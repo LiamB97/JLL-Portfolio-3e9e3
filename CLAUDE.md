@@ -23,9 +23,10 @@ On this macOS checkout, Vite's default configuration loader has sometimes hung. 
 
 - `src/main.tsx`: buyer discovery, filters, shortlist state and top-level navigation.
 - `src/PortfolioHeader.tsx`, `src/discovery.css`: header, mobile map space and public responsive layout.
-- `src/Map.tsx`: Leaflet/MapLibre map, overlays, framing and provider credits.
+- `src/Map.tsx`, `src/map-style.ts`: Leaflet/MapLibre map, subtle park/water colours, overlays, framing and provider credits.
 - `src/Detail.tsx`, `src/DevelopmentVideo.tsx`: development details, viewing requests and media.
-- `src/StaffPortal.tsx`, `src/workspace.ts`, `src/workspace.css`: staff navigation and workspace layout.
+- `src/StaffPortal.tsx`, `src/workspace.ts`, `src/workspace.css`: staff navigation and workspace layout. My profile is available to every staff role, with the photo editor first.
+- `src/readability.css`: final reading-size and wrapping rules. Body copy is 16px, development descriptions 18px and compact UI labels at least 14px.
 - `src/Admin.tsx`, `src/PendingInput.tsx`, `server/pending-input.mjs`: stock entry, review, assignment and publishing.
 - `src/StaffCollections.tsx`, `src/TransportDefaults.tsx`: featured collections and their transport defaults.
 - `src/StaffBrochures.tsx`, `src/brochure.ts`, `src/brochure-assets.ts`: A4 brochure generation and sharing.

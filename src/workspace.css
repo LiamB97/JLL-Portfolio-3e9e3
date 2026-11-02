@@ -10,7 +10,7 @@
 .workspace-navigation{position:sticky;top:20px}
 .workspace-mobile-nav{display:none!important}
 .workspace-nav-group{margin-bottom:22px}
-.workspace-nav-group>p{color:var(--muted);font-size:11px;letter-spacing:.03em;margin:0 12px 7px}
+.workspace-nav-group>p{color:var(--muted);font-size:14px;letter-spacing:.03em;margin:0 12px 7px}
 .workspace-nav-group button{width:100%;justify-content:flex-start;min-height:44px;text-align:left;border-color:transparent;background:transparent;font-size:14px;padding:10px 12px;margin:2px 0}
 .workspace-nav-group button.selected,html[data-theme=dark] .workspace-nav-group button.selected{background:var(--selected-bg);color:var(--ink);border-color:var(--line);font-weight:600}
 .workspace-content{min-width:0}
@@ -22,7 +22,7 @@
 .workspace-content :is(.admin-panel,.staff-section){min-width:0}
 .workspace-content h1{font-size:28px}
 .workspace-content p{line-height:1.65}
-.workspace-content label{font-size:13px}
+.workspace-content label{font-size:14px}
 .workspace-content :is(input,textarea,select){font-size:14px}
 .workspace-content input[type=checkbox]{height:19px;min-height:19px;width:19px;accent-color:var(--accent);flex-shrink:0}
 
@@ -31,13 +31,13 @@
 .workspace-task>svg{color:var(--accent)}
 .workspace-task strong{font-size:20px;line-height:1.25}
 .workspace-task span{font-size:14px;line-height:1.6;color:var(--muted)}
-.workspace-task b{font-size:13px;display:flex;align-items:center;gap:8px;margin-top:auto;color:var(--accent)}
+.workspace-task b{font-size:14px;display:flex;align-items:center;gap:8px;margin-top:auto;color:var(--accent)}
 .workspace-help{margin:28px 0;padding:24px;border-block:1px solid var(--line)}
 .workspace-help p{font-size:14px;color:var(--muted);margin:8px 0 14px}
-.workspace-help button{font-size:13px}
+.workspace-help button{font-size:14px}
 .workspace-setup{background:var(--raised);padding:20px;border-radius:7px;margin:0 0 24px}
 .workspace-setup p{font-size:14px;margin:8px 0 16px}
-.workspace-privacy{margin:28px 0 0;font-size:12px;color:var(--muted)}
+.workspace-privacy{margin:28px 0 0;font-size:14px;color:var(--muted)}
 .workspace-privacy summary{cursor:pointer;min-height:44px;align-content:center}
 .workspace-privacy p{max-width:850px;line-height:1.7}
 
@@ -49,11 +49,11 @@
 .saved-collection strong{overflow-wrap:anywhere}
 .collection-map-options{margin:20px 0;border-block:1px solid var(--line);padding:14px 0}
 .collection-map-options>summary{cursor:pointer;font-size:14px;font-weight:600;min-height:44px;align-content:center}
-.collection-map-options>summary small{font-size:12px;font-weight:400;color:var(--muted);margin-inline-start:12px}
+.collection-map-options>summary small{font-size:14px;font-weight:400;color:var(--muted);margin-inline-start:12px}
 .collection-map-options .transport-defaults{margin:14px 0}
 .collection-choices{overscroll-behavior:contain}
 .stock-toolbar{margin:20px 0}
-.stock-toolbar p{font-size:13px;color:var(--muted);margin:12px 0}
+.stock-toolbar p{font-size:14px;color:var(--muted);margin:12px 0}
 .stock-toolbar .selected{background:var(--selected-bg)}
 .stock-tool{padding:16px 0;border-block-start:1px solid var(--line);margin:12px 0}
 .stock-tool>summary{font-size:15px;font-weight:600;cursor:pointer;min-height:44px;align-content:center}
@@ -62,8 +62,8 @@
 
 .pending-assignment-panel fieldset{border:0;padding:0;margin:0;min-width:0}
 .pending-assignment-panel h2{margin-bottom:10px}
-.pending-assignment-panel>p{font-size:13px;color:var(--muted)}
+.pending-assignment-panel>p{font-size:14px;color:var(--muted)}
 .pending-assignment-panel .action-row{margin-top:12px;align-items:center;flex-wrap:wrap}
-.assignment-unsaved{font-size:12px;color:var(--muted)}
+.assignment-unsaved{font-size:14px;color:var(--muted)}
 .assignment-feedback{font-size:14px;line-height:1.6;margin:14px 0 0;padding:12px;background:var(--page);border:1px solid var(--line);border-radius:5px;overflow-wrap:anywhere}
 @media(max-width:760px){.pending-assignment-panel .action-row .primary{width:100%;min-height:44px}}

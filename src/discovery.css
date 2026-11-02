@@ -6,23 +6,23 @@
 .portfolio-header-title{grid-column:2;grid-row:1;margin:0;text-align:center;font-size:20px;font-weight:500;line-height:1.2;white-space:nowrap}
 .portfolio-header-buttons{grid-column:3;grid-row:1;justify-self:end;display:flex;gap:4px}
 .portfolio-header-buttons>button{width:44px;height:44px;padding:8px;background:transparent;border:0;color:var(--ink);position:relative}
-.portfolio-saved b{position:absolute;top:0;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:10px;background:var(--accent);color:var(--accent-contrast);font-size:10px;line-height:17px}
+.portfolio-saved b{position:absolute;top:0;right:0;min-width:17px;height:17px;padding:0 4px;border-radius:10px;background:var(--accent);color:var(--accent-contrast);font-size:14px;line-height:17px}
 .portfolio-views{grid-column:3;grid-row:1;justify-self:end;margin-inline-end:104px;display:flex;padding:3px;border:1px solid var(--line);border-radius:7px;background:var(--page);gap:3px}
-.portfolio-views button{min-height:38px;padding:8px 11px;font-size:13px;border:0;background:transparent;gap:7px}
+.portfolio-views button{min-height:38px;padding:8px 11px;font-size:14px;border:0;background:transparent;gap:7px}
 .portfolio-views button[aria-pressed=true]{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px #0001}
 .portfolio-header:not(.with-views){grid-template-columns:1fr auto}
 .portfolio-header:not(.with-views) .portfolio-header-buttons{grid-column:2}
 .portfolio-menu-section{padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--line)}
 .portfolio-menu-section h3{font-size:15px;margin:0 0 14px}
 .portfolio-inline-share{display:flex;flex-wrap:wrap;gap:10px}
-.portfolio-inline-share p{flex-basis:100%;font-size:13px;margin:0;color:var(--muted)}
+.portfolio-inline-share p{flex-basis:100%;font-size:14px;margin:0;color:var(--muted)}
 .portfolio-inline-share :is(a,button){min-height:44px;flex:1;font-size:14px}
 .portfolio-inline-share input{width:100%;min-width:0;font-size:16px;padding:10px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:5px}
 .portfolio-inline-preferences{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
-.portfolio-inline-preferences label{display:grid;gap:7px;min-width:0;font-size:13px}
+.portfolio-inline-preferences label{display:grid;gap:7px;min-width:0;font-size:14px}
 .portfolio-inline-preferences select{width:100%;min-width:0;min-height:44px;padding:9px;font-size:16px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:5px}
 .portfolio-inline-preferences :is(p,button){grid-column:1/-1}
-.portfolio-inline-preferences p{font-size:12px;color:var(--muted);margin:0}
+.portfolio-inline-preferences p{font-size:14px;color:var(--muted);margin:0}
 .portfolio-menu-links{display:grid;gap:5px}
 .portfolio-menu-links a{display:flex;align-items:center;gap:12px;min-height:46px;padding:10px;border-radius:5px;font-size:15px}
 /* Desktop and listing controls stay in normal flow; mobile Map uses a light overlay. */
@@ -32,22 +32,22 @@
 .discovery-search input{flex:1;width:100%;min-width:0;height:100%;font-size:16px;border:0;background:transparent;color:var(--ink);outline-offset:0}
 .discovery-search>svg{flex-shrink:0}
 .discovery-search button{min-width:40px;min-height:40px;padding:8px;border:0;background:var(--page);color:var(--ink)}
-.discovery-filter-trigger>span{font-size:13px}
+.discovery-filter-trigger>span{font-size:14px}
 .discovery-filter-trigger.filtered{background:var(--selected-bg)}
-.discovery-filter-trigger b{display:grid;place-items:center;min-width:17px;height:17px;border-radius:50%;background:var(--accent);color:var(--accent-contrast);font-size:10px}
+.discovery-filter-trigger b{display:grid;place-items:center;min-width:17px;height:17px;border-radius:50%;background:var(--accent);color:var(--accent-contrast);font-size:14px}
 .discovery-toolbar>.commute-search{margin:0;min-width:0;align-self:center;border-color:var(--line);border-radius:7px}
-.discovery-toolbar .commute-search-trigger{min-height:46px;font-size:13px;padding:10px 12px}
+.discovery-toolbar .commute-search-trigger{min-height:46px;font-size:14px;padding:10px 12px}
 .commute-label-short{display:none}
-.discovery-count{display:flex;align-items:center;justify-content:flex-end;gap:10px;font-size:13px;min-width:0;color:var(--muted)}
+.discovery-count{display:flex;align-items:center;justify-content:flex-end;gap:10px;font-size:14px;min-width:0;color:var(--muted)}
 .discovery-count strong{font-weight:400;white-space:nowrap}
-.discovery-count button{min-height:40px;padding:8px;border:0;background:transparent;font-size:12px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.discovery-count button{min-height:40px;padding:8px;border:0;background:transparent;font-size:14px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .discovery-filter-checks{display:grid;gap:14px;margin:20px 0 0}
 .discovery-filter-checks label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px}
-.discovery-collection,.discovery-broker{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;min-width:0;font-size:13px}
+.discovery-collection,.discovery-broker{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;min-width:0;font-size:14px}
 .discovery-collection>span{display:flex;align-items:center;gap:7px;min-width:0}
 .discovery-collection strong{overflow-wrap:anywhere}
 .discovery-collection p{margin:0;color:var(--muted)}
-.discovery-collection button{min-height:36px;padding:6px 10px;margin-inline-start:auto;font-size:12px}
+.discovery-collection button{min-height:36px;padding:6px 10px;margin-inline-start:auto;font-size:14px}
 .discovery-broker>a{display:flex;align-items:center;gap:8px;min-height:38px;padding:5px 12px;border-radius:5px;background:#25d366;color:#071e18;font-weight:600}
 .discovery-broker .broker-avatar{width:28px;height:28px}
 .discovery-broker strong{color:#071e18;overflow-wrap:anywhere}
@@ -61,26 +61,26 @@
 .discovery-page.view-list{overflow:auto}
 .discovery-page.view-list .discovery-workspace{display:block;flex:none}
 .discovery-page.view-list .explorer-list{height:auto;overflow:visible;max-width:1440px;margin:auto}
-.discovery-disclaimer{position:static;flex-shrink:0;padding:5px 16px;font-size:10px;line-height:1.4;text-align:center;background:var(--surface);color:var(--muted);border-top:1px solid var(--line)}
+.discovery-disclaimer{position:static;flex-shrink:0;padding:5px 16px;font-size:14px;line-height:1.4;text-align:center;background:var(--surface);color:var(--muted);border-top:1px solid var(--line)}
 .discovery-list-jump{display:none}
 /* Controls have one anchor and reserve space for Leaflet zoom controls. */
 .map-utilities{position:absolute;bottom:36px;inset-inline-start:16px;display:flex;gap:8px;z-index:600;max-width:calc(100% - 82px)}
-.map-utilities button{min-height:44px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 2px 8px #0002;padding:10px 12px;font-size:13px;gap:8px}
+.map-utilities button{min-height:44px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 2px 8px #0002;padding:10px 12px;font-size:14px;gap:8px}
 .map-fit-button{min-width:44px}
 .discovery-page .map-note{display:none}
 .discovery-page .leaflet-control-zoom{margin-bottom:36px;margin-inline-end:14px}
-.discovery-page .transport-notice{top:12px;bottom:auto;inset-inline:16px;max-width:calc(100% - 32px);font-size:12px}
+.discovery-page .transport-notice{top:12px;bottom:auto;inset-inline:16px;max-width:calc(100% - 32px);font-size:14px}
 /* Date controls must be allowed to shrink inside a grid, including in Safari. */
 .staff-portal label,.staff-portal fieldset{min-width:0}
 .staff-portal :is(input:not([type=checkbox]):not([type=range]),select,textarea){width:100%;max-width:100%;min-width:0;box-sizing:border-box}
 .staff-portal .activity-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end;padding:20px}
-.staff-portal .activity-filters label{display:grid;gap:8px;margin:0;min-width:0;font-size:13px;line-height:1.4}
+.staff-portal .activity-filters label{display:grid;gap:8px;margin:0;min-width:0;font-size:14px;line-height:1.4}
 .staff-portal .activity-filters :is(input,select){display:block;width:100%;max-width:100%;min-width:0;height:48px;min-height:48px;margin:0;padding:10px 12px;line-height:24px;font-size:16px}
 .staff-portal input[type=date],.staff-portal input[type=time]{appearance:none;-webkit-appearance:none;min-inline-size:0;inline-size:100%;max-inline-size:100%;text-align:start}
 .staff-portal input::-webkit-date-and-time-value{min-width:0;text-align:start;line-height:24px}
 .staff-portal input::-webkit-datetime-edit{padding:0;min-width:0}
 .staff-portal .activity-filters .primary{grid-column:1/-1;justify-self:start;margin:0;min-height:44px}
-.activity-explainer{font-size:12px;color:var(--muted);margin:12px 0}
+.activity-explainer{font-size:14px;color:var(--muted);margin:12px 0}
 .activity-explainer summary{min-height:40px;align-content:center;cursor:pointer}
 @media(hover:hover) and (pointer:fine){.portfolio-menu-links a:hover{background:var(--page)}}
 @media(min-width:761px) and (max-width:1100px){
@@ -92,27 +92,27 @@
  .portfolio-header.with-views{grid-template-rows:64px 52px}
  .portfolio-header-brand{width:180px}.portfolio-header-title{display:none}.portfolio-header-buttons{grid-column:2}
  .portfolio-views{grid-column:1/-1;grid-row:2;justify-self:stretch;margin:0 0 4px;width:100%;height:48px;padding:1px;gap:4px}
- .portfolio-views button{flex:1;min-width:0;min-height:44px;padding:6px;font-size:13px}
+ .portfolio-views button{flex:1;min-width:0;min-height:44px;padding:6px;font-size:14px}
  .discovery-toolbar{grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:10px 12px}
  .discovery-search{grid-column:1/-1;height:46px;padding-inline-start:10px}.discovery-search input{font-size:16px}.discovery-filter-trigger>span{display:none}
- .discovery-toolbar .commute-search-trigger{min-height:42px;padding:9px 10px;font-size:13px}.commute-label-long{display:none}.commute-label-short{display:inline}.discovery-toolbar .commute-search-trigger small{display:none}
- .discovery-count{font-size:12px;gap:4px}.discovery-count button{font-size:11px;padding:6px;min-height:40px}
- .discovery-collection,.discovery-broker{font-size:12px;gap:5px 10px}.discovery-collection p{display:none}.discovery-collection button{min-height:36px}
+ .discovery-toolbar .commute-search-trigger{min-height:42px;padding:9px 10px;font-size:14px}.commute-label-long{display:none}.commute-label-short{display:inline}.discovery-toolbar .commute-search-trigger small{display:none}
+ .discovery-count{font-size:14px;gap:4px}.discovery-count button{font-size:14px;padding:6px;min-height:40px}
+ .discovery-collection,.discovery-broker{font-size:14px;gap:5px 10px}.discovery-collection p{display:none}.discovery-collection button{min-height:36px}
  .discovery-broker>a{padding:3px 9px;min-height:36px}.discovery-broker .broker-avatar{width:24px;height:24px}
- .discovery-disclaimer{font-size:9px;padding:4px 12px}
- .map-utilities{bottom:36px;inset-inline-start:12px;gap:7px}.map-utilities button{font-size:12px;padding:10px}.map-fit-button span{display:none}
+ .discovery-disclaimer{font-size:14px;padding:4px 12px}
+ .map-utilities{bottom:36px;inset-inline-start:12px;gap:7px}.map-utilities button{font-size:14px;padding:10px}.map-fit-button span{display:none}
  .discovery-page.view-split{overflow:auto}.discovery-page.view-split .discovery-workspace{display:flex;flex-direction:column;flex:none;height:auto}
  .discovery-page.view-split .map-shell{height:clamp(300px,46svh,460px);flex:none}
  .discovery-page :is(.explorer-list){height:auto;overflow:visible;padding:18px 12px}
  .discovery-page.view-map .discovery-workspace{min-height:150px}
- .discovery-page.view-split .discovery-list-jump{display:inline-flex;grid-column:1/-1;justify-content:space-between;min-height:40px;font-size:13px}
+ .discovery-page.view-split .discovery-list-jump{display:inline-flex;grid-column:1/-1;justify-content:space-between;min-height:40px;font-size:14px}
  .discovery-page .leaflet-control-zoom{margin-inline-end:12px}
  .staff-portal .activity-filters{grid-template-columns:minmax(0,1fr);padding:16px;gap:18px}
  .staff-portal .activity-filters .primary{justify-self:stretch;width:100%;min-height:46px}
  .staff-portal :is(input:not([type=checkbox]),select,textarea){font-size:16px}
  .portfolio-inline-preferences{grid-template-columns:minmax(0,1fr)}
 }
-@media(max-width:360px){.portfolio-header-brand{width:158px}.portfolio-header{padding-inline:12px}.discovery-count{font-size:11px}.discovery-toolbar{gap:8px}}
+@media(max-width:360px){.portfolio-header-brand{width:158px}.portfolio-header{padding-inline:12px}.discovery-count{font-size:14px}.discovery-toolbar{gap:8px}}
 
 .commute-search.has-results .commute-search-trigger{background:var(--selected-bg);color:var(--accent)}
 
@@ -120,17 +120,17 @@
 .portfolio-header{padding-block-start:env(safe-area-inset-top)}
 .discovery-disclaimer{padding-block-end:max(4px,env(safe-area-inset-bottom))}
 
-.activity-advanced{grid-column:1/-1;border-top:1px solid var(--line);padding-top:8px}.activity-advanced summary{min-height:44px;align-content:center;cursor:pointer;font-size:14px}.activity-advanced summary span{font-size:12px;color:var(--accent)}.activity-advanced-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding-top:12px}@media(max-width:760px){.activity-advanced-grid{grid-template-columns:minmax(0,1fr)}}
+.activity-advanced{grid-column:1/-1;border-top:1px solid var(--line);padding-top:8px}.activity-advanced summary{min-height:44px;align-content:center;cursor:pointer;font-size:14px}.activity-advanced summary span{font-size:14px;color:var(--accent)}.activity-advanced-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding-top:12px}@media(max-width:760px){.activity-advanced-grid{grid-template-columns:minmax(0,1fr)}}
 
 /* On phones, prioritise the map canvas over persistent navigation rows. */
 .portfolio-mobile-broker,.portfolio-mobile-view-picker,.portfolio-mobile-context{display:none}
 .portfolio-menu-view-options{display:flex;gap:8px}
 .portfolio-menu-view-options button{flex:1;min-width:0;min-height:44px;padding:10px 8px;font-size:14px}
 .portfolio-menu-view-options button[aria-pressed=true]{background:var(--selected-bg);color:var(--accent);border-color:var(--accent)}
-.portfolio-mobile-context p{font-size:13px;color:var(--muted);margin:0 0 16px}
+.portfolio-mobile-context p{font-size:14px;color:var(--muted);margin:0 0 16px}
 .filter-collection-context{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .filter-collection-context strong{display:flex;align-items:center;gap:8px;overflow-wrap:anywhere}
-.filter-collection-context p{font-size:13px;color:var(--muted);margin:8px 0 0}
+.filter-collection-context p{font-size:14px;color:var(--muted);margin:8px 0 0}
 @media(max-width:760px){
  .portfolio-header,.portfolio-header:not(.with-views),.portfolio-header.with-views{grid-template-rows:56px}
  .portfolio-header-brand{width:160px}
@@ -144,8 +144,8 @@
  .discovery-page.view-map .discovery-search{background:var(--surface);box-shadow:0 2px 10px #0002;height:48px}
  .discovery-page.view-map .discovery-toolbar>.commute-search{justify-self:start;width:auto;max-width:100%;background:var(--surface);box-shadow:0 2px 8px #0001;overflow:hidden}
  .discovery-page.view-map .commute-search-trigger{min-height:44px;padding:9px 11px;gap:7px}
- .discovery-page.view-map .discovery-count{align-self:center;justify-self:end;flex-wrap:wrap;max-width:100%;background:var(--surface);padding:2px 8px;min-height:36px;border:1px solid var(--line);border-radius:6px;font-size:11px;box-shadow:0 2px 8px #0001}
- .discovery-page.view-map .discovery-count button{min-height:40px;padding:6px;font-size:11px}
+ .discovery-page.view-map .discovery-count{align-self:center;justify-self:end;flex-wrap:wrap;max-width:100%;background:var(--surface);padding:2px 8px;min-height:36px;border:1px solid var(--line);border-radius:6px;font-size:14px;box-shadow:0 2px 8px #0001}
+ .discovery-page.view-map .discovery-count button{min-height:40px;padding:6px;font-size:14px}
  .discovery-page.view-map .discovery-collection,.discovery-page.view-map .discovery-broker{display:none}
  .discovery-page.view-map .discovery-toolbar>.explorer-message{max-height:150px;overflow:auto;overscroll-behavior:contain}
  .discovery-page.view-map .discovery-workspace{min-height:0}

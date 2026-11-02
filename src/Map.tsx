@@ -10,6 +10,7 @@ import '@maplibre/maplibre-gl-leaflet';
 import {Landmark, Layers, TrainFront, AlertCircle, SlidersHorizontal,LocateFixed} from 'lucide-react';
 import Modal from './Modal';
 import {landmarks} from './explore';
+import {styleNeighbourhoodMap} from './map-style';
 import {useLocale} from './i18n';
 import type {Development, TransportNetwork, TransportDefaults} from './types';
 
@@ -67,12 +68,13 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     const styleTimeout=window.setTimeout(()=>{if(!vectorLoaded)rasterFallback();},12000);
     gl?.on('load',()=>{
       vectorLoaded=true;window.clearTimeout(styleTimeout);setFailed(false);setBaseReady(true);
-      const style=gl.getStyle();if(dark){for(const layer of style.layers){if(layer.type==='background')gl.setPaintProperty(layer.id,'background-color','#131E29');if(layer.type==='symbol'&&layer.layout?.['text-field']){gl.setPaintProperty(layer.id,'text-color','#aab5c2');gl.setPaintProperty(layer.id,'text-halo-color','#131E29');}if(layer.type==='fill'&&/^water/.test(layer.id))gl.setPaintProperty(layer.id,'fill-color','#003E51');}}const source=Object.entries(style.sources).find(([,s])=>s.type==='vector')?.[0];
+      styleNeighbourhoodMap(gl,dark);
+      const style=gl.getStyle(),source=Object.entries(style.sources).find(([,s])=>s.type==='vector')?.[0];
       if(!source)return;
       const universityFilter=['any',['==',['get','class'],'college'],['==',['get','class'],'university'],['==',['get','subclass'],'university']] as import('maplibre-gl').ExpressionSpecification;
       gl.addLayer({id:'london-university-points',type:'circle',source,'source-layer':'poi',minzoom:13,filter:universityFilter,paint:{'circle-radius':3,'circle-color':'#5a6890','circle-stroke-color':'#fff','circle-stroke-width':1}});
-      gl.addLayer({id:'london-university-labels',type:'symbol',source,'source-layer':'poi',minzoom:13,filter:universityFilter,layout:{'text-field':['coalesce',['get','name:en'],['get','name:latin'],['get','name']],'text-font':['Noto Sans Regular'],'text-size':12,'text-anchor':'left','text-offset':[.6,0],'text-max-width':13},paint:{'text-color':dark?'#b6bbd2':'#536183','text-halo-color':dark?'#1F2A35':'#fff','text-halo-width':2}});
-      gl.addLayer({id:'london-local-places',type:'symbol',source,'source-layer':'poi',minzoom:16,filter:['!',universityFilter],layout:{'text-field':['coalesce',['get','name:en'],['get','name:latin'],['get','name']],'text-font':['Noto Sans Regular'],'text-size':11,'text-max-width':12},paint:{'text-color':dark?'#a3ada6':'#8b938d','text-halo-color':dark?'#1F2A35':'#fff','text-halo-width':1.5}});
+      gl.addLayer({id:'london-university-labels',type:'symbol',source,'source-layer':'poi',minzoom:13,filter:universityFilter,layout:{'text-field':['coalesce',['get','name:en'],['get','name:latin'],['get','name']],'text-font':['Noto Sans Regular'],'text-size':14,'text-anchor':'left','text-offset':[.6,0],'text-max-width':13},paint:{'text-color':dark?'#b6bbd2':'#536183','text-halo-color':dark?'#1F2A35':'#fff','text-halo-width':2}});
+      gl.addLayer({id:'london-local-places',type:'symbol',source,'source-layer':'poi',minzoom:16,filter:['!',universityFilter],layout:{'text-field':['coalesce',['get','name:en'],['get','name:latin'],['get','name']],'text-font':['Noto Sans Regular'],'text-size':14,'text-max-width':12},paint:{'text-color':dark?'#a3ada6':'#8b938d','text-halo-color':dark?'#1F2A35':'#fff','text-halo-width':1.5}});
     });
     commuteLayer.current=L.layerGroup().addTo(m);
     landmarkLayer.current=L.layerGroup().addTo(m);
@@ -103,7 +105,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
       for(const place of [...landmarks].sort((a,b)=>a.minZoom-b.minZoom)){
         if(zoom<place.minZoom||!viewport.contains([place.lat,place.lng]))continue;
         const position=m!.latLngToContainerPoint([place.lat,place.lng]);
-        const bounds=L.bounds([position.x+8,position.y-10],[position.x+8+Math.min(260,place.name.length*6+14),position.y+10]);
+        const bounds=L.bounds([position.x+8,position.y-10],[position.x+8+Math.min(260,place.name.length*7+14),position.y+10]);
         const permanent=zoom>=(place.minZoom===11?11:13)&&!labels.some(other=>other.intersects(bounds));
         if(permanent)labels.push(bounds);
         const label=document.createElement('span');label.textContent=place.name;

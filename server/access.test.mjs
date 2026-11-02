@@ -121,3 +121,15 @@ test('broker portraits save only to the signed-in profile, persist and can be re
  for(const invalid of ['data:image/svg+xml;base64,PHN2Zy8+','https://example.com/photo.jpg','data:image/jpeg;base64,aGVsbG8=',null,'x'.repeat(180001)])assert.equal((await e.call('admin/profile',{method:'POST',actor:a,body:{photo:invalid}})).status,422);
  assert.equal((await e.call('admin/profile',{method:'POST',actor:a,body:{photo:''}})).data.photo,'');assert.equal((await e.call('brokers/'+a.user.shareSlug)).data.photo,'');
 });
+
+test('Admin, Broker admin and Broker can all update their own profile photo without changing another account',async()=>{
+ const {readFileSync}=await import('node:fs');const photo='data:image/jpeg;base64,'+readFileSync(new URL('./fixtures/profile-square.jpg',import.meta.url)).toString('base64');
+ const e=environment(),owner=await e.owner(),broker=await e.broker(owner),manager=await e.broker(owner,'photo-manager@example.test','broker_admin');
+ for(const actor of [broker,manager,owner]){
+  const result=await e.call('admin/profile',{method:'POST',actor,body:{photo,userId:owner.user.id,role:'admin'}});
+  assert.equal(result.status,200);assert.equal(result.data.role,actor.user.role);assert.equal(result.data.whatsapp,actor.user.whatsapp);assert.equal(result.data.photo,photo);
+  assert.equal((await e.call('access/me',{actor})).data.user.photo,photo);
+ }
+ assert.equal((await e.call('admin/profile',{method:'POST',actor:broker,body:{photo:''}})).status,200);
+ assert.equal((await e.call('access/me',{actor:owner})).data.user.photo,photo);assert.equal((await e.call('access/me',{actor:manager})).data.user.photo,photo);
+});

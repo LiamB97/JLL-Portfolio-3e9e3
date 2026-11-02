@@ -19,6 +19,7 @@ import './brand.css';
 import './workspace.css';
 import './portfolio-ui.css';
 import './discovery.css';
+import './readability.css';
 import {PreferencesProvider,useLocale} from './i18n';
 import Detail from './Detail';
 import AnalyticsConsent from './AnalyticsConsent';
