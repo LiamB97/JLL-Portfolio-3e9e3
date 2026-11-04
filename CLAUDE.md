@@ -29,7 +29,9 @@ On this macOS checkout, Vite's default configuration loader has sometimes hung. 
 - `src/readability.css`: final reading-size and wrapping rules. Body copy is 16px, development descriptions 18px and compact UI labels at least 14px.
 - `src/Admin.tsx`, `src/PendingInput.tsx`, `server/pending-input.mjs`: stock entry, review, assignment and publishing.
 - `src/StaffCollections.tsx`, `src/TransportDefaults.tsx`: featured collections and their transport defaults.
-- `src/StaffBrochures.tsx`, `src/brochure.ts`, `src/brochure-assets.ts`: A4 brochure generation and sharing.
+- `src/StaffBrochures.tsx`, `src/BrochureCover.tsx`, `src/brochure.ts`, `src/brochure-assets.ts`: saved A4 brochures, cover selection and Outlook drafts with attached PDFs. `server/brochures.mjs` enforces private ownership/version/quota; `server/brochure-files.mjs` stores binaries separately.
+- `server/source-review.mjs`: protect manual stock edits across website refreshes and resolve explicit field differences. Never replace manually supplied bedroom prices with the website’s aggregate starting price.
+- `shared/pricing.ts`: bedroom-specific budget/display/sort rules; missing per-bedroom prices do not fall back to another unit type’s aggregate price.
 - `server/netlify-api.mjs`: shared HTTP API; `server/access.mjs`: staff authentication, roles, profiles and collection ownership.
 - `server/netlify-store.mjs`, `server/engagement-store.mjs`: production persistent stores.
 - `server/index.mjs`: local Express API and SQLite repository.
@@ -49,7 +51,7 @@ On this macOS checkout, Vite's default configuration loader has sometimes hung. 
 
 ## Data and working practices
 
-Production accounts, password hashes, broker photos, collections, unpublished drafts, pending assignments and staff activity are in Netlify Blobs, not the checked-in seed JSON. A Git clone or deploy does not migrate that data.
+Production accounts, password hashes, broker photos, collections, unpublished drafts, saved brochure metadata/PDFs, pending assignments and staff activity are in Netlify Blobs, not the checked-in seed JSON. A Git clone or deploy does not migrate that data.
 
 Do not put credentials, data exports, cookies, `.env`, `.data`, `.netlify`, `node_modules`, `dist` or this checkout's temporary QA files into Git. Do not print secret values while diagnosing deployment. The Functions secret is named `ADMIN_PASSWORD`; its value belongs in Netlify, not a frontend `VITE_` variable or this file.
 

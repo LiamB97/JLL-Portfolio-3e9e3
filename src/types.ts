@@ -1,4 +1,4 @@
-export interface Development {translations?:Record<string,{description:string;amenities:string[]}>;canEdit?:boolean;id:string;name:string;area:string;postcode:string;lat:number;lng:number;priceFrom:number;bedrooms:number[];propertyTypes:string[];amenities:string[];images:string[];videos:string[];description:string;sample:boolean;status:string;sourceUrl:string}
+export interface Development {unitPrices?:Record<string,number>;translations?:Record<string,{description:string;amenities:string[]}>;canEdit?:boolean;id:string;name:string;area:string;postcode:string;lat:number;lng:number;priceFrom:number;bedrooms:number[];propertyTypes:string[];amenities:string[];images:string[];videos:string[];description:string;sample:boolean;status:string;sourceUrl:string}
 export interface Station {id?:string;lineIds?:string[];name:string;lat:number;lng:number;lines:string}
 export const money=(n:number)=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n);
 export const bedroomLabel=(b:number[])=>b.map(x=>x===0?'Studio':String(x)).join(', ');

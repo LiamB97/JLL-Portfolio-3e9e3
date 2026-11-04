@@ -1,3 +1,4 @@
+import {mergeSource} from './source-review.mjs';
 import * as cheerio from 'cheerio';
 import {validateDevelopment} from './model.mjs';
 export const SEARCH_URL='https://residential.jll.co.uk/search?tenureType=sale&flags=new-home&sortBy=newestListed&currencyType=GBP';
@@ -19,7 +20,7 @@ export function applySource(db,records){
  const ready=[],skipped=[];for(const p of records){try{ready.push(convertSource(p));}catch(e){skipped.push({name:plain(p.title),reason:e.message});}}
  if(!ready.length)throw Error('No valid London developments found; existing stock was kept.');
  const statement=db.prepare('INSERT INTO developments(id,data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data');
- db.exec('BEGIN');try{for(const d of ready)statement.run(d.id,JSON.stringify(d));for(const row of db.prepare('SELECT id,data FROM developments').all()){const d=JSON.parse(row.data);if(d.sample===true)db.prepare('DELETE FROM developments WHERE id=?').run(row.id);}
- const report={imported:ready.length,skipped,syncedAt:new Date().toISOString(),note:'Website-managed records are refreshed in place. Manual records are preserved. Missing website stock is retained for review, not automatically withdrawn.'};db.prepare('INSERT INTO metadata(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run('last-sync',JSON.stringify(report));db.exec('COMMIT');return report;
+ db.exec('BEGIN');try{const access=db.prepare("SELECT value FROM metadata WHERE key='access-state'").get();const state=access?JSON.parse(access.value):{};for(const d of ready){const row=db.prepare('SELECT data FROM developments WHERE id=?').get(d.id);statement.run(d.id,JSON.stringify(mergeSource(row?JSON.parse(row.data):null,d,{legacyEdited:state.activity?.timeline?.some(e=>e.event==='stock_edit'&&e.resourceId===d.id)})));}for(const row of db.prepare('SELECT id,data FROM developments').all()){const d=JSON.parse(row.data);if(d.sample===true)db.prepare('DELETE FROM developments WHERE id=?').run(row.id);}
+ const report={imported:ready.length,skipped,syncedAt:new Date().toISOString(),note:'Manual edits are preserved; website differences await a stock manager’s review. Missing website stock is retained for review, not automatically withdrawn.'};db.prepare('INSERT INTO metadata(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run('last-sync',JSON.stringify(report));db.exec('COMMIT');return report;
  }catch(e){db.exec('ROLLBACK');throw e;}
 }

@@ -11,7 +11,7 @@ Reviewed 27 October 2026. This is a code review and launch handover, not a penet
 - Website imports validate public HTTPS destinations and redirects, reject private IPs and credentials, and bound response sizes and durations. Imported records require review before ordinary publication. HTML is rendered as text rather than executed.
 - Portfolio updates use conditional writes and retry conflicts. Public responses exclude account email, passwords, invitations, sessions and private stock provenance. Disabled brokers' links stop resolving.
 - Buyer favourites stay in their browser. Buyer analytics require consent and use anonymous counts; no buyer email addresses, raw searches, commute destinations or WhatsApp message text are recorded by these events.
-- Email sharing only generates copy and a mailto link. Sending happens in the broker's email app; the portfolio never accepts recipient addresses or delivers messages. Share-button activity is not proof of a delivered message.
+- Email sharing generates copy/mailto links; brochure email also offers an Outlook .eml draft containing the PDF attachment. Sending happens in the broker's email app; the portfolio never accepts recipient addresses or delivers messages. Share-button activity is not proof of a delivered message.
 
 ## Data and storage
 
@@ -19,7 +19,7 @@ Staff names, email addresses, WhatsApp numbers, password hashes, invitations, se
 
 Production currently uses Netlify Blobs, with strongly consistent reads and conditional writes. This is suitable for the present small shared portfolio. Development uses SQLite. The production app does not yet provide scheduled independent backups or a tested point-in-time restore workflow. A source-code deploy rollback does **not** restore the live database.
 
-Before a wider launch, agree an owner, retention policy and an encrypted backup/restore procedure for the production store with IT. Include accounts, collections, unpublished drafts and anonymous reporting aggregates; restrict backup access and rehearse restoration to an isolated environment. Do not commit database exports or credentials to Git.
+Before a wider launch, agree an owner, retention policy and an encrypted backup/restore procedure for the production store with IT. Include accounts, collections, unpublished drafts, saved brochure metadata, the jll-brochure-files binaries and anonymous reporting aggregates; restrict backup access and rehearse restoration to an isolated environment. Do not commit database exports or credentials to Git.
 
 If stock, staff counts or simultaneous writes grow substantially, assess a managed PostgreSQL database with automated backups and restore support. The present shared portfolio document serialises updates across stock and staff activity, so it should not be described as an unlimited-scale database. Moving data requires a planned migration preserving development IDs, collection links and account access.
 

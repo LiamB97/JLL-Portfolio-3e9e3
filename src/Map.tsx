@@ -40,7 +40,7 @@ function stationPopup(station:TransportNetwork['stations'][number], network:Tran
 }
 export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={}}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>}) {
   const {t,dark}=useLocale();
-  const lastView=useRef<{centre:L.LatLngExpression;zoom:number}>({centre:[51.505,-.085],zoom:11});
+  const lastView=useRef<{centre:L.LatLngExpression;zoom:number}>({centre:[51.5074,-.1278],zoom:12});
   const el=useRef<HTMLDivElement>(null), map=useRef<L.Map|null>(null);
   const markers=useRef<L.MarkerClusterGroup|null>(null), lines=useRef<L.LayerGroup|null>(null), stationLayer=useRef<L.LayerGroup|null>(null),featuredLayer=useRef<L.LayerGroup|null>(null);
   const [showLines,setShowLines]=useState(false),[showStations,setShowStations]=useState(false),[failed,setFailed]=useState(false),[baseReady,setBaseReady]=useState(false);
@@ -50,6 +50,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   const [lineFilter,setLineFilter]=useState<string[]>([]);
   const [stationFilter,setStationFilter]=useState<string[]>([]);
   useEffect(()=>{setShowLines(transportDefaults?.showLines??false);setShowStations(transportDefaults?.showStations??false);setLineFilter(transportDefaults?.lineIds??[]);setStationFilter(transportDefaults?.stationIds??[]);},[transportDefaults]);
+  const collectionActive=useRef(false);collectionActive.current=featuredIds.length>0;
   const shownLines=useMemo(()=>network?.lines.filter(l=>!lineFilter.length||lineFilter.includes(l.id))||[],[network,lineFilter]);
   useEffect(()=>{
     if(!el.current)return;setBaseReady(false);setFailed(false);
@@ -78,7 +79,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     });
     commuteLayer.current=L.layerGroup().addTo(m);
     landmarkLayer.current=L.layerGroup().addTo(m);
-    markers.current=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:40,spiderfyOnMaxZoom:true,iconCreateFunction:cluster=>L.divIcon({html:`<span>${cluster.getChildCount()}</span>`,className:'development-cluster',iconSize:[42,42],iconAnchor:[21,21]})}).addTo(m);
+    markers.current=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:40,spiderfyOnMaxZoom:true,iconCreateFunction:cluster=>L.divIcon({html:`<span>${cluster.getChildCount()}</span>`,className:'development-cluster'+(collectionActive.current?' subdued-cluster':''),iconSize:[42,42],iconAnchor:[21,21]})}).addTo(m);
     lines.current=L.layerGroup().addTo(m);stationLayer.current=L.layerGroup().addTo(m);featuredLayer.current=L.layerGroup().addTo(m);
     const resize=new ResizeObserver(()=>m.invalidateSize({pan:false}));resize.observe(el.current);
     return()=>{window.clearTimeout(styleTimeout);resize.disconnect();m.stop();
@@ -91,8 +92,8 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     const group=markers.current,featured=featuredLayer.current;if(!group||!featured)return;group.clearLayers();featured.clearLayers();
     for(const d of items){
       const highlighted=featuredIds.includes(d.id),saved=favouriteIds.includes(d.id);
-      const icon=L.divIcon({className:'development-pin-wrap',html:`<span class="development-pin ${d.id===selected?'active':''} ${highlighted?'featured-pin':''} ${saved?'favourite-pin':''}">${saved?'<svg class="pin-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>':'<span class="pin-centre"></span>'}</span>`,iconSize:[34,40],iconAnchor:[17,38]});
-      const marker=L.marker([d.lat,d.lng],{icon,keyboard:true,title:d.name+(highlighted?' · '+t('FEATURED'):'')+(saved?' · '+t('Saved to favourites'):''),zIndexOffset:d.id===selected?3000:highlighted?2000:saved?1000:0});
+      const icon=L.divIcon({className:'development-pin-wrap',html:`<span class="development-pin ${d.id===selected?'active':''} ${highlighted?'featured-pin':''} ${saved?'favourite-pin':''}">${highlighted?'<svg class="pin-feature-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>':saved?'<svg class="pin-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>':'<span class="pin-centre"></span>'}${highlighted&&saved?'<b class="pin-saved-badge">♥</b>':''}</span>`,iconSize:[34,40],iconAnchor:[17,38]});
+      const marker=L.marker([d.lat,d.lng],{icon,keyboard:true,title:d.name+(highlighted?' · '+t('FEATURED'):'')+(saved?' · '+t('Saved to favourites'):''),opacity:featuredIds.length&&!highlighted&&!saved&&d.id!==selected ? 0.42 : 1,zIndexOffset:d.id===selected?3000:highlighted?2000:saved?1000:0});
       if(commuteTimes[d.id]!==undefined){const label=document.createElement('span');label.textContent=d.name+' · '+commuteTimes[d.id]+' min commute';marker.bindTooltip(label);}
       marker.on('add',()=>marker.getElement()?.setAttribute('aria-label',`${d.name}${highlighted?', '+t('FEATURED'):''}${saved?', '+t('Saved to favourites'):''}`)).on('click',()=>onSelect(d.id)).addTo(highlighted||saved?featured:group);
     }

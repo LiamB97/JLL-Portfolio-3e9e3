@@ -20,7 +20,7 @@ function password(value){if(typeof value!=='string'||value.length<12||value.leng
 async function passwordHash(value){const salt=randomBytes(16).toString('hex');const key=await scrypt(password(value),salt,64,{N:32768,r:8,p:1,maxmem:64*1024*1024});return `scrypt-v1:${salt}:${key.toString('hex')}`;}
 async function verify(value,stored){if(typeof value!=='string'||value.length>128)return false;const [,salt,key]=String(stored||'').split(':');const result=await scrypt(value,salt||'jll-login-padding',64,{N:32768,r:8,p:1,maxmem:64*1024*1024});return Boolean(key)&&equal(result.toString('hex'),key);}
 export function publicUser(u){return {id:u.id,name:u.name,email:u.email,role:u.role,active:u.active,createdAt:u.createdAt,whatsapp:u.whatsapp||'',shareSlug:u.shareSlug||'',photo:u.photo||''};}
-export function publicDevelopment(d){const {createdBy,updatedBy,importSource,...safe}=d;return safe;}
+export function publicDevelopment(d){const {createdBy,updatedBy,importSource,...safe}=d;for(const key of Object.keys(safe))if(key.startsWith('_'))delete safe[key];return safe;}
 function init(s){for(const key of ['users','sessions','invites','collections','authFailures'])if(!Array.isArray(s[key]))s[key]=[];}
 function ownerGuard(s,u,nextRole,nextActive){if(u.role==='admin'&&u.active&&(nextRole!=='admin'||!nextActive)&&s.users.filter(x=>x.active&&x.role==='admin').length<=1)throw new AccessError('Keep at least one active administrator.');}
 function cookies(request){return Object.fromEntries((request.headers.get('cookie')||'').split(';').map(x=>x.trim().split('=')).filter(x=>x.length===2));}

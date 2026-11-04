@@ -5,7 +5,7 @@ import {workspaceGroups} from '../src/workspace.ts';
 const defaults={query:'',region:'',area:'',beds:'',budget:'',featuredOnly:false,featuredIds:[],favouritesOnly:false,favouriteIds:[],commute:null,sort:'curated'};
 const homes=[
  {id:'unknown',name:'Abbey Homes',area:'Westminster',postcode:'SW1A 1AA',lat:51.501,lng:-.141,priceFrom:0,bedrooms:[1]},
- {id:'studio',name:'Central Studios',area:'Westminster',postcode:'SW1A 2AA',lat:51.502,lng:-.14,priceFrom:500000,bedrooms:[0,1]},
+ {id:'studio',name:'Central Studios',area:'Westminster',postcode:'SW1A 2AA',lat:51.502,lng:-.14,priceFrom:500000,bedrooms:[0,1],unitPrices:{'0':500000}},
  {id:'family',name:'Riverside Homes',area:'Greenwich',postcode:'SE10 9AA',lat:51.48,lng:0,priceFrom:900000,bedrooms:[2,3]},
 ];
 const find=(change={})=>searchDevelopments(homes,{...defaults,...change}).map(d=>d.id);

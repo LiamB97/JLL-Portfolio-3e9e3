@@ -1,7 +1,8 @@
+import {startingPrice,unitLabel} from '../shared/pricing.ts';
 import {jsPDF} from 'jspdf';
 import QRCode from 'qrcode';
 import type {Development} from './types';
-export interface BrochureInput {title:string;intro:string;notes:Record<string,string>;items:Development[];broker:{name:string;whatsapp:string;photo?:string;title?:string};origin:string;collection?:string;brokerSlug?:string;date?:Date}
+export interface BrochureInput {title:string;intro:string;notes:Record<string,string>;items:Development[];broker:{name:string;whatsapp:string;photo?:string;title?:string};origin:string;collection?:string;brokerSlug?:string;date?:Date;coverImage?:string}
 export interface BrochureAssets {regular:string;semibold:string;light?:string;logoLight?:string;logoDark?:string;photos:Record<string,string>;galleries?:Record<string,string[]>}
 export function brochureFilename(title:string){return (title.normalize('NFKD').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,70)||'JLL-brochure')+'.pdf';}
 const clean=(s:string)=>s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/[\u2010-\u2015]/g,'-').replace(/\u00a0/g,' ');
@@ -10,12 +11,12 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  if(!input.title.trim()||input.items.length<1||input.items.length>20)throw Error('Choose 1–20 developments and add a title.');
  const doc=new jsPDF({unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true});
  for(const [file,weight,data]of [['Regular','normal',assets.regular],['Semibold','bold',assets.semibold],['Light','light',assets.light||assets.regular]]){doc.addFileToVFS('SourceSans'+file+'.ttf',data!);doc.addFont('SourceSans'+file+'.ttf','SourceSans',weight!);}
- const ink='#131e29',blue='#0083a6',muted='#65707a',white='#ffffff',pale='#edf3f4';
+ const ink='#131e29',blue='#003e51',muted='#65707a',white='#ffffff',pale='#edf3f4';
  const date=(input.date||new Date()).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
  const portfolio=new URL('/',input.origin);if(input.collection)portfolio.searchParams.set('collection',input.collection);else if(input.brokerSlug)portfolio.searchParams.set('broker',input.brokerSlug);
  const whatsapp='https://wa.me/'+input.broker.whatsapp.replace(/\D/g,'');
  const condensedNotes:string[]=[];let y=20,dark=false,continuation='';
- function style(size=11,weight='normal',colour=dark?white:ink){doc.setFont('SourceSans',weight);doc.setFontSize(size);doc.setTextColor(colour);doc.setCharSpace(0);}
+ function style(size=11,weight='normal',colour=dark?white:ink){doc.setFont('SourceSans',weight);doc.setFontSize(size);doc.setTextColor(colour===blue&&dark?'#e0c6ad':colour);doc.setCharSpace(0);}
  function logo(x:number,top:number,width:number,onDark=false){const image=onDark?assets.logoDark:assets.logoLight;if(image)doc.addImage(image,'PNG',x,top,width,width*94.065/517.30957);else{style(17,'bold',onDark?white:ink);doc.text('JLL',x,top+6);style(12,'light',onDark?white:ink);doc.text('Residential',x+14,top+6);}}
  function background(){doc.setFillColor(dark?ink:white);doc.rect(0,0,210,297,'F');}
  function page(isDark=false,label=''){doc.addPage();dark=isDark;continuation=label;background();y=22;if(label){style(12,'light');const lines=doc.splitTextToSize(clean(label)+' / continued',174);doc.text(lines,18,y);y+=lines.length*6+10;}}
@@ -30,7 +31,7 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  function qr(url:string,x:number,top:number,size:number){const code=QRCode.create(url,{errorCorrectionLevel:'M'}),n=code.modules.size,step=size/(n+8);doc.setFillColor(white);doc.rect(x,top,size,size,'F');doc.setFillColor('#000000');for(let row=0;row<n;row++)for(let col=0;col<n;col++)if(code.modules.get(row,col))doc.rect(x+(col+4)*step,top+(row+4)*step,step+.01,step+.01,'F');doc.link(x,top,size,size,{url});}
  function fitted(value:string,width:number,size:number,maxLines:number){let lines:string[]=[];for(;size>=8;size--){style(size,'light');lines=doc.splitTextToSize(clean(value),width);if(lines.length<=maxLines)break;}size=Math.max(8,size);if(lines.length>maxLines){lines=lines.slice(0,maxLines);style(size,'light');let last=lines[maxLines-1];while(last&&doc.getTextWidth(last+'…')>width)last=last.slice(0,-1);lines[maxLines-1]=last+'…';}return {lines,size};}
  // Photographic cover, like the supplied editorial brochure; no crop or bleed marks.
- dark=true;background();const hero=input.items.map(d=>assets.photos[d.id]).find(Boolean);
+ dark=true;background();const hero=input.coverImage||input.items.map(d=>assets.photos[d.id]).find(Boolean);
  if(hero){imageCover(hero,0,0,210,297);tint(0,0,210,297,.15);tint(0,190,210,107,.58);}else{doc.setDrawColor('#203d4a');doc.setLineWidth(.3);doc.circle(180,40,105,'S');doc.circle(180,40,85,'S');}
  logo(18,16,68,true);qr(whatsapp,163,16,29);style(9,'normal',white);doc.text('Scan to connect',177.5,50,{align:'center'});
  const cover=fitted(input.title.trim().slice(0,100),119,34,3);style(cover.size,'light',white);doc.text(cover.lines,18,220,{lineHeightFactor:1.13});
@@ -54,7 +55,7 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
   const address=fitted(`${d.area} / ${d.postcode}`,174,10,1);style(address.size,'light',muted);doc.text(address.lines,18,y);y+=8;
   const price=d.priceFrom>0?new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(d.priceFrom):'Price to be confirmed';
   const beds=d.bedrooms.length?d.bedrooms.map(b=>b===0?'Studio':String(b)).join(', ')+(d.bedrooms.some(b=>b>0)?' bedrooms':''):'Bedrooms to be confirmed';
-  const facts=fitted(`${d.priceFrom>0?'From ':''}${price} | ${beds}`,174,12,2);style(facts.size,'normal',blue);doc.text(facts.lines,18,y);y+=facts.lines.length*facts.size*.4+5;
+  const unitFacts=d.bedrooms.map(b=>unitLabel(b)+': '+(startingPrice(d,b)!==null?'from '+new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(startingPrice(d,b)!):'price to confirm')).join(' | ');const facts=fitted(unitFacts||`${d.priceFrom>0?'Development from ':''}${price} | ${beds}`,174,11,3);style(facts.size,'normal',blue);doc.text(facts.lines,18,y);y+=facts.lines.length*facts.size*.4+5;
   if(d.sample){style(8,'normal','#a32222');doc.text('ILLUSTRATIVE SAMPLE - NOT LIVE STOCK',18,y);y+=6;}
   // Features use two columns so imagery and broker notes retain room.
   if(d.amenities.length){style(10,'normal',blue);doc.text('Key features',18,y);y+=6;const features=d.amenities.slice(0,6);for(let row=0;row<Math.ceil(features.length/2);row++){let height=0;for(let col=0;col<2;col++){const value=features[row*2+col];if(!value)continue;const feature=fitted('• '+value.replace(/\s+/g,' ').trim(),83,9.5,2);style(feature.size,'light',ink);doc.text(feature.lines,18+col*88,y,{lineHeightFactor:1.16});height=Math.max(height,feature.lines.length*feature.size*.42);}y+=height+3;}y+=2;}

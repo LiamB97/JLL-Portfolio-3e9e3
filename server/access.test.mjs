@@ -133,3 +133,33 @@ test('Admin, Broker admin and Broker can all update their own profile photo with
  assert.equal((await e.call('admin/profile',{method:'POST',actor:broker,body:{photo:''}})).status,200);
  assert.equal((await e.call('access/me',{actor:owner})).data.user.photo,photo);assert.equal((await e.call('access/me',{actor:manager})).data.user.photo,photo);
 });
+
+test('saved brochures are private per broker, versioned and available after a cold API instance',async()=>{
+ const {memoryBrochureFiles}=await import('./brochures.mjs'),files=memoryBrochureFiles(),e=environment({brochureFiles:files}),admin=await e.owner(),a=await e.broker(admin),b=await e.broker(admin,'other-brochures@example.test');
+ const {jsPDF}=await import('jspdf'),pdf=new jsPDF();pdf.text('Saved brochure fixture',20,20);const bytes=Buffer.from(pdf.output('arraybuffer')),config={title:'My saved London homes',intro:'A personal selection',brokerTitle:'Broker',developmentIds:[samples[0].id],notes:{[samples[0].id]:'Near the river.'},collection:'',cover:{kind:'default'}};
+ const body={config,pdfBase64:bytes.toString('base64'),ownerId:b.user.id};assert.equal((await e.call('admin/brochures',{method:'POST',actor:a,body,csrf:false})).status,403);
+ const saved=await e.call('admin/brochures',{method:'POST',actor:a,body});assert.equal(saved.status,200);assert.equal(saved.data.hasPdf,true);assert.equal(saved.data.ownerId,a.user.id);assert.equal((await e.call('admin/brochures',{actor:b})).data.length,0);
+ assert.equal((await e.call('admin/brochures',{method:'POST',actor:b,body:{...body,id:saved.data.id,version:saved.data.version}})).status,404);
+ assert.equal((await e.call('admin/brochures',{method:'POST',actor:a,body:{...body,id:saved.data.id,version:0}})).status,409);
+ const cold=createNetlifyApi({repository:e.repository,password:e.secret,brochureFiles:files});const response=await cold(new Request('https://portfolio.example/api/admin/brochures/'+saved.data.id+'/pdf',{headers:{Cookie:a.cookie}}));assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'application/pdf');assert.deepEqual(Buffer.from(await response.arrayBuffer()),bytes);
+ assert.equal((await cold(new Request('https://portfolio.example/api/admin/brochures/'+saved.data.id+'/pdf',{headers:{Cookie:b.cookie}}))).status,404);
+ const edited=await e.call('admin/brochures',{method:'POST',actor:a,body:{config:{...config,title:'Updated draft'},id:saved.data.id,version:saved.data.version}});assert.equal(edited.status,200);assert.equal(edited.data.hasPdf,false);assert.equal((await e.call('admin/brochures/'+saved.data.id,{method:'DELETE',actor:a})).status,200);assert.equal((await e.call('admin/brochures',{actor:a})).data.length,0);
+ assert.equal((await e.call('admin/brochure-cover',{method:'POST',actor:a,body:{photo:'data:image/jpeg;base64,AAAA'}})).status,403);
+});
+
+test('manual website edits survive real refreshes and only stock managers can resolve current differences',async()=>{
+ let price=600000;const raw=()=>({id:'review-website',city:'London',tenureType:['sale'],isNewDevelopment:true,title:'Refresh protected home',developmentHeadline:'Refresh protected home, Angel',postcode:'N1 7AA',lat:51.53,lng:-.1,price:{minAmount:price,currencyCode:'GBP'},rooms:{bedrooms:['1 Bed','3 Bed']},description:'London homes near transport.',amenities:['Garden'],images:['https://example.test/photo.jpg'],videos:[],pageUrl:'/sale-development/protected'});
+ const e=environment({fetchListings:async()=>[raw()]}),owner=await e.owner(),manager=await e.broker(owner,'review-manager@example.test','broker_admin'),broker=await e.broker(owner);await e.call('admin/sync',{method:'POST',actor:owner,body:{}});
+ let d=(await e.call('admin/developments',{actor:manager})).data.find(d=>d.id==='jll-review-website');assert.equal((await e.call('admin/developments/'+d.id,{method:'PUT',actor:manager,body:{...d,priceFrom:700000,unitPrices:{'3':1300000}}})).status,200);
+ price=800000;const refreshed=await e.call('admin/sync',{method:'POST',actor:owner,body:{}});assert.ok(refreshed.data.conflicts>=1);d=(await e.call('admin/developments',{actor:manager})).data.find(d=>d.id==='jll-review-website');assert.equal(d.priceFrom,700000);assert.equal(d.unitPrices['3'],1300000);const change=d._refreshConflicts.priceFrom;assert.ok(change);
+ const publicD=(await e.call('developments')).data.find(row=>row.id==='jll-review-website');assert.ok(Object.keys(publicD).every(k=>!k.startsWith('_')));const brokerView=(await e.call('admin/developments',{actor:broker})).data.find(row=>row.id==='jll-review-website');assert.ok(Object.keys(brokerView).every(k=>!k.startsWith('_')));
+ const body={id:d.id,field:'priceFrom',choice:'website',version:change.version};assert.equal((await e.call('admin/source-review',{method:'POST',actor:broker,body})).status,403);assert.equal((await e.call('admin/source-review',{method:'POST',actor:manager,body:{...body,version:'stale'}})).status,409);assert.equal((await e.call('admin/source-review',{method:'POST',actor:manager,body})).status,200);
+ d=(await e.call('developments')).data.find(d=>d.id==='jll-review-website');assert.equal(d.priceFrom,800000);assert.equal(d.unitPrices['3'],1300000);
+});
+
+test('brochure quotas and revoked accounts reject writes without replacing saved work',async()=>{
+ const {memoryBrochureFiles}=await import('./brochures.mjs'),files=memoryBrochureFiles(),e=environment({brochureFiles:files}),admin=await e.owner(),broker=await e.broker(admin);const config={title:'Quota draft',developmentIds:[samples[0].id],notes:{},cover:{kind:'default'}};
+ await e.repository.update(s=>{s.brochures=Array.from({length:50},(_,i)=>({id:'quota-'+i,ownerId:broker.user.id,version:1,config,title:'Existing',size:0,updatedAt:'2026-11-01'}));});assert.equal((await e.call('admin/brochures',{method:'POST',actor:broker,body:{config}})).status,422);assert.equal((await e.call('admin/brochures',{actor:broker})).data.length,50);
+ await e.repository.update(s=>{s.brochures=[{id:'quota-0',ownerId:broker.user.id,version:1,config,title:'Existing',size:100000000,updatedAt:'2026-11-01'}];});const pdf=Buffer.from('%PDF-1.4\nsmall fixture\n%%EOF').toString('base64');assert.equal((await e.call('admin/brochures',{method:'POST',actor:broker,body:{config,pdfBase64:pdf}})).status,422);assert.equal((await e.call('admin/brochures',{actor:broker})).data.length,1);
+ await e.call('admin/users/'+broker.user.id,{method:'PATCH',actor:admin,body:{active:false}});assert.equal((await e.call('admin/brochures',{method:'POST',actor:broker,body:{config}})).status,401);
+});

@@ -26,6 +26,10 @@ export function validateDevelopment(raw) {
   });
  }
  if(!d.bedrooms.length||!d.propertyTypes.length)throw Error('At least one bedroom option and property type are required.');
+ d.unitPrices={};
+ if(raw.unitPrices!==undefined){if(!raw.unitPrices||typeof raw.unitPrices!=='object'||Array.isArray(raw.unitPrices))throw Error('unitPrices must contain prices by bedroom count.');
+  for(const [beds,price] of Object.entries(raw.unitPrices)){if(!/^(?:[0-9]|10)$/.test(beds)||!d.bedrooms.includes(Number(beds))||!Number.isSafeInteger(price)||price<=0)throw Error('Unit prices must be positive whole GBP amounts for available bedroom options.');d.unitPrices[beds]=price;}
+ }
  d.status = raw.status==='Coming soon'?'Coming soon':'Available';
  d.sample = raw.sample === true;
  d.sourceUrl = '';

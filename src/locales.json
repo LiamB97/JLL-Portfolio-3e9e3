@@ -94,7 +94,7 @@
     "Go back to the JLL broker who shared this portfolio to find out more.": "تواصل مع وسيط JLL الذي أرسل لك هذه المجموعة لمعرفة المزيد.",
     "Back to the collection": "العودة إلى المجموعة",
     "YOUR LONDON SHORTLIST": "قائمتك المختصرة في لندن",
-    "Your favourites": "المفضلة لديك",
+    "Your favourites": "مفضلاتك",
     "Close favourites": "إغلاق المفضلة",
     "Save homes as you explore, then send your selection back to the broker who shared this portfolio. No sign-in needed.": "احفظ المنازل أثناء التصفح ثم أرسل اختياراتك إلى الوسيط الذي شاركك هذه المجموعة. لا حاجة لتسجيل الدخول.",
     "Saved on this browser and device.": "محفوظة في هذا المتصفح وعلى هذا الجهاز.",
@@ -232,7 +232,16 @@
     "Open menu": "فتح القائمة",
     "Portfolio menu": "قائمة المحفظة",
     "Portfolio navigation": "التنقل في المحفظة",
-    "Broker workspace": "مساحة عمل الوسيط"
+    "Broker workspace": "مساحة عمل الوسيط",
+    "Starting price: high to low": "السعر الابتدائي: من الأعلى إلى الأقل",
+    "Prime central": "وسط لندن الراقي",
+    "Starting prices by bedroom": "الأسعار الابتدائية حسب عدد غرف النوم",
+    "Price to be confirmed": "السعر بانتظار التأكيد",
+    "From": "ابتداءً من",
+    "About this development": "عن هذا المشروع",
+    "Broker’s selection": "اختيارات الوسيط",
+    "Prices are for the stated bedroom type and remain subject to availability. Ask your broker to confirm the available homes.": "الأسعار تخص نوع الوحدة المحدد وتخضع للتوافر. اطلب من وسيطك تأكيد الوحدات المتاحة.",
+    "Development prices from": "الأسعار الابتدائية للمشروع"
   },
   "zh-CN": {
     "Map": "地图",
@@ -467,7 +476,16 @@
     "Open menu": "打开菜单",
     "Portfolio menu": "房源集菜单",
     "Portfolio navigation": "房源集导航",
-    "Broker workspace": "经纪人工作台"
+    "Broker workspace": "经纪人工作台",
+    "Starting price: high to low": "起价：从高到低",
+    "Prime central": "伦敦核心区域",
+    "Starting prices by bedroom": "按卧室数量划分的起价",
+    "Price to be confirmed": "价格待确认",
+    "From": "起价",
+    "About this development": "关于此楼盘",
+    "Broker’s selection": "经纪人精选",
+    "Prices are for the stated bedroom type and remain subject to availability. Ask your broker to confirm the available homes.": "价格适用于所示卧室户型，并视房源供应情况而定。请向经纪人确认可售房源。",
+    "Development prices from": "楼盘整体起价"
   },
   "tr": {
     "Map": "Harita",
@@ -702,6 +720,15 @@
     "Open menu": "Menüyü aç",
     "Portfolio menu": "Portföy menüsü",
     "Portfolio navigation": "Portföy gezinmesi",
-    "Broker workspace": "Danışman çalışma alanı"
+    "Broker workspace": "Danışman çalışma alanı",
+    "Starting price: high to low": "Başlangıç fiyatı: yüksekten düşüğe",
+    "Prime central": "Londra’nın merkezî bölgeleri",
+    "Starting prices by bedroom": "Yatak odası sayısına göre başlangıç fiyatları",
+    "Price to be confirmed": "Fiyat teyit edilecek",
+    "From": "Başlangıç",
+    "About this development": "Bu proje hakkında",
+    "Broker’s selection": "Danışmanın seçimi",
+    "Prices are for the stated bedroom type and remain subject to availability. Ask your broker to confirm the available homes.": "Fiyatlar belirtilen yatak odası tipi içindir ve müsaitliğe bağlıdır. Mevcut konutları danışmanınızla teyit edin.",
+    "Development prices from": "Proje genelindeki başlangıç fiyatı"
   }
 }

@@ -2,15 +2,21 @@
 
 ## Brochures
 
-Every signed-in staff role can open Manage → Brochures. Select 1–20 published developments, optionally starting from a collection owned by that broker. Add a title (100 characters), introduction (1,600 characters), and per-development notes (1,600 characters). Reorder homes inside each note panel. Generate a PDF, inspect the preview, then download or share the file. A WhatsApp number is required so enquiry links have a working broker contact.
+Every signed-in staff role can open Broker workspace → PDF brochures. Select 1–20 published developments, optionally starting from a collection owned by that broker. Add a title (100 characters), introduction (1,600 characters), and per-development notes (1,600 characters). Reorder homes inside each note panel. Generate a PDF, inspect the preview, then download or share the file. A WhatsApp number is required so enquiry links have a working broker contact.
 
-The brochure uses portrait A4 pages: a photographic cover, a dark introduction headed **Your handpicked collection**, exactly one page per development and a contact page. Brokers can edit the page-one headline and optional job title. Footer branding and the former lower-right JLL Residential label have been removed.
+The brochure uses portrait A4 pages: a selectable cover, a dark introduction headed **Your handpicked collection**, exactly one page per development and a contact page. Brokers can edit the page-one headline and optional job title. Footer branding and the former lower-right JLL Residential label have been removed.
 
 Each development includes up to three available photos, up to six key features, pricing and bedroom facts, an overview, broker notes and an enquiry link. It never creates a continuation page. Longer content is fitted to the available space; notes that still exceed it are shortened with an ellipsis and explicitly listed in a warning before sharing. Photos preserve their original aspect ratio and are cropped within their frames.
 
-PDFs are generated on the device with jsPDF, locally drawn QR codes and bundled SIL-licensed Source Sans 3 fonts. The PDF code loads only when generating. No buyer notes or PDFs are uploaded or stored on the server. Unfinished details survive workspace tab switches while signed in, but closing or refreshing the browser tab or signing out clears them. Photo loading is limited to seven seconds per image; cross-origin restrictions or missing photos produce explicit placeholders and a report before sharing.
+PDFs are generated on the device with jsPDF, locally drawn QR codes and bundled SIL-licensed Source Sans 3 fonts. Choose the shared default London cover or an image from a selected development. The bundled skyline is an original illustration. Admins can upload approved JPEG/PNG/WebP photography to replace the team default; this affects newly generated PDFs only.
 
-Share via WhatsApp opens a wa.me sharing link directly; Share via email opens a mailto draft. Both trigger a download of the generated PDF. The broker attaches that downloaded document before sending; neither service can attach a browser-local file via a URL. A separate Share file button appears only where native file sharing is available, with the prepared File and a separate user click to preserve activation. The app never sends a message or email automatically.
+Save brochure stores its private settings in the workspace. Generate & save PDF also stores the generated PDF when it is at most 3.5 MB. Each broker can retain up to 50 brochures and 100 MB of PDFs. Larger PDFs remain downloadable in the current tab; settings are saved but the UI explicitly reports that the file was not stored. Saved settings and files survive refresh, logout and deployment. A PDF is a dated snapshot: regenerate it for current stock, prices and broker details. Changing saved settings invalidates its older PDF. Version checks reject concurrent overwrites.
+
+Metadata is held in the existing private portfolio object; binaries are separate objects in `jll-brochure-files`. Production downloads require an active session belonging to the brochure owner. Neither buyer pages nor other brokers expose these private files. Local development uses separate SQLite metadata and private files under DATA_DIR/brochure-files. Remove brochure deletes its metadata and associated binary; downloaded copies remain outside the app.
+
+Outlook draft · PDF attached downloads an RFC 822 `.eml` draft with `X-Unsent: 1`, a UTF-8 body and the actual PDF MIME attachment. Open it in Outlook, enter the recipient and review before sending. Outlook editions may handle draft opening differently; the separate Download PDF action remains available. No mailbox connection is required and no email is sent automatically. WhatsApp opens the sharing service and downloads the PDF for manual attachment. Share file uses supported device share sheets.
+
+Photo loading is limited to seven seconds per image. Missing or cross-origin-blocked images produce placeholders and a visible warning. No scrape or source text is invented to fill missing bedroom prices.
 
 ## Videos
 

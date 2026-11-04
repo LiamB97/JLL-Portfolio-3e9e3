@@ -32,6 +32,7 @@ Netlify Blobs are scoped to the Netlify project. Keeping the existing project id
 
 | Store | Keys/content | Treatment |
 | --- | --- | --- |
+| `jll-brochure-files` | `pdf/…` saved brochure files and `cover/…` shared cover photography; keys referenced by portfolio metadata | Preserve binaries together with the matching portfolio object |
 | `jll-london-portfolio` | `portfolio`: published developments, accounts/password hashes, broker photos, profiles, collections, drafts, pending inputs/assignments, analytics configuration and staff activity | Critical; preserve the complete object and identifiers |
 | `jll-team-engagement` | Daily date-keyed anonymous reporting aggregates | Preserve if reporting history is required; enumerate all pages of keys |
 | `jll-transport` | TfL network and per-development route caches | Rebuildable cache |
@@ -53,7 +54,7 @@ If a new Netlify project is unavoidable, treat this as a separate data migration
 - Stock refresh: scheduled function `refresh-stock`, every six hours.
 - Keep `ADMIN_PASSWORD` configured as a server-side Functions secret. After owner setup, staff use their individual account passwords. Do not reset/rebootstrap production to transfer hosting.
 - Netlify injects its own Blobs context for deployed functions. Do not hard-code a personal token or old Site ID into the application.
-- Image URLs generally reference external JLL/developer media. Broker portraits are stored inside the private profile data. Brochure inputs stay in the browser tab and the generated PDF.
+- Image URLs generally reference external JLL/developer media. Broker portraits are stored inside the private profile data. Saved brochure settings are in portfolio metadata; saved PDFs and the shared cover image are in the separate jll-brochure-files store. Preserve both when transferring the project.
 
 ## Continue in Claude
 
