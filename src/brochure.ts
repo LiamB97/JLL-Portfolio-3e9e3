@@ -30,17 +30,28 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  function portrait(cx:number,cy:number,r:number,onDark=false){doc.setFillColor(onDark?white:pale);doc.circle(cx,cy,r,'F');if(input.broker.photo){doc.saveGraphicsState();doc.circle(cx,cy,r-.6,null);doc.clip();doc.discardPath();doc.addImage(input.broker.photo,'JPEG',cx-r+.6,cy-r+.6,(r-.6)*2,(r-.6)*2,undefined,'MEDIUM');doc.restoreGraphicsState();}else{style(r*.8,'light',ink);doc.text(input.broker.name.split(/\s+/).map(s=>s[0]).slice(0,2).join(''),cx,cy+r*.1,{align:'center'});}doc.setDrawColor(onDark?white:pale);doc.setLineWidth(.7);doc.circle(cx,cy,r,'S');}
  function qr(url:string,x:number,top:number,size:number){const code=QRCode.create(url,{errorCorrectionLevel:'M'}),n=code.modules.size,step=size/(n+8);doc.setFillColor(white);doc.rect(x,top,size,size,'F');doc.setFillColor('#000000');for(let row=0;row<n;row++)for(let col=0;col<n;col++)if(code.modules.get(row,col))doc.rect(x+(col+4)*step,top+(row+4)*step,step+.01,step+.01,'F');doc.link(x,top,size,size,{url});}
  function fitted(value:string,width:number,size:number,maxLines:number){let lines:string[]=[];for(;size>=8;size--){style(size,'light');lines=doc.splitTextToSize(clean(value),width);if(lines.length<=maxLines)break;}size=Math.max(8,size);if(lines.length>maxLines){lines=lines.slice(0,maxLines);style(size,'light');let last=lines[maxLines-1];while(last&&doc.getTextWidth(last+'…')>width)last=last.slice(0,-1);lines[maxLines-1]=last+'…';}return {lines,size};}
- // Photographic cover, like the supplied editorial brochure; no crop or bleed marks.
- dark=true;background();const hero=input.coverImage||input.items.map(d=>assets.photos[d.id]).find(Boolean);
- if(hero){imageCover(hero,0,0,210,297);tint(0,0,210,297,.15);tint(0,190,210,107,.58);}else{doc.setDrawColor('#203d4a');doc.setLineWidth(.3);doc.circle(180,40,105,'S');doc.circle(180,40,85,'S');}
- logo(18,16,68,true);qr(whatsapp,163,16,29);style(9,'normal',white);doc.text('Scan to connect',177.5,50,{align:'center'});
- const cover=fitted(input.title.trim().slice(0,100),119,34,3);style(cover.size,'light',white);doc.text(cover.lines,18,220,{lineHeightFactor:1.13});
- doc.setFont('times','italic');doc.setFontSize(17);doc.setTextColor(white);doc.text('A snapshot of our portfolio',18,280);
- portrait(168,224,16,true);const name=fitted(input.broker.name,53,13,3);style(name.size,'light',white);doc.text(name.lines,168,249,{align:'center',lineHeightFactor:1.1});if(input.broker.title?.trim()){const role=fitted(input.broker.title.trim().slice(0,100),53,10,2);style(role.size,'light',white);doc.text(role.lines,168,274,{align:'center',lineHeightFactor:1.1});}
- // A dark introduction page keeps the broker's own words separate from stock facts.
- page(true);continuation='Your introduction';eyebrow('Your handpicked collection');text('Homes, chosen for you.',30,'light',white,10);
- text(input.intro.trim().slice(0,1600)||'Explore a personal selection of London homes. Browse the developments in this guide, then contact your JLL broker to discuss availability and arrange your next steps.',14,'light',white,10);
- room(26);text(`${input.items.length} selected developments`,13,'light',blue,2);text(`Prepared by ${input.broker.name} / ${date}`,10,'light','#c7d1d5',6);link('Explore the interactive collection',portfolio.href);
+ // One editorial opening page: wide photograph, personal introduction and broker card.
+ const introduction=clean(input.intro.trim().slice(0,1600)||'Explore a personal selection of London homes, chosen for you. Browse the developments in this guide, then contact me to discuss the available homes and arrange your next steps.');
+ style(11.5,'normal',ink);const estimatedLines:string[]=doc.splitTextToSize(introduction,174);const heroHeight=Math.min(160,Math.max(108,182-estimatedLines.length*11.5*25.4/72*1.3)),introHeight=182-heroHeight;
+ dark=false;background();const hero=input.coverImage||input.items.map(d=>assets.photos[d.id]).find(Boolean);
+ if(hero){imageCover(hero,0,0,210,heroHeight);tint(0,0,210,heroHeight,.22);tint(0,heroHeight-60,210,60,.42);}else{doc.setFillColor(ink);doc.rect(0,0,210,heroHeight,'F');}
+ logo(18,14,65,true);qr(portfolio.href,168,13,24);style(8.5,'normal',white);doc.text('Open your map',180,42,{align:'center'});
+ style(10,'normal','#e0c6ad');doc.text('YOUR HANDPICKED LONDON HOMES',18,heroHeight-55);
+ const cover=fitted(input.title.trim().slice(0,100),174,30,3);style(cover.size,'light',white);doc.text(cover.lines,18,heroHeight-40,{lineHeightFactor:1.12});
+ style(10,'normal',blue);doc.text(`${input.items.length} selected ${input.items.length===1?'development':'developments'}`,18,heroHeight+14);style(9,'normal',muted);doc.text(date,192,heroHeight+14,{align:'right'});
+ style(10,'bold',blue);doc.text('A personal introduction',18,heroHeight+26);
+
+ let introSize=11.5,introLines:string[]=[],introMax=0;
+ for(;introSize>=10;introSize-=.5){style(introSize,'normal',ink);introLines=doc.splitTextToSize(introduction,174);introMax=Math.floor(introHeight/(introSize*25.4/72*1.3));if(introLines.length<=introMax)break;}
+ introSize=Math.max(10,introSize);style(introSize,'normal',ink);introMax=Math.floor(introHeight/(introSize*25.4/72*1.3));
+ if(introLines.length>introMax){condensedNotes.push('Cover introduction');introLines=introLines.slice(0,introMax);let last=introLines[introMax-1];while(last&&doc.getTextWidth(last+'…')>174)last=last.slice(0,-1);introLines[introMax-1]=last+'…';}
+ const introTop=heroHeight+35,linkTop=introTop+introLines.length*introSize*25.4/72*1.3+8,cardTop=linkTop+11;
+ doc.text(introLines,18,introTop,{lineHeightFactor:1.3});style(10.5,'normal',blue);doc.textWithLink('Explore your interactive portfolio',18,linkTop,{url:portfolio.href});
+ doc.setFillColor('#f6eee6');doc.roundedRect(18,cardTop,174,44,2,2,'F');portrait(34,cardTop+22,11);const name=fitted(input.broker.name,126,14,2);style(name.size,'normal',ink);doc.text(name.lines,52,cardTop+13,{lineHeightFactor:1.1});
+ const roleTop=cardTop+13+name.lines.length*name.size*25.4/72*1.1+2;
+ if(input.broker.title?.trim()){const role=fitted(input.broker.title.trim().slice(0,100),126,10.5,2);style(role.size,'normal',muted);doc.text(role.lines,52,roleTop,{lineHeightFactor:1.15});}
+ style(10.5,'normal',blue);doc.textWithLink('WhatsApp '+input.broker.whatsapp,52,cardTop+38,{url:whatsapp});
+ style(8,'normal',muted);doc.text('Prices and availability subject to broker confirmation.',18,289);
  // Every development owns exactly one A4 page: no continuation or overview duplicates.
  for(const d of input.items){
   page();
@@ -78,6 +89,6 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  portrait(44,103,25);const contactName=fitted(input.broker.name,102,23,3);style(contactName.size,'light',ink);doc.text(contactName.lines,80,90,{lineHeightFactor:1.1});const contactY=90+contactName.lines.length*contactName.size*.39+8;if(input.broker.title?.trim()){const role=fitted(input.broker.title.trim().slice(0,100),102,12,2);style(role.size,'light',muted);doc.text(role.lines,80,contactY,{lineHeightFactor:1.1});}style(10,'normal',blue);doc.text('Mobile / WhatsApp',80,contactY+13);style(14,'light',ink);doc.textWithLink(input.broker.whatsapp,80,contactY+21,{url:whatsapp});
  qr(whatsapp,18,178,32);style(12,'light',ink);doc.text(['Scan to connect','with your JLL broker'],58,190,{lineHeightFactor:1.35});
  style(8,'light',muted);doc.text(`Prepared ${date}. Prices and availability subject to broker confirmation.`,18,264);doc.text('Images are indicative. Full details are available in the interactive portfolio.',18,269);
- const pages=doc.getNumberOfPages();for(let n=2;n<=pages;n++){doc.setPage(n);style(8,'light',n===2?'#bdc9cd':muted);doc.text(String(n),192,287,{align:'right'});}
+ const pages=doc.getNumberOfPages();for(let n=2;n<=pages;n++){doc.setPage(n);style(8,'light',muted);doc.text(String(n),192,287,{align:'right'});}
  doc.setProperties({title:input.title,author:input.broker.name,subject:'Selected London new homes',creator:'JLL New Homes Portfolio'});return Object.assign(doc,{brochureWarnings:condensedNotes});
 }

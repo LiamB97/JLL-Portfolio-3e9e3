@@ -1,0 +1,28 @@
+/* Keep collection context to one compact row, rather than several full-width bands. */
+.discovery-toolbar>.collection-strip{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;padding:10px 12px;margin:0;border:1px solid var(--line);border-inline-start:4px solid var(--space);border-radius:6px;background:var(--page);font-size:14px}
+.collection-strip-summary{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 180px}
+.collection-strip-summary>svg{flex-shrink:0;color:var(--space);fill:var(--sand)}
+.collection-strip-summary>div{min-width:0}.collection-strip-summary strong{display:block;font-size:16px;font-weight:600;line-height:1.3}
+.collection-strip-summary small{display:block;font-size:14px;line-height:1.4;color:var(--muted);margin-top:3px}
+.collection-strip-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.collection-strip .collection-strip-actions>button,.collection-strip .collection-strip-actions>a{margin:0;min-height:40px;padding:8px 10px;line-height:1.4;font-size:14px;max-width:100%;white-space:normal}
+.collection-strip .collection-view-button{background:var(--space);color:var(--white);border-color:var(--space);font-weight:600}
+.collection-strip .collection-opacity-button[aria-pressed=true]{background:var(--raised)}
+.collection-inactive{border-inline-start-color:var(--line)!important}
+.collection-opacity-setting{display:flex;align-items:center;gap:10px;min-height:44px;margin:16px 0;font-size:16px}.collection-opacity-setting input{width:20px;height:20px;accent-color:var(--accent)}
+.development-pin.featured-pin,html[data-theme=dark] .development-pin.featured-pin{width:42px;height:42px;border:3px solid var(--sand);background:var(--space);box-shadow:0 0 0 3px var(--white),0 0 0 9px #e0c6ad99,0 0 24px 8px #003e5199;position:relative}
+.development-pin.featured-pin .pin-feature-star{width:23px;height:23px;fill:var(--white);stroke:var(--white)}
+.subdued-cluster{opacity:.32}
+.profile-details-form{padding-block:20px;border-block:1px solid var(--line);margin-block:22px;max-width:700px}.profile-details-form label{display:block}.profile-details-form input{font-size:16px}.profile-details-form button{min-height:44px}
+.brochure-profile-title{padding:14px;background:var(--page);border:1px solid var(--line);border-radius:5px;margin:16px 0}.brochure-profile-title p{margin:7px 0 0;overflow-wrap:anywhere}
+@media(max-width:1100px){.collection-strip .collection-broker-contact span{display:none}.collection-strip .collection-opacity-button span{display:none}.collection-strip .collection-only-button{display:none}}
+@media(max-width:760px){
+ .discovery-page.view-map>.discovery-toolbar>.collection-strip,.discovery-page.view-split>.discovery-toolbar>.collection-strip,.discovery-page.view-list>.discovery-toolbar>.collection-strip{display:flex;grid-column:1/-1;flex-wrap:nowrap;padding:7px 9px;gap:9px;background:var(--surface);box-shadow:0 2px 8px #0002;pointer-events:auto}
+ .collection-strip-summary{flex:1 1 0;gap:7px}.collection-strip-summary>svg{width:17px;height:17px}.collection-strip-summary strong{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.collection-strip-summary small{font-size:14px;white-space:nowrap}
+ .collection-strip-actions{gap:5px;flex-wrap:nowrap;flex-shrink:0}.collection-strip .collection-broker-contact{display:none!important}.collection-strip .collection-strip-actions>button{min-height:40px;padding:8px}
+ .collection-strip .collection-opacity-button{width:40px}.collection-strip .collection-view-button{gap:5px}.collection-strip .collection-view-button>svg{display:none}
+ .collection-inactive .collection-strip-summary{display:none}.collection-inactive .collection-strip-actions{flex:1}.collection-inactive .collection-strip-actions>button{width:100%}
+ .map-reset-button span{display:none}.map-reset-button{min-width:44px}
+}
+
+.portfolio-menu-links>button{display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:46px;padding:10px;border:0;background:transparent;color:var(--ink);font-size:15px;text-align:start}

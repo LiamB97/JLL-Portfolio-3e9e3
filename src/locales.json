@@ -241,7 +241,19 @@
     "About this development": "عن هذا المشروع",
     "Broker’s selection": "اختيارات الوسيط",
     "Prices are for the stated bedroom type and remain subject to availability. Ask your broker to confirm the available homes.": "الأسعار تخص نوع الوحدة المحدد وتخضع للتوافر. اطلب من وسيطك تأكيد الوحدات المتاحة.",
-    "Development prices from": "الأسعار الابتدائية للمشروع"
+    "Development prices from": "الأسعار الابتدائية للمشروع",
+    "Your handpicked collection": "مجموعتك المختارة",
+    "{count} picked homes": "{count} منازل مختارة",
+    "All London homes": "جميع منازل لندن",
+    "Collection highlights hidden": "تم إخفاء تمييز المجموعة",
+    "View picked homes": "عرض المنازل المختارة",
+    "View picks": "عرض المختارات",
+    "Show other homes normally": "إظهار المنازل الأخرى بوضوح عادي",
+    "Fade other homes": "تخفيف ظهور المنازل الأخرى",
+    "Picked homes only": "المنازل المختارة فقط",
+    "Show all homes": "عرض جميع المنازل",
+    "Restore picked collection": "إعادة المجموعة المختارة",
+    "Reset map": "إعادة ضبط الخريطة"
   },
   "zh-CN": {
     "Map": "地图",
@@ -485,7 +497,19 @@
     "About this development": "关于此楼盘",
     "Broker’s selection": "经纪人精选",
     "Prices are for the stated bedroom type and remain subject to availability. Ask your broker to confirm the available homes.": "价格适用于所示卧室户型，并视房源供应情况而定。请向经纪人确认可售房源。",
-    "Development prices from": "楼盘整体起价"
+    "Development prices from": "楼盘整体起价",
+    "Your handpicked collection": "您的精选房源",
+    "{count} picked homes": "{count} 套精选房源",
+    "All London homes": "全部伦敦房源",
+    "Collection highlights hidden": "已隐藏精选标记",
+    "View picked homes": "查看精选房源",
+    "View picks": "查看精选",
+    "Show other homes normally": "正常显示其他房源",
+    "Fade other homes": "淡化其他房源",
+    "Picked homes only": "仅精选房源",
+    "Show all homes": "显示全部房源",
+    "Restore picked collection": "恢复精选房源",
+    "Reset map": "重置地图"
   },
   "tr": {
     "Map": "Harita",
@@ -729,6 +753,18 @@
     "About this development": "Bu proje hakkında",
     "Broker’s selection": "Danışmanın seçimi",
     "Prices are for the stated bedroom type and remain subject to availability. Ask your broker to confirm the available homes.": "Fiyatlar belirtilen yatak odası tipi içindir ve müsaitliğe bağlıdır. Mevcut konutları danışmanınızla teyit edin.",
-    "Development prices from": "Proje genelindeki başlangıç fiyatı"
+    "Development prices from": "Proje genelindeki başlangıç fiyatı",
+    "Your handpicked collection": "Size özel seçilen koleksiyon",
+    "{count} picked homes": "{count} seçilmiş konut",
+    "All London homes": "Tüm Londra konutları",
+    "Collection highlights hidden": "Koleksiyon vurguları gizlendi",
+    "View picked homes": "Seçilen konutları göster",
+    "View picks": "Seçilenler",
+    "Show other homes normally": "Diğer konutları normal göster",
+    "Fade other homes": "Diğer konutları soluk göster",
+    "Picked homes only": "Yalnızca seçilen konutlar",
+    "Show all homes": "Tüm konutları göster",
+    "Restore picked collection": "Seçilen koleksiyonu geri getir",
+    "Reset map": "Haritayı sıfırla"
   }
 }

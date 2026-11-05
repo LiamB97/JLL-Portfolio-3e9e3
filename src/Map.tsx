@@ -1,3 +1,4 @@
+import {CENTRAL_LONDON} from './map-view';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -7,7 +8,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import * as maplibregl from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import '@maplibre/maplibre-gl-leaflet';
-import {Landmark, Layers, TrainFront, AlertCircle, SlidersHorizontal,LocateFixed} from 'lucide-react';
+import {Landmark, Layers, TrainFront, AlertCircle, SlidersHorizontal,LocateFixed,RotateCcw} from 'lucide-react';
 import Modal from './Modal';
 import {landmarks} from './explore';
 import {styleNeighbourhoodMap} from './map-style';
@@ -38,9 +39,9 @@ function stationPopup(station:TransportNetwork['stations'][number], network:Tran
   }
   return popup;
 }
-export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={}}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>}) {
+export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void}) {
   const {t,dark}=useLocale();
-  const lastView=useRef<{centre:L.LatLngExpression;zoom:number}>({centre:[51.5074,-.1278],zoom:12});
+  const lastView=useRef<{centre:L.LatLngExpression;zoom:number}>({centre:CENTRAL_LONDON.centre,zoom:CENTRAL_LONDON.zoom});
   const el=useRef<HTMLDivElement>(null), map=useRef<L.Map|null>(null);
   const markers=useRef<L.MarkerClusterGroup|null>(null), lines=useRef<L.LayerGroup|null>(null), stationLayer=useRef<L.LayerGroup|null>(null),featuredLayer=useRef<L.LayerGroup|null>(null);
   const [showLines,setShowLines]=useState(false),[showStations,setShowStations]=useState(false),[failed,setFailed]=useState(false),[baseReady,setBaseReady]=useState(false);
@@ -50,11 +51,11 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   const [lineFilter,setLineFilter]=useState<string[]>([]);
   const [stationFilter,setStationFilter]=useState<string[]>([]);
   useEffect(()=>{setShowLines(transportDefaults?.showLines??false);setShowStations(transportDefaults?.showStations??false);setLineFilter(transportDefaults?.lineIds??[]);setStationFilter(transportDefaults?.stationIds??[]);},[transportDefaults]);
-  const collectionActive=useRef(false);collectionActive.current=featuredIds.length>0;
+  const collectionActive=useRef(false);collectionActive.current=featuredIds.length>0&&dimOthers;
   const shownLines=useMemo(()=>network?.lines.filter(l=>!lineFilter.length||lineFilter.includes(l.id))||[],[network,lineFilter]);
   useEffect(()=>{
     if(!el.current)return;setBaseReady(false);setFailed(false);
-    const m=L.map(el.current,{zoomControl:false,scrollWheelZoom:true,minZoom:8,maxZoom:19}).setView(lastView.current.centre,lastView.current.zoom);map.current=m;
+    const m=L.map(el.current,{zoomControl:false,scrollWheelZoom:true,minZoom:8,maxZoom:19}).setView(lastView.current.centre,lastView.current.zoom);map.current=m;const reportZoom=()=>m.getContainer().setAttribute('data-zoom',String(m.getZoom()));reportZoom();m.on('zoomend',reportZoom);
     L.control.zoom({position:'bottomright'}).addTo(m);
     m.attributionControl.setPrefix(false);
     m.attributionControl.addAttribution(osmAttribution);
@@ -92,12 +93,12 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     const group=markers.current,featured=featuredLayer.current;if(!group||!featured)return;group.clearLayers();featured.clearLayers();
     for(const d of items){
       const highlighted=featuredIds.includes(d.id),saved=favouriteIds.includes(d.id);
-      const icon=L.divIcon({className:'development-pin-wrap',html:`<span class="development-pin ${d.id===selected?'active':''} ${highlighted?'featured-pin':''} ${saved?'favourite-pin':''}">${highlighted?'<svg class="pin-feature-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>':saved?'<svg class="pin-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>':'<span class="pin-centre"></span>'}${highlighted&&saved?'<b class="pin-saved-badge">♥</b>':''}</span>`,iconSize:[34,40],iconAnchor:[17,38]});
-      const marker=L.marker([d.lat,d.lng],{icon,keyboard:true,title:d.name+(highlighted?' · '+t('FEATURED'):'')+(saved?' · '+t('Saved to favourites'):''),opacity:featuredIds.length&&!highlighted&&!saved&&d.id!==selected ? 0.42 : 1,zIndexOffset:d.id===selected?3000:highlighted?2000:saved?1000:0});
+      const icon=L.divIcon({className:'development-pin-wrap',html:`<span class="development-pin ${d.id===selected?'active':''} ${highlighted?'featured-pin':''} ${saved?'favourite-pin':''}">${highlighted?'<svg class="pin-feature-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>':saved?'<svg class="pin-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>':'<span class="pin-centre"></span>'}${highlighted&&saved?'<b class="pin-saved-badge">♥</b>':''}</span>`,iconSize:highlighted?[46,54]:[34,40],iconAnchor:highlighted?[23,50]:[17,38]});
+      const marker=L.marker([d.lat,d.lng],{icon,keyboard:true,title:d.name+(highlighted?' · '+t('FEATURED'):'')+(saved?' · '+t('Saved to favourites'):''),opacity:dimOthers&&featuredIds.length&&!highlighted&&!saved&&d.id!==selected ? 0.32 : 1,zIndexOffset:d.id===selected?3000:highlighted?2000:saved?1000:0});
       if(commuteTimes[d.id]!==undefined){const label=document.createElement('span');label.textContent=d.name+' · '+commuteTimes[d.id]+' min commute';marker.bindTooltip(label);}
       marker.on('add',()=>marker.getElement()?.setAttribute('aria-label',`${d.name}${highlighted?', '+t('FEATURED'):''}${saved?', '+t('Saved to favourites'):''}`)).on('click',()=>onSelect(d.id)).addTo(highlighted||saved?featured:group);
     }
-  },[items,selected,onSelect,featuredIds,favouriteIds,commuteTimes,dark,t]);
+  },[items,selected,onSelect,featuredIds,favouriteIds,commuteTimes,dimOthers,dark,t]);
   useEffect(()=>{
     const m=map.current,group=landmarkLayer.current;if(!m||!group)return;
     function render(){
@@ -121,7 +122,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   useEffect(()=>{if(!favouritesOnly){framedFavourites.current=false;return;}if(framedFavourites.current||!items.length||!map.current)return;map.current.fitBounds(L.latLngBounds(items.map(d=>[d.lat,d.lng] as [number,number])),frameOptions(map.current));framedFavourites.current=true;},[favouritesOnly,items,dark]);
   const framedCollection=useRef('');
   useEffect(()=>{
-    if(favouritesOnly||commuteDestination)return;
+    if(!collectionFrameKey||favouritesOnly||commuteDestination)return;
     const homes=items.filter(d=>featuredIds.includes(d.id));
     if(!homes.length)return;
     // Frame only explicitly selected, visible stations, never whole routes or
@@ -132,7 +133,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     const points=[...homes,...stations]
       .filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lng))
       .map(p=>[p.lat,p.lng] as [number,number]);
-    const key=JSON.stringify(points)+'|'+items.length;
+    const key=collectionFrameKey+'|'+JSON.stringify(points)+'|'+items.length;
     if(!points.length||key===framedCollection.current)return;
     const m=map.current;
     if(m){
@@ -140,7 +141,8 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
       m.fitBounds(L.latLngBounds(points),frameOptions(m));
       framedCollection.current=key;
     }
-  },[featuredIds,items,network,transportDefaults,dark,favouritesOnly,commuteDestination]);
+  },[featuredIds,items,network,transportDefaults,dark,favouritesOnly,commuteDestination,collectionFrameKey]);
+  useEffect(()=>{if(!resetKey)return;const m=map.current;if(m){m.stop();m.setView(CENTRAL_LONDON.centre,CENTRAL_LONDON.zoom,{animate:false});}setShowLines(false);setShowStations(false);setShowLandmarks(false);setLineFilter([]);setStationFilter([]);setToolsOpen(false);framedCollection.current='';framedFavourites.current=false;},[resetKey]);
   const framedCommute=useRef('');
   useEffect(()=>{
     const layer=commuteLayer.current,m=map.current;if(!layer||!m)return;layer.clearLayers();
@@ -170,9 +172,11 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   return <div className="map-shell" data-map-ready={baseReady}>{!baseReady&&<div className="map-loading-indicator" role="status">{t("Loading London map…")}</div>}<div ref={el} className="map" aria-label={t("Map of London developments")}/>
     <div className="map-utilities"><button className="map-layer-button" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={()=>setToolsOpen(true)}><SlidersHorizontal size={16}/>{t('Map layers')}{(showLines||showStations||showLandmarks)&&<span className="layer-count">{[showLines,showStations,showLandmarks].filter(Boolean).length}</span>}</button>
     <button className="map-fit-button" aria-label={t('Show matching homes')} title={t('Show matching homes')} disabled={!items.length} onClick={()=>{const m=map.current;if(!m||!items.length)return;m.fitBounds(L.latLngBounds([...items,...(commuteDestination?[commuteDestination]:[])].map(d=>[d.lat,d.lng] as [number,number])),frameOptions(m));}}><LocateFixed size={19}/><span>{t('Show matching homes')}</span></button>
+    {onReset&&<button className="map-reset-button" aria-label={t('Reset map')} title={t('Reset map')} onClick={onReset}><RotateCcw size={18}/><span>{t('Reset map')}</span></button>}
     </div>
     {toolsOpen&&<Modal title={t('Map layers')} close={()=>setToolsOpen(false)} className="map-layers-dialog" footer={<button onClick={()=>{setShowLines(false);setShowStations(false);setShowLandmarks(false);setLineFilter([]);setStationFilter([]);}}>{t('Hide all layers')}</button>}>
       <p className="muted">{t('Keep the focus on homes, or add local context to your map.')}</p>
+      {featuredIds.length>0&&onDimOthers&&<label className="collection-opacity-setting"><input type="checkbox" checked={dimOthers} onChange={onDimOthers}/><span>{t('Fade other homes')}</span></label>}
       <div className="map-layer-toggles">{[{label:'Landmarks',checked:showLandmarks,set:setShowLandmarks,Icon:Landmark},{label:'Stations',checked:showStations,set:setShowStations,Icon:TrainFront},{label:'TfL lines',checked:showLines,set:setShowLines,Icon:Layers}].map(({label,checked,set,Icon})=><label key={label}><Icon size={18}/><span>{t(label)}</span><input type="checkbox" checked={checked} disabled={label!=='Landmarks'&&!network} onChange={e=>set(e.target.checked)}/></label>)}</div>
       {network&&(showLines||showStations)&&<section className="map-line-picker"><h3>{t('Show specific lines')}</h3><p>{t('All lines are shown until you pick a specific selection below.')}</p><button aria-pressed={!lineFilter.length} className={!lineFilter.length?'selected':''} onClick={()=>{setLineFilter([]);setStationFilter([]);}}>{t('Show all lines')}</button><div className="map-line-options">{network.lines.map(line=><label key={line.id}><i style={{background:line.colour}}/><span>{line.name}</span><input type="checkbox" checked={lineFilter.includes(line.id)} onChange={()=>{setStationFilter([]);setLineFilter(old=>!old.length?[line.id]:old.includes(line.id)?old.filter(id=>id!==line.id):[...old,line.id]);}}/></label>)}</div>{Boolean(stationFilter.length)&&<p>{t('This collection shows selected stations. Choosing lines will show stops on those lines.')}</p>}<small>{t('Powered by TfL Open Data')}{network.stale?' · Last available network':''}</small>{Boolean(network.missingGeometry?.length)&&<small>{t('Route geometry unavailable for:')} {network.missingGeometry!.join(', ')}</small>}</section>}
       {!network&&<p role="status">{t('Transport layers are temporarily unavailable. You can still browse developments and landmarks.')}</p>}

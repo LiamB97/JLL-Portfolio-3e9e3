@@ -42,11 +42,11 @@ On this macOS checkout, Vite's default configuration loader has sometimes hung. 
 - Buyers need no account. Preserve broker/collection attribution on enquiries, friend links, PDF links and email copy.
 - Admins manage accounts and reporting. Admins and Broker admins manage stock and Pending input. Regular Brokers manage their own collections and cannot access the stock work queue. Do not broaden these roles as a side effect of a UI change.
 - Pending assignment and notes have a separate save action at the top of an entry. Metadata-only saves must preserve development data, enforce the current revision and permissions, and never publish a development. The development draft button saves the form separately.
-- Collection transport defaults apply only to collections. General/personal links open with optional transport and landmark overlays off. Explicit station choices contribute to collection framing; entire routes do not.
+- Collection transport defaults apply only to collections. General/personal links open with optional transport and landmark overlays off. Explicit station choices contribute to View picked homes framing; entire routes do not. All links initially open at central London zoom13. A wider fit happens only after the buyer chooses it.
 - The mobile Map canvas fills the area beneath a 56px header. Search and small commute/result controls float over it. Desktop and List/Split controls stay in normal flow. Mobile view choices and full collection context are in the menu; broker contact remains one tap away.
-- Map framing reads the actual floating toolbar bounds. Preserve map provider attribution; the optional Leaflet badge has been removed.
+- Map framing reads the actual floating toolbar bounds. Reset map clears current filters, highlights and optional layers, while preserving saved favourites and original broker/collection attribution. Show other homes normally restores opacity without dropping the selection. Preserve map provider attribution; the optional Leaflet badge has been removed.
 - Commutes use TfL journey durations, not distance estimates. Unconfirmed routes do not qualify as matches.
-- Brochures are A4, with exactly one page per selected development, up to three photos and six key features. Circular portraits use actual PDF clipping. Long notes may be shortened with a visible warning.
+- Brochures are A4, with one combined cover/introduction/profile page and exactly one page per selected development, up to three photos and six key features. Circular portraits use actual PDF clipping. Long notes may be shortened with a visible warning.
 - WhatsApp/email buttons prepare a request or open an app. They do not send messages, confirm bookings or automatically attach a downloaded PDF.
 
 ## Data and working practices

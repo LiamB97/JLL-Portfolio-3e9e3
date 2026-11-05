@@ -163,3 +163,13 @@ test('brochure quotas and revoked accounts reject writes without replacing saved
  await e.repository.update(s=>{s.brochures=[{id:'quota-0',ownerId:broker.user.id,version:1,config,title:'Existing',size:100000000,updatedAt:'2026-11-01'}];});const pdf=Buffer.from('%PDF-1.4\nsmall fixture\n%%EOF').toString('base64');assert.equal((await e.call('admin/brochures',{method:'POST',actor:broker,body:{config,pdfBase64:pdf}})).status,422);assert.equal((await e.call('admin/brochures',{actor:broker})).data.length,1);
  await e.call('admin/users/'+broker.user.id,{method:'PATCH',actor:admin,body:{active:false}});assert.equal((await e.call('admin/brochures',{method:'POST',actor:broker,body:{config}})).status,401);
 });
+
+test('profile job titles belong to the signed-in user and override per-brochure title inputs',async()=>{
+ const e=environment(),owner=await e.owner(),broker=await e.broker(owner),manager=await e.broker(owner,'titles-manager@example.test','broker_admin');
+ for(const actor of [owner,broker,manager]){
+  const changed=await e.call('admin/profile',{method:'POST',actor,body:{jobTitle:'  Senior Sales Broker  ',id:owner.user.id,role:'admin'}});assert.equal(changed.status,200);assert.equal(changed.data.jobTitle,'Senior Sales Broker');assert.equal(changed.data.role,actor.user.role);assert.equal((await e.call('access/me',{actor})).data.user.jobTitle,'Senior Sales Broker');
+  const saved=await e.call('admin/brochures',{method:'POST',actor,body:{config:{title:'Profile title brochure',brokerTitle:'An unauthoritative title',developmentIds:[samples[0].id],cover:{kind:'default'}}}});assert.equal(saved.status,200);assert.equal(saved.data.config.brokerTitle,'Senior Sales Broker');
+ }
+ assert.equal((await e.call('admin/profile',{method:'POST',actor:broker,body:{jobTitle:'x'.repeat(101)}})).status,422);
+ await e.call('admin/profile',{method:'POST',actor:broker,body:{jobTitle:''}});assert.equal((await e.call('access/me',{actor:broker})).data.user.jobTitle,'');assert.equal((await e.call('access/me',{actor:owner})).data.user.jobTitle,'Senior Sales Broker');
+});

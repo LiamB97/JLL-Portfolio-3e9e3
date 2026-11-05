@@ -7,7 +7,7 @@ export function brochureService(repository,files){
  function config(body,state,actor){const input=body.config;if(!input||typeof input!=='object'||Array.isArray(input))throw new AccessError('A brochure needs its saved settings.');
   const text=(v,max)=>{if(typeof v!=='string'||v.length>max)throw new AccessError('Check the brochure text lengths.');return v;};
   const ids=input.developmentIds;if(!Array.isArray(ids)||!ids.length||ids.length>20||ids.some(id=>typeof id!=='string'||!state.developments.some(d=>d.id===id)))throw new AccessError('Choose 1–20 published developments.');
-  const result={title:text(input.title,100).trim(),intro:text(input.intro||'',1600),brokerTitle:text(input.brokerTitle||'',100),developmentIds:[...new Set(ids)],notes:{},collection:String(input.collection||''),cover:{kind:'default'}};
+  const result={title:text(input.title,100).trim(),intro:text(input.intro||'',1600),brokerTitle:actor.jobTitle||'',developmentIds:[...new Set(ids)],notes:{},collection:String(input.collection||''),cover:{kind:'default'}};
   if(!result.title)throw new AccessError('Give the brochure a title.');
   if(result.collection&&!state.collections?.some(c=>c.slug===result.collection&&c.ownerId===actor.id))throw new AccessError('Choose one of your own collections.',403);
   for(const id of ids)if(input.notes?.[id])result.notes[id]=text(input.notes[id],1600);

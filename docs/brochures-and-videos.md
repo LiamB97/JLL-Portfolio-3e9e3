@@ -2,9 +2,9 @@
 
 ## Brochures
 
-Every signed-in staff role can open Broker workspace → PDF brochures. Select 1–20 published developments, optionally starting from a collection owned by that broker. Add a title (100 characters), introduction (1,600 characters), and per-development notes (1,600 characters). Reorder homes inside each note panel. Generate a PDF, inspect the preview, then download or share the file. A WhatsApp number is required so enquiry links have a working broker contact.
+Every signed-in staff role can open Broker workspace → PDF brochures. Select 1–20 published developments, optionally starting from a collection owned by that broker. Add a cover headline (100 characters), introduction (1,600 characters), and per-development notes (1,600 characters). Reorder homes inside each note panel. Generate a PDF, inspect the preview, then download or share the file. A WhatsApp number is required so enquiry links have a working broker contact.
 
-The brochure uses portrait A4 pages: a selectable cover, a dark introduction headed **Your handpicked collection**, exactly one page per development and a contact page. Brokers can edit the page-one headline and optional job title. Footer branding and the former lower-right JLL Residential label have been removed.
+The brochure uses portrait A4 pages: one combined opening page with a selectable image, introduction and broker profile, exactly one page per development and a contact page. The hero image height adapts to the introduction length; long notes fit down to 10pt or are explicitly flagged if shortened. Brokers can edit the cover headline; their job title comes automatically from My profile and cannot be overridden per brochure. Footer branding and the former lower-right JLL Residential label have been removed.
 
 Each development includes up to three available photos, up to six key features, pricing and bedroom facts, an overview, broker notes and an enquiry link. It never creates a continuation page. Longer content is fitted to the available space; notes that still exceed it are shortened with an ellipsis and explicitly listed in a warning before sharing. Photos preserve their original aspect ratio and are cropped within their frames.
 

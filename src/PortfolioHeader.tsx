@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Columns2,Heart,LayoutGrid,Map as MapIcon,Menu,Settings,CircleHelp} from 'lucide-react';
+import {Columns2,Heart,LayoutGrid,Map as MapIcon,Menu,Settings,CircleHelp,RotateCcw} from 'lucide-react';
 import Modal from './Modal';
 import Preferences from './Preferences';
 import ShareWithFriend from './ShareWithFriend';
@@ -9,7 +9,7 @@ import {buyerShareLink} from './sharing';
 import type {BrokerCard,BuyerCollection} from './types';
 export type PortfolioView='map'|'split'|'list';
 const views=([{value:'map',label:'Map',Icon:MapIcon},{value:'split',label:'Split',Icon:Columns2},{value:'list',label:'List',Icon:LayoutGrid}] as const);
-export default function PortfolioHeader({exploring,staff,view,setView,saved,openFavourites,onNavigate,broker=null,collection=null,onContact}:{exploring:boolean;staff:boolean;view:PortfolioView;setView:(view:PortfolioView)=>void;saved:number;openFavourites:()=>void;onNavigate:()=>void;broker?:BrokerCard|null;collection?:BuyerCollection|null;onContact?:()=>void}){
+export default function PortfolioHeader({exploring,staff,view,setView,saved,openFavourites,onNavigate,broker=null,collection=null,onContact,onResetMap}:{exploring:boolean;staff:boolean;view:PortfolioView;setView:(view:PortfolioView)=>void;saved:number;openFavourites:()=>void;onNavigate:()=>void;broker?:BrokerCard|null;collection?:BuyerCollection|null;onContact?:()=>void;onResetMap?:()=>void}){
  const {t,dark}=useLocale(),[menu,setMenu]=useState(false);
  const homeHref=buyerShareLink(location.href);
  const contactHref=broker?'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments.")+'\n'+buyerShareLink(location.href)):'';
@@ -24,7 +24,7 @@ export default function PortfolioHeader({exploring,staff,view,setView,saved,open
    {exploring&&(broker||collection)&&<section className="portfolio-menu-section portfolio-mobile-context">{collection&&<><h3>{collection.title}</h3><p>{collection.developmentIds.length} {t('featured developments · Picked by')} {collection.brokerName}</p><small className="collection-map-key">★ {t('Broker’s selection')} · ♡ {t('Your favourites')}</small></>}{broker&&<><h3>{t('Your JLL broker')}</h3><a className="whatsapp-action" href={contactHref} target="_blank" rel="noopener noreferrer" onClick={onContact}><WhatsAppIcon size={18}/>{broker.name}</a></>}</section>}
    {!staff&&<section className="portfolio-menu-section"><h3>{t('Share with a friend')}</h3><ShareWithFriend inline/></section>}
    <section className="portfolio-menu-section"><h3>{t('Appearance and language')}</h3><Preferences onOpenAnalytics={()=>setMenu(false)}/></section>
-   <nav className="portfolio-menu-links" aria-label={t('Portfolio navigation')}><a href="#" onClick={navigate}><MapIcon size={18}/>{t('Back to the map')}</a>{!staff&&<a href="#how-it-works" onClick={navigate}><CircleHelp size={18}/>{t('How it works')}</a>}<a href="#admin" onClick={navigate}><Settings size={18}/>{t('Broker workspace')}</a></nav>
+   <nav className="portfolio-menu-links" aria-label={t('Portfolio navigation')}>{exploring&&onResetMap&&<button onClick={()=>{setMenu(false);onResetMap();}}><RotateCcw size={18}/>{t('Reset map')}</button>}<a href="#" onClick={navigate}><MapIcon size={18}/>{t('Back to the map')}</a>{!staff&&<a href="#how-it-works" onClick={navigate}><CircleHelp size={18}/>{t('How it works')}</a>}<a href="#admin" onClick={navigate}><Settings size={18}/>{t('Broker workspace')}</a></nav>
   </Modal>}
  </header>;
 }
