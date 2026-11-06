@@ -47,3 +47,18 @@ test('the combined opening page fits both long and short introductions without a
  const doc=buildBrochure({...input,intro:'A considered introduction to your London home search. '.repeat(60),broker:{...input.broker,title:'Senior Residential Sales Broker'},items:input.items.slice(0,1)},assets);
  assert.equal(doc.getNumberOfPages(),3);assert.ok(doc.internal.pages[1].length>0);assert.equal(buildBrochure({...input,intro:'A short personal note.',items:input.items.slice(0,1)},assets).getNumberOfPages(),3);
 });
+
+test('brochure opening and contact pages include the broker email with WhatsApp and keep A4 link bounds',()=>{
+ const email='residential.broker@example.test';
+ for(const intro of ['A short introduction.','A considered introduction to the selected London homes. '.repeat(40)]){
+  const doc=buildBrochure({...input,intro,items:input.items.slice(0,1),broker:{...input.broker,title:'Senior Residential Sales Broker',email}},assets);
+  assert.equal(doc.getNumberOfPages(),3);
+  for(const page of [1,3]){
+   const links=doc.internal.getPageInfo(page).pageContext.annotations.filter(a=>a.type==='link');
+   assert.ok(links.some(a=>a.options.url==='mailto:'+email));
+   assert.ok(links.some(a=>a.options.url==='https://wa.me/447900000001'));
+   for(const a of links){const b=a.finalBounds;for(const key of ['x','w'])assert.ok(Number(b[key])>=0&&Number(b[key])<=596);for(const key of ['y','h'])assert.ok(Number(b[key])>=0&&Number(b[key])<=842);}
+  }
+ }
+ const without=buildBrochure(input,assets);assert.doesNotMatch(without.output(),/mailto:/);
+});

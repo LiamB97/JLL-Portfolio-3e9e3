@@ -34,7 +34,7 @@ export default function StaffPortal({items,onChange}:{items:Development[];onChan
  {tab==='guide'&&<StaffGuide request={request} onNavigate={navigate} canManageStock={user.role!=='broker'}/>}
  {tab==='activity'&&user.role==='admin'&&<StaffActivity request={request}/>}
  {tab==='analytics'&&user.role==='admin'&&<StaffAnalytics request={request}/>}
- {visited.includes('brochures')&&<div hidden={tab!=='brochures'}><StaffBrochures active={tab==='brochures'} items={items} user={user} request={request}/></div>}
+ {visited.includes('brochures')&&<div hidden={tab!=='brochures'}><StaffBrochures onProfile={()=>navigate('profile')} active={tab==='brochures'} items={items} user={user} request={request}/></div>}
  {visited.includes('collections')&&<div hidden={tab!=='collections'}><StaffCollections active={tab==='collections'} items={items} request={request}/></div>}
  {visited.includes('developments')&&user.role!=='broker'&&<div hidden={tab!=='developments'}><DevelopmentManager items={privateItems} user={user} request={request} onChange={async()=>{await onChange();await refreshPrivate();}}/></div>}
  {visited.includes('pending')&&user.role!=='broker'&&<div hidden={tab!=='pending'}><PendingInput items={privateItems} user={user} request={request} onChange={async()=>{await onChange();await refreshPrivate();}}/></div>}

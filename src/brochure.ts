@@ -2,7 +2,7 @@ import {startingPrice,unitLabel} from '../shared/pricing.ts';
 import {jsPDF} from 'jspdf';
 import QRCode from 'qrcode';
 import type {Development} from './types';
-export interface BrochureInput {title:string;intro:string;notes:Record<string,string>;items:Development[];broker:{name:string;whatsapp:string;photo?:string;title?:string};origin:string;collection?:string;brokerSlug?:string;date?:Date;coverImage?:string}
+export interface BrochureInput {title:string;intro:string;notes:Record<string,string>;items:Development[];broker:{name:string;whatsapp:string;photo?:string;title?:string;email?:string};origin:string;collection?:string;brokerSlug?:string;date?:Date;coverImage?:string}
 export interface BrochureAssets {regular:string;semibold:string;light?:string;logoLight?:string;logoDark?:string;photos:Record<string,string>;galleries?:Record<string,string[]>}
 export function brochureFilename(title:string){return (title.normalize('NFKD').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,70)||'JLL-brochure')+'.pdf';}
 const clean=(s:string)=>s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/[\u2010-\u2015]/g,'-').replace(/\u00a0/g,' ');
@@ -32,7 +32,7 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  function fitted(value:string,width:number,size:number,maxLines:number){let lines:string[]=[];for(;size>=8;size--){style(size,'light');lines=doc.splitTextToSize(clean(value),width);if(lines.length<=maxLines)break;}size=Math.max(8,size);if(lines.length>maxLines){lines=lines.slice(0,maxLines);style(size,'light');let last=lines[maxLines-1];while(last&&doc.getTextWidth(last+'…')>width)last=last.slice(0,-1);lines[maxLines-1]=last+'…';}return {lines,size};}
  // One editorial opening page: wide photograph, personal introduction and broker card.
  const introduction=clean(input.intro.trim().slice(0,1600)||'Explore a personal selection of London homes, chosen for you. Browse the developments in this guide, then contact me to discuss the available homes and arrange your next steps.');
- style(11.5,'normal',ink);const estimatedLines:string[]=doc.splitTextToSize(introduction,174);const heroHeight=Math.min(160,Math.max(108,182-estimatedLines.length*11.5*25.4/72*1.3)),introHeight=182-heroHeight;
+ const openingSpace=input.broker.email?172:182;style(11.5,'normal',ink);const estimatedLines:string[]=doc.splitTextToSize(introduction,174);const heroHeight=Math.min(160,Math.max(108,openingSpace-estimatedLines.length*11.5*25.4/72*1.3)),introHeight=openingSpace-heroHeight;
  dark=false;background();const hero=input.coverImage||input.items.map(d=>assets.photos[d.id]).find(Boolean);
  if(hero){imageCover(hero,0,0,210,heroHeight);tint(0,0,210,heroHeight,.22);tint(0,heroHeight-60,210,60,.42);}else{doc.setFillColor(ink);doc.rect(0,0,210,heroHeight,'F');}
  logo(18,14,65,true);qr(portfolio.href,168,13,24);style(8.5,'normal',white);doc.text('Open your map',180,42,{align:'center'});
@@ -47,10 +47,11 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  if(introLines.length>introMax){condensedNotes.push('Cover introduction');introLines=introLines.slice(0,introMax);let last=introLines[introMax-1];while(last&&doc.getTextWidth(last+'…')>174)last=last.slice(0,-1);introLines[introMax-1]=last+'…';}
  const introTop=heroHeight+35,linkTop=introTop+introLines.length*introSize*25.4/72*1.3+8,cardTop=linkTop+11;
  doc.text(introLines,18,introTop,{lineHeightFactor:1.3});style(10.5,'normal',blue);doc.textWithLink('Explore your interactive portfolio',18,linkTop,{url:portfolio.href});
- doc.setFillColor('#f6eee6');doc.roundedRect(18,cardTop,174,44,2,2,'F');portrait(34,cardTop+22,11);const name=fitted(input.broker.name,126,14,2);style(name.size,'normal',ink);doc.text(name.lines,52,cardTop+13,{lineHeightFactor:1.1});
+ doc.setFillColor('#f6eee6');doc.roundedRect(18,cardTop,174,input.broker.email?54:44,2,2,'F');portrait(34,cardTop+22,11);const name=fitted(input.broker.name,126,14,2);style(name.size,'normal',ink);doc.text(name.lines,52,cardTop+13,{lineHeightFactor:1.1});
  const roleTop=cardTop+13+name.lines.length*name.size*25.4/72*1.1+2;
  if(input.broker.title?.trim()){const role=fitted(input.broker.title.trim().slice(0,100),126,10.5,2);style(role.size,'normal',muted);doc.text(role.lines,52,roleTop,{lineHeightFactor:1.15});}
  style(10.5,'normal',blue);doc.textWithLink('WhatsApp '+input.broker.whatsapp,52,cardTop+38,{url:whatsapp});
+ if(input.broker.email){const email=fitted(input.broker.email,126,10,2);style(email.size,'normal',blue);email.lines.forEach((line,index)=>doc.textWithLink(line,52,cardTop+46+index*email.size*25.4/72*1.15,{url:'mailto:'+input.broker.email}));}
  style(8,'normal',muted);doc.text('Prices and availability subject to broker confirmation.',18,289);
  // Every development owns exactly one A4 page: no continuation or overview duplicates.
  for(const d of input.items){
@@ -87,6 +88,7 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  }
  page();eyebrow('Get in touch');text('Let’s talk about London',32,'light',ink,10);doc.setFont('times','italic');doc.setFontSize(15);doc.setTextColor(ink);doc.text(['For a conversation about any of the','developments in this guide.'],18,61,{lineHeightFactor:1.4});
  portrait(44,103,25);const contactName=fitted(input.broker.name,102,23,3);style(contactName.size,'light',ink);doc.text(contactName.lines,80,90,{lineHeightFactor:1.1});const contactY=90+contactName.lines.length*contactName.size*.39+8;if(input.broker.title?.trim()){const role=fitted(input.broker.title.trim().slice(0,100),102,12,2);style(role.size,'light',muted);doc.text(role.lines,80,contactY,{lineHeightFactor:1.1});}style(10,'normal',blue);doc.text('Mobile / WhatsApp',80,contactY+13);style(14,'light',ink);doc.textWithLink(input.broker.whatsapp,80,contactY+21,{url:whatsapp});
+ if(input.broker.email){style(10,'normal',muted);doc.text('Email',80,contactY+33);const email=fitted(input.broker.email,102,11,2);style(email.size,'normal',blue);email.lines.forEach((line,index)=>doc.textWithLink(line,80,contactY+41+index*email.size*25.4/72*1.15,{url:'mailto:'+input.broker.email}));}
  qr(whatsapp,18,178,32);style(12,'light',ink);doc.text(['Scan to connect','with your JLL broker'],58,190,{lineHeightFactor:1.35});
  style(8,'light',muted);doc.text(`Prepared ${date}. Prices and availability subject to broker confirmation.`,18,264);doc.text('Images are indicative. Full details are available in the interactive portfolio.',18,269);
  const pages=doc.getNumberOfPages();for(let n=2;n<=pages;n++){doc.setPage(n);style(8,'light',muted);doc.text(String(n),192,287,{align:'right'});}
