@@ -173,3 +173,11 @@ test('profile job titles belong to the signed-in user and override per-brochure 
  assert.equal((await e.call('admin/profile',{method:'POST',actor:broker,body:{jobTitle:'x'.repeat(101)}})).status,422);
  await e.call('admin/profile',{method:'POST',actor:broker,body:{jobTitle:''}});assert.equal((await e.call('access/me',{actor:broker})).data.user.jobTitle,'');assert.equal((await e.call('access/me',{actor:owner})).data.user.jobTitle,'Senior Sales Broker');
 });
+
+test('brochure map choice is validated, saved privately and preserved when reopening',async()=>{
+ const e=environment(),owner=await e.owner(),broker=await e.broker(owner),config={title:'Map selection',developmentIds:[samples[0].id],cover:{kind:'default'}};
+ const created=await e.call('admin/brochures',{method:'POST',actor:broker,body:{config}});assert.equal(created.status,200);assert.equal(created.data.config.includeMap,true);
+ const changed=await e.call('admin/brochures',{method:'POST',actor:broker,body:{id:created.data.id,version:created.data.version,config:{...config,includeMap:false}}});assert.equal(changed.status,200);assert.equal(changed.data.config.includeMap,false);
+ const invalid=await e.call('admin/brochures',{method:'POST',actor:broker,body:{config:{...config,includeMap:'no'}}});assert.equal(invalid.status,422);
+ const rows=(await e.call('admin/brochures',{actor:broker})).data;assert.equal(rows.length,1);assert.equal(rows[0].config.includeMap,false);assert.equal((await e.call('admin/brochures',{actor:owner})).data.length,0);
+});
