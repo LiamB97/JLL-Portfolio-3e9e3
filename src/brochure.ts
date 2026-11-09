@@ -43,7 +43,7 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  function block(value:string,x:number,y:number,width:number,size:number,maxLines:number,{weight='light',colour=C.white,leading=1.5,label,opacity=1}:{weight?:string;colour?:string;leading?:number;label?:string;opacity?:number}={}){
   const text=fit(value,width,size,Math.max(1,maxLines),weight,label);style(size,weight,colour,opacity);doc.text(text.lines,x,y,{lineHeightFactor:leading});return y+text.lines.length*size*MM*leading;
  }
- function logo(x=M,y=279,width=48){style();const img=assets.logoDark;if(img)doc.addImage(img,'PNG',x,y,width,width*94.065/517.30957);else{style(16,'bold');doc.text('JLL Residential',x,y+6);}}
+ function logo(x=M,y=10,width=46){style();const height=width*94.065/517.30957;doc.setFillColor(C.midnight);doc.rect(x-3,y-3,width+6,height+6,'F');const img=assets.logoDark;if(img)doc.addImage(img,'PNG',x,y,width,height);else{style(16,'bold');doc.text('JLL Residential',x,y+6);}}
  function footer(){logo();style(9,'light',C.white,.65);doc.text(String(doc.getNumberOfPages()),196,287,{align:'right'});}
  function image(image:string,x:number,y:number,w:number,h:number){const p=doc.getImageProperties(image),scale=Math.max(w/p.width,h/p.height);doc.saveGraphicsState();doc.rect(x,y,w,h,null);doc.clip();doc.discardPath();doc.addImage(image,'JPEG',x+(w-p.width*scale)/2,y+Math.min(0,(h-p.height*scale)*.3),p.width*scale,p.height*scale,undefined,'MEDIUM');doc.restoreGraphicsState();}
  // A true photo-to-Midnight fade, restricted to the photograph behind the headline.
@@ -95,12 +95,12 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
   style(5.5,'light',C.midnight,.8);doc.text('© OpenStreetMap contributors',208,top+height-1.8,{align:'right'});
   style(6.5,'light',C.white,.65);doc.text(map.attribution,M,top+height+4);
  }
- coverContact(245);logo();style(9,'light',C.white,.65);doc.text(date,196,287,{align:'right'});
+ coverContact(251);logo();style(9,'light',C.white,.65);doc.text(date,196,287,{align:'right'});
  // Every development still owns one page, with matching numbers throughout.
  for(const [index,d]of input.items.entries()){
   page();const name=brochureDevelopmentName(d.name),note=input.notes[d.id]?.trim().slice(0,1600),last=index===input.items.length-1,heroEnd=developmentHeroHeight(note,last),photo=assets.photos[d.id];const ctaTop=272-contactCard(0,true),contentLimit=last?ctaTop-23:262;
   if(assets.fadedPhotos?.[d.id])image(assets.fadedPhotos[d.id],0,0,210,heroEnd);else if(photo){image(photo,0,0,210,heroEnd);photoFade(heroEnd-48,heroEnd);}
-  pin(19,last?14:24,index+1,.9);const title=fit(name,W,28,2,'bold',name+' headline',22);style(title.size,'bold');doc.text(title.lines,M,heroEnd-10-(title.lines.length-1)*title.size*MM*1.15,{lineHeightFactor:1.15});
+  pin(85,21,index+1,.9);const title=fit(name,W,28,2,'bold',name+' headline',22);style(title.size,'bold');doc.text(title.lines,M,heroEnd-10-(title.lines.length-1)*title.size*MM*1.15,{lineHeightFactor:1.15});
   const developmentLogo=assets.developmentLogos?.[d.id];if(developmentLogo){const p=doc.getImageProperties(developmentLogo),scale=Math.min(40/p.width,14/p.height);doc.addImage(developmentLogo,'PNG',196-p.width*scale,12,p.width*scale,p.height*scale);}
   style(10.5,'bold',C.sand);doc.text(clean(d.area+' / '+d.postcode),M,heroEnd+9);
   const introduction=clean(brochureIntroduction(d.description)).replace(/\s+/g,' ').trim();const summary=fit(introduction,W,12.5,2,'light',name+' introduction');style(12.5);doc.text(summary.lines,M,heroEnd+19,{lineHeightFactor:1.5});
