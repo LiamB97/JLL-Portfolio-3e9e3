@@ -1,0 +1,48 @@
+THE NEW AND IMPROVED DIGITAL PORTFOLIO
+Recording script
+No synthetic narration is used in the video.
+
+0:00–0:12 | Start with the map
+Explore our New Homes on the map. Search by area or postcode, filter by bedrooms and budget, and add stations, transport lines and landmarks.
+
+0:12–0:28 | Photography, video and detail
+Open a development to explore its photography, videos, description, features and amenities. Check the bedroom options and confirmed starting prices.
+
+0:28–0:42 | Stations, routes and your commute
+See the nearest stations and check how long it takes to walk or cycle to them. In the commute section, enter a destination and choose your travel mode to open the route in Google Maps.
+
+0:42–0:50 | Buyer favourites
+Buyers can save favourites without signing in, share a development with someone else, or send their shortlist back to their broker on WhatsApp.
+
+0:50–1:02 | My Profile
+Add your photo, job title and WhatsApp number in My Profile. Your personal portfolio link keeps you as the contact buyers see. Use it instead of the generic homepage link.
+
+1:02–1:14 | Saved buyer collections
+Create saved collections for different requirements, such as Prime Central London. Choose the developments and share a map with those homes highlighted.
+
+1:14–1:28 | Saved with the collection link
+Choose which lines and stations appear when your collection opens. If your buyer wants to live near the Elizabeth line, select it and show its stations, then save and share that view.
+
+1:28–1:41 | Start from your saved PCL collection
+Use a saved collection to create a branded brochure. Choose the default London cover or a development image, introduce the selection, and include your broker contact details.
+
+1:41–1:54 | Personalised notes for each development
+Add a personalised note for each development explaining why you have included it. The notes appear on the development pages of your brochure, alongside the property details.
+
+1:54–2:06 | Your broker workspace
+Save the brochure in your workspace to reopen and adapt for future buyers. Regenerate the PDF with the latest portfolio details. Download it, or prepare an Outlook email with the PDF attached.
+
+2:06–2:19 | Admins and Broker admins
+Our JLL stock imports listing copy and imagery from the Residential New Homes website. The website is our default source of truth. Manual edits are protected, with website differences flagged for review.
+
+2:19–2:32 | Admins and Broker admins
+Paste a developer's listing URL to extract as much available information as possible. Review the imagery and copy, complete missing details, then confirm before publishing. Some websites need manual completion.
+
+2:32–2:41 | Admins and Broker admins
+Hundreds of developments to add? Use bulk JSON upload to bring in up to 200 records per file. Review every record before publishing.
+
+2:41–2:54 | Admins only
+Google Analytics shows visits, development views, favourites and WhatsApp clicks. Team activity shows sign-ins, last use, saved collections and sharing actions. Filter the team report, compare periods and export the results.
+
+2:54–3:00 | Your next buyer conversation
+Complete your profile. Build your collections. Share a portfolio that feels personal.

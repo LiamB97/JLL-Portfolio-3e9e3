@@ -1,0 +1,174 @@
+1
+00:00:00,350 --> 00:00:02,966
+Explore our New Homes on the map.
+
+2
+00:00:02,966 --> 00:00:11,450
+Search by area or postcode, filter by bedrooms and budget, and
+add stations, transport lines and landmarks.
+
+3
+00:00:12,350 --> 00:00:21,698
+Open a development to explore its photography, videos,
+description, features and amenities.
+
+4
+00:00:21,698 --> 00:00:27,450
+Check the bedroom options and confirmed starting prices.
+
+5
+00:00:28,350 --> 00:00:33,964
+See the nearest stations and check how long it takes to walk or
+cycle to them.
+
+6
+00:00:33,964 --> 00:00:38,211
+In the commute section, enter a destination and choose your
+
+7
+00:00:38,211 --> 00:00:41,450
+travel mode to open the route in Google Maps.
+
+8
+00:00:42,350 --> 00:00:46,300
+Buyers can save favourites without signing in, share a
+development with someone
+
+9
+00:00:46,300 --> 00:00:49,450
+else, or send their shortlist back to their broker on WhatsApp.
+
+10
+00:00:50,350 --> 00:00:54,291
+Add your photo, job title and WhatsApp number in My Profile.
+
+11
+00:00:54,291 --> 00:00:58,560
+Your personal portfolio link keeps you as the contact buyers
+see.
+
+12
+00:00:58,560 --> 00:01:01,450
+Use it instead of the generic homepage link.
+
+13
+00:01:02,350 --> 00:01:08,378
+Create saved collections for different requirements, such as
+Prime Central London.
+
+14
+00:01:08,378 --> 00:01:13,450
+Choose the developments and share a map with those homes
+highlighted.
+
+15
+00:01:14,350 --> 00:01:19,127
+Choose which lines and stations appear when your collection
+opens.
+
+16
+00:01:19,127 --> 00:01:23,397
+If your buyer wants to live near the Elizabeth line, select
+
+17
+00:01:23,397 --> 00:01:27,450
+it and show its stations, then save and share that view.
+
+18
+00:01:28,350 --> 00:01:31,987
+Use a saved collection to create a branded brochure.
+
+19
+00:01:31,987 --> 00:01:40,450
+Choose the default London cover or a development image,
+introduce the selection, and include your broker contact
+details.
+
+20
+00:01:41,350 --> 00:01:47,048
+Add a personalised note for each development explaining why you
+have included it.
+
+21
+00:01:47,048 --> 00:01:53,450
+The notes appear on the development pages of your brochure,
+alongside the property details.
+
+22
+00:01:54,350 --> 00:01:58,673
+Save the brochure in your workspace to reopen and adapt for
+future buyers.
+
+23
+00:01:58,673 --> 00:02:01,769
+Regenerate the PDF with the latest portfolio details.
+
+24
+00:02:01,769 --> 00:02:05,450
+Download it, or prepare an Outlook email with the PDF attached.
+
+25
+00:02:06,350 --> 00:02:11,527
+Our JLL stock imports listing copy and imagery from the
+Residential New Homes website.
+
+26
+00:02:11,527 --> 00:02:14,116
+The website is our default source of truth.
+
+27
+00:02:14,116 --> 00:02:18,450
+Manual edits are protected, with website differences flagged for
+review.
+
+28
+00:02:19,350 --> 00:02:24,295
+Paste a developer's listing URL to extract as much available
+information as possible.
+
+29
+00:02:24,295 --> 00:02:29,298
+Review the imagery and copy, complete missing details, then
+confirm before publishing.
+
+30
+00:02:29,298 --> 00:02:31,450
+Some websites need manual completion.
+
+31
+00:02:32,350 --> 00:02:34,344
+Hundreds of developments to add?
+
+32
+00:02:34,344 --> 00:02:38,082
+Use bulk JSON upload to bring in up to 200 records per file.
+
+33
+00:02:38,082 --> 00:02:40,450
+Review every record before publishing.
+
+34
+00:02:41,350 --> 00:02:45,765
+Google Analytics shows visits, development views, favourites and
+WhatsApp clicks.
+
+35
+00:02:45,765 --> 00:02:50,016
+Team activity shows sign-ins, last use, saved collections and
+sharing actions.
+
+36
+00:02:50,016 --> 00:02:53,450
+Filter the team report, compare periods and export the results.
+
+37
+00:02:54,350 --> 00:02:55,702
+Complete your profile.
+
+38
+00:02:55,702 --> 00:02:57,115
+Build your collections.
+
+39
+00:02:57,115 --> 00:02:59,450
+Share a portfolio that feels personal.

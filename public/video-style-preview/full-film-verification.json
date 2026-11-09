@@ -1,0 +1,90 @@
+{
+  "status": "passed",
+  "duration": "180.011000",
+  "sizeBytes": 23814700,
+  "width": 1920,
+  "height": 1080,
+  "frames": "4320",
+  "fps": "24/1",
+  "videoCodec": "h264",
+  "audioCodec": "aac",
+  "fullDecode": "passed separately with ffmpeg; empty error log",
+  "playback": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "duration": 180.011,
+      "width": 1920,
+      "height": 1080,
+      "seeks": [
+        {
+          "target": 2,
+          "actual": 2,
+          "error": null
+        },
+        {
+          "target": 84,
+          "actual": 84,
+          "error": null
+        },
+        {
+          "target": 110,
+          "actual": 110,
+          "error": null
+        },
+        {
+          "target": 169,
+          "actual": 169,
+          "error": null
+        },
+        {
+          "target": 179,
+          "actual": 179,
+          "error": null
+        }
+      ],
+      "played": true
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "duration": 180.011,
+      "width": 1920,
+      "height": 1080,
+      "seeks": [
+        {
+          "target": 2,
+          "actual": 2,
+          "error": null
+        },
+        {
+          "target": 84,
+          "actual": 84,
+          "error": null
+        },
+        {
+          "target": 110,
+          "actual": 110,
+          "error": null
+        },
+        {
+          "target": 169,
+          "actual": 169,
+          "error": null
+        },
+        {
+          "target": 179,
+          "actual": 179,
+          "error": null
+        }
+      ],
+      "played": true
+    }
+  ],
+  "loudnessLUFS": -21.97,
+  "truePeakDbTP": -10.65
+}

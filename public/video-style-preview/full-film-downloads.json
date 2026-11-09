@@ -1,0 +1,26 @@
+{
+  "full-film-captions.srt": {
+    "sizeBytes": 3846,
+    "sha256": "74c837944d0d12b6e955b671c98bd83956620c39a5a1d4b7b6f2dcf0696df8c5"
+  },
+  "recording-script.txt": {
+    "sizeBytes": 3237,
+    "sha256": "44ea575b9c397830b33c1b282b2687231c31d5a28ed79a7f8d3289c7de17b02e"
+  },
+  "recording-script.md": {
+    "sizeBytes": 3510,
+    "sha256": "983c61bbad4bcc4cf61f2465a11e42dabf45228a145b502ee02ac66c90036220"
+  },
+  "voiceover-recording-pack.zip": {
+    "sizeBytes": 5590,
+    "sha256": "ad4520efefadd366e9baaa5d0f91e810d4c5b34d039031ecb401c9ecc29b9f7b"
+  },
+  "jll-digital-portfolio-editable.zip": {
+    "sizeBytes": 40564843,
+    "sha256": "80a0a19a3d4a66d1faee6cd8b262fac7f91c3738e9f6c7b5b97416ba7d841d36"
+  },
+  "jll-digital-portfolio-full.mp4": {
+    "sizeBytes": 23814700,
+    "sha256": "835ff9c8fe8ccd24893849bed70a109825ce8f42420ec44b130eaa65cf3ed467"
+  }
+}
