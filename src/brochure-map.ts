@@ -1,5 +1,6 @@
 import type {Development} from './types';
 import type {BrochureMapImage} from './brochure-map-layout';
+import {brochureMapBounds,BROCHURE_MAP_CANVAS} from './brochure-map-view';
 
 const areaLabels=[
  ['Paddington',51.517,-.177],['Marylebone',51.52,-.153],['Mayfair',51.509,-.148],['Soho',51.514,-.133],['Holborn',51.519,-.117],
@@ -19,7 +20,8 @@ export async function brochureMap(items:Development[]):Promise<BrochureMapImage>
  const style=await response.json();
  const [maplibre,{default:workerUrl}]=await Promise.all([import('maplibre-gl'),import('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url')]);
  maplibre.setWorkerUrl(workerUrl);
- const node=document.createElement('div');Object.assign(node.style,{position:'fixed',left:'-10000px',top:'0',width:'1500px',height:'1260px',pointerEvents:'none'});node.setAttribute('aria-hidden','true');document.body.append(node);
+ const {width,height}=BROCHURE_MAP_CANVAS;
+ const node=document.createElement('div');Object.assign(node.style,{position:'fixed',left:'-10000px',top:'0',width:width+'px',height:height+'px',pointerEvents:'none'});node.setAttribute('aria-hidden','true');node.inert=true;document.body.append(node);
  let map:InstanceType<typeof maplibre.Map>|undefined;
  try{
   return await new Promise<BrochureMapImage>((resolve,reject)=>{
@@ -28,9 +30,7 @@ export async function brochureMap(items:Development[]):Promise<BrochureMapImage>
    try{
     map=new maplibre.Map({container:node,style,interactive:false,attributionControl:false,canvasContextAttributes:{preserveDrawingBuffer:true},pixelRatio:1,fadeDuration:0,renderWorldCopies:false});
     map.on('error',fail);
-    const lngs=items.map(d=>d.lng),lats=items.map(d=>d.lat),cx=(Math.min(...lngs)+Math.max(...lngs))/2,cy=(Math.min(...lats)+Math.max(...lats))/2;
-    const dx=Math.max(.035,(Math.max(...lngs)-Math.min(...lngs))/2),dy=Math.max(.022,(Math.max(...lats)-Math.min(...lats))/2);
-    map.fitBounds([[cx-dx,cy-dy],[cx+dx,cy+dy]],{padding:{top:145,right:245,bottom:130,left:245},duration:0,maxZoom:14});
+    map.fitBounds(brochureMapBounds(items),{padding:{top:55,right:70,bottom:45,left:70},duration:0,maxZoom:11});
     map.once('load',()=>{
      if(!map)return;try{
      for(const layer of map.getStyle().layers){
@@ -49,8 +49,9 @@ export async function brochureMap(items:Development[]):Promise<BrochureMapImage>
       }
      }
      map.once('idle',()=>{requestAnimationFrame(()=>{
-      try{if(!map)return;const project=(lng:number,lat:number)=>{const p=map!.project([lng,lat]);return {x:p.x/1500,y:p.y/1260};};
-       const result:BrochureMapImage={image:map.getCanvas().toDataURL('image/jpeg',.9),points:items.map(d=>({id:d.id,...project(d.lng,d.lat)})),areas:areaLabels.map(([name,lat,lng,major])=>({name,...project(lng,lat),major})).filter(p=>p.x>.05&&p.x<.95&&p.y>.04&&p.y<.94),attribution:'© OpenStreetMap contributors · OpenMapTiles · OpenFreeMap'};
+      try{if(!map)return;const project=(lng:number,lat:number)=>{const p=map!.project([lng,lat]);return {x:p.x/width,y:p.y/height};};
+       const areas=areaLabels.filter(a=>a[3]);
+       const result:BrochureMapImage={image:map.getCanvas().toDataURL('image/jpeg',.9),points:items.map(d=>({id:d.id,...project(d.lng,d.lat)})),areas:areas.map(([name,lat,lng,major])=>({name,...project(lng,lat),major})).filter(p=>p.x>.05&&p.x<.95&&p.y>.04&&p.y<.94),attribution:'© OpenStreetMap contributors · OpenMapTiles · OpenFreeMap'};
        clearTimeout(timer);resolve(result);
       }catch{fail();}
      });});

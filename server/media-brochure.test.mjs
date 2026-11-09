@@ -19,7 +19,7 @@ test('provider URLs preserve video identity and privacy hashes without arbitrary
 test('brochure PDFs fit development notes to one A4 page, retain input and attach links to the correct broker',()=>{
  const value={...input,intro:'A longer introduction. '.repeat(70),notes:{[input.items[0].id]:'A detailed broker recommendation. '.repeat(48)}};
  const before=JSON.stringify(value);const doc=buildBrochure(value,assets);assert.equal(JSON.stringify(value),before);assert.ok(doc.getNumberOfPages()>=3);assert.match(doc.output(),/^%PDF-/);assert.match(doc.output(),/https:\/\/wa.me\/447900000001/);assert.match(doc.output(),/broker=own-broker/);
- assert.equal(buildBrochure(input,assets).getNumberOfPages(),4);
+ assert.equal(buildBrochure(input,assets).getNumberOfPages(),3);
  const collection=buildBrochure({...input,collection:'selected-collection'},assets);assert.match(collection.output(),/collection=selected-collection/);assert.doesNotMatch(collection.output(),/broker=own-broker/);
  assert.throws(()=>buildBrochure({...input,items:[]},assets));assert.throws(()=>buildBrochure({...input,title:' '},assets));assert.equal(brochureFilename('London / Homes: 2026'),'London-Homes-2026.pdf');
 });
@@ -35,7 +35,7 @@ test('PDF portraits use an active circular clipping path on the cover and contac
 test('each selected development stays on exactly one page even with maximum-length notes',()=>{
  const items=seed.developments.slice(0,20).map((d,i)=>({...d,name:i===0?'A very long development name with more detail '.repeat(4):d.name,amenities:Array.from({length:6},(_,n)=>'Key feature '+n+' '+('spacious living '.repeat(10)))}));
  const notes=Object.fromEntries(items.map(d=>[d.id,'Personal broker advice and viewing information. '.repeat(40).slice(0,1600)]));
- const doc=buildBrochure({...input,items,notes},assets);assert.equal(doc.getNumberOfPages(),22);
+ const doc=buildBrochure({...input,items,notes},assets);assert.equal(doc.getNumberOfPages(),21);
 });
 test('video posters use a real YouTube thumbnail with development and illustration fallbacks',()=>{
  assert.deepEqual(videoThumbnails('https://youtu.be/M7lc1UVf-VE','/cover.jpg'),['https://i.ytimg.com/vi/M7lc1UVf-VE/hqdefault.jpg','/cover.jpg','/images/city.svg']);
@@ -45,15 +45,15 @@ test('video posters use a real YouTube thumbnail with development and illustrati
 
 test('the combined opening page fits both long and short introductions without an extra page',()=>{
  const doc=buildBrochure({...input,intro:'A considered introduction to your London home search. '.repeat(60),broker:{...input.broker,title:'Senior Residential Sales Broker'},items:input.items.slice(0,1)},assets);
- assert.equal(doc.getNumberOfPages(),3);assert.ok(doc.internal.pages[1].length>0);assert.equal(buildBrochure({...input,intro:'A short personal note.',items:input.items.slice(0,1)},assets).getNumberOfPages(),3);
+ assert.equal(doc.getNumberOfPages(),2);assert.ok(doc.internal.pages[1].length>0);assert.equal(buildBrochure({...input,intro:'A short personal note.',items:input.items.slice(0,1)},assets).getNumberOfPages(),2);
 });
 
 test('brochure opening and contact pages include the broker email with WhatsApp and keep A4 link bounds',()=>{
  const email='residential.broker@example.test';
  for(const intro of ['A short introduction.','A considered introduction to the selected London homes. '.repeat(40)]){
   const doc=buildBrochure({...input,intro,items:input.items.slice(0,1),broker:{...input.broker,title:'Senior Residential Sales Broker',email}},assets);
-  assert.equal(doc.getNumberOfPages(),3);
-  for(const page of [1,3]){
+  assert.equal(doc.getNumberOfPages(),2);
+  for(const page of [1,2]){
    const links=doc.internal.getPageInfo(page).pageContext.annotations.filter(a=>a.type==='link');
    assert.ok(links.some(a=>a.options.url==='mailto:'+email));
    assert.ok(links.some(a=>a.options.url==='https://wa.me/447900000001'));

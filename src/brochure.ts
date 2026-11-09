@@ -1,8 +1,8 @@
 import {startingPrice,unitLabel} from '../shared/pricing.ts';
 import {jsPDF} from 'jspdf';
-import QRCode from 'qrcode';
-import {layoutBrochureMap,type BrochureMapImage} from './brochure-map-layout.ts';
+import {layoutBrochurePins,type BrochureMapImage} from './brochure-map-layout.ts';
 import type {Development} from './types';
+import {BROCHURE_MAP_BAND} from './brochure-map-view.ts';
 
 export interface BrochureInput {title:string;intro:string;notes:Record<string,string>;items:Development[];broker:{name:string;whatsapp:string;photo?:string;title?:string;email?:string};origin:string;collection?:string;brokerSlug?:string;date?:Date;coverImage?:string}
 export interface BrochureAssets {regular:string;semibold:string;light?:string;serifItalic?:string;logoLight?:string;logoDark?:string;whatsappIcon?:string;photos:Record<string,string>;galleries?:Record<string,string[]>;map?:BrochureMapImage;developmentLogos?:Record<string,string>;fadedCover?:string;fadedPhotos?:Record<string,string>}
@@ -18,8 +18,8 @@ const money=(n:number)=>new Intl.NumberFormat('en-GB',{style:'currency',currency
 const price=(n:number|null|undefined)=>n&&Number.isFinite(n)&&n>0?'From '+money(n):'From £[ ]';
 const C={midnight:'#131E29',sand:'#E0C6AD',white:'#FFFFFF',space:'#003E51',card:'#1F2A35',border:'#6B7783',green:'#25D366'};
 const M=14,W=182,MM=25.4/72;
-export const coverHeroHeight=(intro:string)=>intro.trim().length>650?116:136;
-export const developmentHeroHeight=(note?:string)=>note?.trim()?88:108;
+export const coverHeroHeight=(intro:string,includeMap=true)=>includeMap?(intro.trim().length>650?68:82):(intro.trim().length>650?116:136);
+export const developmentHeroHeight=(note?:string,last=false)=>last?52:note?.trim()?88:108;
 
 export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  if(!input.title.trim()||input.items.length<1||input.items.length>20)throw Error('Choose 1–20 developments and add a title.');
@@ -49,7 +49,7 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
  // A true photo-to-Midnight fade, restricted to the photograph behind the headline.
  function photoFade(top:number,bottom:number){for(let y=top;y<bottom;y+=.2){const opacity=Math.pow((y-top)/(bottom-top),1.15);doc.setGState(doc.GState({opacity}));doc.setFillColor(C.midnight);doc.rect(0,y,210,Math.min(.2,bottom-y),'F');}doc.setGState(doc.GState({opacity:1}));}
  function portrait(x:number,y:number,r:number){doc.setFillColor(C.sand);doc.circle(x,y,r,'F');if(input.broker.photo){doc.saveGraphicsState();doc.circle(x,y,r-.3,null);doc.clip();doc.discardPath();doc.addImage(input.broker.photo,'JPEG',x-r+.3,y-r+.3,(r-.3)*2,(r-.3)*2,undefined,'MEDIUM');doc.restoreGraphicsState();}else{style(r*.95,'light',C.midnight);doc.text(input.broker.name.split(/\s+/).map(s=>s[0]).slice(0,2).join(''),x,y+r*.13,{align:'center'});}}
- function qr(url:string,x:number,y:number,size:number){const code=QRCode.create(url,{errorCorrectionLevel:'M'}),n=code.modules.size,step=size/(n+8);style();doc.setFillColor(C.white);doc.rect(x,y,size,size,'F');doc.setFillColor(C.midnight);for(let row=0;row<n;row++)for(let col=0;col<n;col++)if(code.modules.get(row,col))doc.rect(x+(col+4)*step,y+(row+4)*step,step+.01,step+.01,'F');doc.link(x,y,size,size,{url});}
+
  function pin(x:number,y:number,n:number,scale=1){
   const shape=(x:number,y:number)=>[{op:'m',c:[x,y]},{op:'c',c:[x-scale,y-1.5*scale,x-4*scale,y-4.2*scale,x-4*scale,y-6*scale]},{op:'c',c:[x-4*scale,y-11*scale,x+4*scale,y-11*scale,x+4*scale,y-6*scale]},{op:'c',c:[x+4*scale,y-4.2*scale,x+scale,y-1.5*scale,x,y]},{op:'h',c:[]}];
   style();doc.setGState(doc.GState({opacity:.15}));doc.setFillColor(C.midnight);doc.path(shape(x+.45*scale,y+.55*scale));doc.fill();style();doc.setFillColor(C.space);doc.setDrawColor(C.white);doc.setLineWidth(.53*scale);doc.path(shape(x,y));doc.fillStroke();style(10*scale,'bold');doc.text(String(n),x,y-4.7*scale,{align:'center'});
@@ -69,37 +69,41 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
   if(input.broker.email){style(10.5,'bold',C.sand);email.lines.forEach((line,i)=>doc.textWithLink(line,inline?textX+phoneWidth+5:textX,emailY+i*5,{url:'mailto:'+input.broker.email}));}
   return y+height;
  }
- background();
- // Cover: editorial hero, Sand callout, personal introduction and broker details.
- const intro=clean(input.intro.trim().slice(0,1600)||'Explore a personal selection of London New Homes, chosen for you. Browse these neighbourhoods and contact me to discuss the available homes and arrange your next steps.');
- const hero=input.coverImage||input.items.map(d=>assets.photos[d.id]).find(Boolean),heroEnd=coverHeroHeight(input.intro);
- if(assets.fadedCover)image(assets.fadedCover,0,0,210,heroEnd);else if(hero){image(hero,0,0,210,heroEnd);photoFade(heroEnd-65,heroEnd);}else background();
- const headline=fit(input.title.trim().slice(0,100),W,34,3,'light','Cover headline',26);style(headline.size);doc.text(headline.lines,M,heroEnd-10-(headline.lines.length-1)*headline.size*MM*1.12,{lineHeightFactor:1.12});
- serif(17);doc.text('Your handpicked London New Homes',M,heroEnd+11);
- const contactTop=Math.min(218,274-contactCard(0,true));
- block(intro,M,heroEnd+25,W,11.5,Math.floor((contactTop-8-heroEnd-25)/(11.5*MM*1.5)),{label:'Cover introduction'});
- contactCard(contactTop);logo(M,282,48);style(9,'light',C.white,.65);doc.text(date,196,287,{align:'right'});
- // Full-width light map band, hard Sand dividers, numbered vector pins and name cards.
- if(assets.map){
-  page();style(30);doc.text('Your London New Homes',M,27);serif(16);doc.text('Explore your selected neighbourhoods',M,40);
-  const top=54,height=177,map=assets.map;doc.addImage(map.image,'JPEG',0,top,210,height,undefined,'MEDIUM');style();doc.setDrawColor(C.sand);doc.setLineWidth(.53);doc.line(0,top,210,top);doc.line(0,top+height,210,top+height);
-  for(const area of map.areas){const x=area.x*210,y=top+area.y*height;serif(area.major?11:7.5,'#6B7783');if(area.major)style(11,'bold',C.midnight);else doc.setCharSpace(.4);doc.setDrawColor(C.white);doc.setLineWidth(.7);doc.text(area.major?area.name:area.name.toUpperCase(),x,y,{align:'center',renderingMode:'fillThenStroke'});doc.text(area.major?area.name:area.name.toUpperCase(),x,y,{align:'center'});doc.setCharSpace(0);}
-  const names=new Map(input.items.map(d=>[d.id,brochureDevelopmentName(d.name)]));
-  const labels=map.points.map(p=>{const text=fit(names.get(p.id)||'',51,9.5,2,'bold');style(9.5,'bold');return {...p,width:Math.min(58,Math.max(...text.lines.map(s=>doc.getTextWidth(s)),15)+7),height:text.lines.length>1?12:8};});
-  const placements=layoutBrochureMap(labels,210,height);
-  for(const p of placements){style();doc.setDrawColor('#6B7783');doc.setLineWidth(.25);if(Math.hypot(p.pin.x-p.anchor.x,p.pin.y-p.anchor.y)>1)doc.line(p.anchor.x,top+p.anchor.y,p.pin.x,top+p.pin.y);const r=p.label;doc.line(p.pin.x,top+p.pin.y-5,Math.max(r.x,Math.min(p.pin.x,r.x+r.width)),top+r.y+r.height/2);}
-  for(const p of placements){const n=input.items.findIndex(d=>d.id===p.id)+1,r=p.label;style();doc.setGState(doc.GState({opacity:.1}));doc.setFillColor(C.midnight);doc.roundedRect(r.x+.5,top+r.y+.6,r.width,r.height,1.8,1.8,'F');style();doc.setFillColor(C.white);doc.setDrawColor('#D6D1CB');doc.setLineWidth(.2);doc.roundedRect(r.x,top+r.y,r.width,r.height,1.8,1.8,'FD');const text=fit(names.get(p.id)||'',r.width-5,9.5,2,'bold');style(9.5,'bold',C.midnight);doc.text(text.lines,r.x+2.5,top+r.y+5.1,{lineHeightFactor:1.2});doc.link(r.x,top+r.y,r.width,r.height,{url:devLink(p.id)});pin(p.pin.x,top+p.pin.y,n);}
-  style(5.5,'light',C.midnight,.8);doc.text('© OpenStreetMap contributors',208,top+height-1.8,{align:'right'});
-  style(12);doc.text(`${input.items.length} selected ${input.items.length===1?'development':'developments'}. One connected city.`,M,246);serif(14);doc.text('Find your next London home',M,257);style(11,'bold',C.sand);doc.textWithLink('Explore your interactive portfolio',M,268,{url:portfolio.href});style(6.5,'light',C.white,.65);doc.text(map.attribution,M,275);footer();
+ function coverContact(y:number){
+  const x=37,width=159,name=fit(input.broker.name,width,13.5,1,'bold','Cover broker name',12);
+  portrait(22,y+10,8);style(name.size,'bold');doc.text(name.lines,x,y);
+  if(input.broker.title?.trim()){const role=fit(input.broker.title,width,10.5,1,'light','Cover job title');style(10.5,'light',C.white,.8);doc.text(role.lines,x,y+6);}
+  const baseline=y+14;style(10.5,'light');if(assets.whatsappIcon){doc.addImage(assets.whatsappIcon,'PNG',x,baseline-3.3,3.7,3.7);doc.link(x,baseline-4,4,5,{url:whatsapp});}
+  doc.textWithLink('WhatsApp or call',x+5,baseline,{url:whatsapp});const phoneX=x+7+doc.getTextWidth('WhatsApp or call');style(10.5,'bold',C.sand);doc.textWithLink(input.broker.whatsapp,phoneX,baseline,{url:tel});
+  if(input.broker.email){const emailX=phoneX+doc.getTextWidth(input.broker.whatsapp)+7,email=fit(input.broker.email,width,10.5,2,'bold','Cover email');const inline=email.lines.length===1&&emailX+doc.getTextWidth(input.broker.email)<196;style(10.5,'bold',C.sand);email.lines.forEach((line,i)=>doc.textWithLink(line,inline?emailX:x,baseline+(inline?0:7)+i*5,{url:'mailto:'+input.broker.email}));}
  }
+ background();
+ // One fuller opening page combines the skyline, introduction and London map.
+ const intro=clean(input.intro.trim().slice(0,1600)||'Explore a personal selection of London New Homes, chosen for you. Browse these neighbourhoods and contact me to discuss the available homes and arrange your next steps.');
+ const hero=input.coverImage||input.items.map(d=>assets.photos[d.id]).find(Boolean),heroEnd=coverHeroHeight(input.intro,Boolean(assets.map));
+ if(assets.fadedCover)image(assets.fadedCover,0,0,210,heroEnd);else if(hero){image(hero,0,0,210,heroEnd);photoFade(Math.max(0,heroEnd-60),heroEnd);}else background();
+ const headline=fit(input.title.trim().slice(0,100),W,30,3,'light','Cover headline',24);style(headline.size);doc.text(headline.lines,M,heroEnd-9-(headline.lines.length-1)*headline.size*MM*1.12,{lineHeightFactor:1.12});
+ serif(15,C.white);doc.text('Your handpicked London New Homes',M,heroEnd+10);
+ const introLimit=assets.map?BROCHURE_MAP_BAND.top-6:234;
+ block(intro,M,heroEnd+22,W,11.5,Math.floor((introLimit-heroEnd-22)/(11.5*MM*1.5)),{label:'Cover introduction'});
+ if(assets.map){
+  const {top,height,width}=BROCHURE_MAP_BAND,map=assets.map;doc.addImage(map.image,'JPEG',0,top,width,height,undefined,'MEDIUM');style();doc.setDrawColor(C.sand);doc.setLineWidth(.53);doc.line(0,top,width,top);doc.line(0,top+height,width,top+height);
+  for(const area of map.areas){const x=area.x*width,y=top+area.y*height;serif(area.major?10:7,'#6B7783');if(area.major)style(10,'bold',C.midnight);else doc.setCharSpace(.4);doc.setDrawColor(C.white);doc.setLineWidth(.6);doc.text(area.major?area.name:area.name.toUpperCase(),x,y,{align:'center',renderingMode:'fillThenStroke'});doc.text(area.major?area.name:area.name.toUpperCase(),x,y,{align:'center'});doc.setCharSpace(0);}
+  const placements=layoutBrochurePins(map.points,width,height);
+  for(const p of placements){if(Math.hypot(p.pin.x-p.anchor.x,p.pin.y-p.anchor.y)>1){style();doc.setDrawColor(C.space);doc.setLineWidth(.25);doc.line(p.anchor.x,top+p.anchor.y,p.pin.x,top+p.pin.y);doc.setFillColor(C.space);doc.circle(p.anchor.x,top+p.anchor.y,.5,'F');}}
+  for(const p of placements){pin(p.pin.x,top+p.pin.y,input.items.findIndex(d=>d.id===p.id)+1);doc.link(p.pin.x-4,top+p.pin.y-10,8,11,{url:devLink(p.id)});}
+  style(5.5,'light',C.midnight,.8);doc.text('© OpenStreetMap contributors',208,top+height-1.8,{align:'right'});
+  style(6.5,'light',C.white,.65);doc.text(map.attribution,M,top+height+4);
+ }
+ coverContact(245);logo();style(9,'light',C.white,.65);doc.text(date,196,287,{align:'right'});
  // Every development still owns one page, with matching numbers throughout.
  for(const [index,d]of input.items.entries()){
-  page();const name=brochureDevelopmentName(d.name),note=input.notes[d.id]?.trim().slice(0,1600),heroEnd=developmentHeroHeight(note),photo=assets.photos[d.id];
+  page();const name=brochureDevelopmentName(d.name),note=input.notes[d.id]?.trim().slice(0,1600),last=index===input.items.length-1,heroEnd=developmentHeroHeight(note,last),photo=assets.photos[d.id];const ctaTop=272-contactCard(0,true),contentLimit=last?ctaTop-23:262;
   if(assets.fadedPhotos?.[d.id])image(assets.fadedPhotos[d.id],0,0,210,heroEnd);else if(photo){image(photo,0,0,210,heroEnd);photoFade(heroEnd-48,heroEnd);}
-  pin(19,24,index+1,.9);const title=fit(name,W,28,2,'bold',name+' headline',22);style(title.size,'bold');doc.text(title.lines,M,heroEnd-10-(title.lines.length-1)*title.size*MM*1.15,{lineHeightFactor:1.15});
+  pin(19,last?14:24,index+1,.9);const title=fit(name,W,28,2,'bold',name+' headline',22);style(title.size,'bold');doc.text(title.lines,M,heroEnd-10-(title.lines.length-1)*title.size*MM*1.15,{lineHeightFactor:1.15});
   const developmentLogo=assets.developmentLogos?.[d.id];if(developmentLogo){const p=doc.getImageProperties(developmentLogo),scale=Math.min(40/p.width,14/p.height);doc.addImage(developmentLogo,'PNG',196-p.width*scale,12,p.width*scale,p.height*scale);}
   style(10.5,'bold',C.sand);doc.text(clean(d.area+' / '+d.postcode),M,heroEnd+9);
-  const introduction=clean(brochureIntroduction(d.description)).replace(/\s+/g,' ').trim();const summary=fit(introduction,W,12.5,2,'light',name+' introduction');serif(12.5);doc.text(summary.lines,M,heroEnd+19,{lineHeightFactor:1.5});
+  const introduction=clean(brochureIntroduction(d.description)).replace(/\s+/g,' ').trim();const summary=fit(introduction,W,12.5,2,'light',name+' introduction');style(12.5);doc.text(summary.lines,M,heroEnd+19,{lineHeightFactor:1.5});
   style(20,'bold',C.sand);doc.text(price(d.priceFrom),M,heroEnd+39);if(d.sample){style(9,'light');doc.text('Illustrative sample, not live stock',196,heroEnd+39,{align:'right'});}
   let y=heroEnd+49;const bedrooms=[...new Set(d.bedrooms)].sort((a,b)=>a-b),columns=bedrooms.length>6?3:2,cellW=(W-8*(columns-1))/columns;
   for(let row=0;row<Math.ceil(bedrooms.length/columns);row++){
@@ -107,22 +111,18 @@ export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
    y+=14;
   }
   y+=3;style();doc.setDrawColor(C.white);doc.setGState(doc.GState({opacity:.15,'stroke-opacity':.15}));doc.setLineWidth(.2);doc.line(M,y,196,y);style();y+=9;
-  if(d.amenities.length){style(12,'bold');doc.text('Key features',M,y);y+=7;const features=d.amenities.slice(0,6);for(let row=0;row<Math.ceil(features.length/2);row++){
-   let rows=1;for(let col=0;col<2;col++){const feature=features[row*2+col];if(!feature)continue;const f=fit('• '+feature,87,11,2,'light',name+' features');style(11);doc.text(f.lines,M+col*95,y,{lineHeightFactor:1.5});rows=Math.max(rows,f.lines.length);}y+=rows*11*MM*1.5+3;
-  }}
-  if(note){y+=4;style(12,'bold',C.sand);doc.text('Your broker’s perspective',M,y);y+=7;block(note,M,y,W,11,Math.max(1,Math.floor((262-y)/(11*MM*1.5))),{label:name+' broker notes'});}
-  style(10.5,'bold',C.sand);doc.textWithLink('View this home in your portfolio',M,271,{url:devLink(d.id)});footer();
+  if(d.amenities.length){
+   const lineLimit=last?1:2,rowHeight=lineLimit*11*MM*1.5+3,potentialRows=Math.floor((contentLimit-y-7)/rowHeight),reserve=note&&potentialRows>=3?18:0,maxRows=last?Math.max(0,Math.min(3,Math.floor((contentLimit-y-7-reserve)/rowHeight))):3;
+   const features=d.amenities.slice(0,maxRows*2);if(features.length<Math.min(d.amenities.length,6))warnings.add(name+' features');
+   if(features.length){style(12,'bold');doc.text('Key features',M,y);y+=7;for(let row=0;row<Math.ceil(features.length/2);row++){
+    let rows=1;for(let col=0;col<2;col++){const feature=features[row*2+col];if(!feature)continue;const f=fit('• '+feature,87,11,lineLimit,'light',name+' features');style(11);doc.text(f.lines,M+col*95,y,{lineHeightFactor:1.5});rows=Math.max(rows,f.lines.length);}y+=rows*11*MM*1.5+3;
+   }}
+  }
+  if(note){const noteY=y+11,maxLines=Math.floor((contentLimit-noteY)/(11*MM*1.5));if(maxLines>0){y+=4;style(12,'bold');doc.text('Your broker’s perspective',M,y);block(note,M,noteY,W,11,maxLines,{label:name+' broker notes'});}else warnings.add(name+' broker notes');}
+  style(10.5,'bold');doc.textWithLink('View this home in your portfolio',M,last?ctaTop-17:271,{url:devLink(d.id)});
+  if(last){style(17);doc.text('Arrange your next viewing',M,ctaTop-8);contactCard(ctaTop);style(8.5,'light',C.white,.65);doc.text('Prices and availability subject to change.',196,276,{align:'right'});}footer();
  }
- // Final numbered index and personalised contact, with no call-to-action buttons.
- page();style(30);doc.text('Your selected New Homes',M,27);serif(16);doc.text('Let’s find the right home for you',M,40);
- const half=Math.ceil(input.items.length/2),rowHeight=input.items.length>12?13.5:17;
- for(const [index,d]of input.items.entries()){
-  const col=index<half?0:1,row=index%half,x=M+col*95,y=50+row*rowHeight,name=brochureDevelopmentName(d.name);pin(x+3,y+7,index+1,.58);
-  style(11,'bold',C.sand);const amount=price(d.priceFrom),amountWidth=doc.getTextWidth(amount),nameWidth=87-amountWidth-12;
-  const title=fit(name,nameWidth,11.5,2,'bold',name+' index name');style(11.5,'bold');doc.text(title.lines,x+9,y+2.5,{lineHeightFactor:1.2});style(11,'bold',C.sand);doc.text(amount,x+87,y+2.5,{align:'right'});doc.link(x,y-3,87,rowHeight-1,{url:devLink(d.id)});
-  style();doc.setGState(doc.GState({opacity:.15,'stroke-opacity':.15}));doc.setDrawColor(C.white);doc.setLineWidth(.2);doc.line(x,y+rowHeight-4,x+87,y+rowHeight-4);style();
- }
- const end=50+half*rowHeight;style(9.5,'light',C.white,.65);doc.text('Prices and availability subject to change.',M,end+4);const finalContactTop=Math.max(169,end+16);contactCard(finalContactTop);footer();
+
  doc.setProperties({title:clean(input.title),author:input.broker.name,subject:'Selected London New Homes',creator:'JLL New Homes Portfolio'});
  return Object.assign(doc,{brochureWarnings:[...warnings]});
 }

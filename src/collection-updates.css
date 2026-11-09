@@ -28,3 +28,5 @@
 .portfolio-menu-links>button{display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:46px;padding:10px;border:0;background:transparent;color:var(--ink);font-size:15px;text-align:start}
 
 .brochure-workspace label.brochure-map-option{display:flex;align-items:center;gap:10px;min-height:44px;margin-top:24px;font-size:16px}.brochure-map-option input{width:20px;height:20px;accent-color:var(--accent);flex:0 0 20px}
+
+.brochure-contact{min-width:0;overflow-wrap:anywhere}
