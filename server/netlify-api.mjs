@@ -2,6 +2,7 @@ import {brochureService,memoryBrochureFiles} from './brochures.mjs';
 import {markManualEdit,resolveSourceField} from './source-review.mjs';
 import {defaultCommute,CommuteError} from './commute.mjs';
 import {pendingInputService} from './pending-input.mjs';
+import {assignDevelopmentReview,confirmDevelopmentReview,developmentReviewWorkspace} from './development-reviews.mjs';
 import {recordStaff,touchStaff,initializeActivity,engagementService,activityReport} from './activity.mjs';
 import {translations as defaultTranslations} from './translations.mjs';
 import {staffGuide} from './staff-guide.mjs';
@@ -18,7 +19,7 @@ import {fetchSource} from './sync.mjs';
 import {ConflictError,refreshPortfolio} from './netlify-store.mjs';
 const reviewedDevelopment=raw=>{try{return validateDevelopment(raw);}catch(e){throw new AccessError(e.message);}};
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
-export function createNetlifyApi({repository,password,fetchListings=fetchSource,extract=extractListing,network,connections,translations=defaultTranslations,visitorRepository,pendingOptions,brochureFiles,commute=defaultCommute}){
+export function createNetlifyApi({repository,password,fetchListings=fetchSource,extract=extractListing,network,connections,translations=defaultTranslations,visitorRepository,pendingOptions,brochureFiles,commute=defaultCommute,reviewEmailConfigured=false}){
  const access=accessService(repository,password);
  const brochures=brochureService(repository,brochureFiles||memoryBrochureFiles());
  const pending=pendingInputService(repository,pendingOptions);
@@ -50,6 +51,25 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    if((await access.status()).setupRequired&&(!password||password.length<12))return json({error:'Administrator access is not configured for this deployment.'},503);
    const actor=await access.authenticate(request);
    if(!['GET','HEAD'].includes(method))access.csrf(request,actor);
+   if(route==='/api/admin/development-reviews'){
+    if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
+    if(method==='GET'){
+     const state=await repository.read();
+     return json(developmentReviewWorkspace(state,access.current(state,actor),reviewEmailConfigured));
+    }
+    if(method==='PUT'||method==='POST'){
+     const text=await request.text();
+     if(Buffer.byteLength(text)>4000)throw new AccessError('Development review request is too large.',413);
+     let body;try{body=JSON.parse(text);}catch{throw new AccessError('Send valid development review data.');}
+     return json(await repository.update(state=>{
+      const acting=access.current(state,actor);
+      if(method==='POST')return confirmDevelopmentReview(state,acting,body);
+      access.admin(acting);
+      return assignDevelopmentReview(state,body);
+     }));
+    }
+    return json({error:'Development review action not found.'},404);
+   }
    if(route==='/api/admin/brochures'||route.startsWith('/api/admin/brochures/')||route==='/api/admin/brochure-cover'){
     const check=state=>{const user=access.current(state,actor);if(user.legacy)throw new AccessError('Sign in with a staff account.',401);return user;};check(await repository.read());
     if(route==='/api/admin/brochure-cover'&&method==='GET'){const file=await brochures.cover(check);return file?new Response(file.bytes,{headers:{'Content-Type':file.type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}}):new Response(null,{status:204});}
@@ -91,7 +111,7 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    if(method==='POST'&&route==='/api/admin/sync'){access.stock(actor);return json(await refreshPortfolio(repository,await fetchListings(),state=>{const acting=access.current(state,actor);access.stock(acting);recordStaff(state,acting,'stock_sync');}));}
    if(method==='DELETE'&&route.startsWith('/api/admin/developments/')){
     const id=decodeURIComponent(route.slice('/api/admin/developments/'.length));
-    const found=await repository.update(state=>{const acting=access.current(state,actor);access.stock(acting);const target=state.developments.find(d=>d.id===id);if(target&&!access.canEdit(acting,target))throw new AccessError('You can only remove your own developments.',403);const before=state.developments.length;state.developments=state.developments.filter(d=>d.id!==id);if(target)recordStaff(state,acting,'stock_remove',{id,label:target.name});return before!==state.developments.length;});return json(found?{ok:true}:{error:'Development not found.'},found?200:404);
+    const found=await repository.update(state=>{const acting=access.current(state,actor);access.stock(acting);const target=state.developments.find(d=>d.id===id);if(target&&!access.canEdit(acting,target))throw new AccessError('You can only remove your own developments.',403);const before=state.developments.length;state.developments=state.developments.filter(d=>d.id!==id);if(target&&state.developmentReviews)state.developmentReviews=state.developmentReviews.filter(review=>review.developmentId!==id);if(target)recordStaff(state,acting,'stock_remove',{id,label:target.name});return before!==state.developments.length;});return json(found?{ok:true}:{error:'Development not found.'},found?200:404);
    }
    if(!['POST','PUT','PATCH'].includes(method))return json({error:'API endpoint not found.'},404);
    if(Number(request.headers.get('content-length')||0)>2_000_000)return json({error:'Import exceeds the 2MB limit.'},413);

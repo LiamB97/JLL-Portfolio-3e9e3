@@ -20,6 +20,12 @@ Vite serves the interface on port 5173 and proxies API calls to the server on po
 
 `npm test` runs validation/import tests and a real API integration test using an isolated temporary database. `npm run build` performs strict TypeScript checking and produces the browser bundle.
 
+## Development review reminders
+
+In the staff workspace, open **Development reviews**. An admin can assign each published development to an active staff account. The assigned consultant can open the published details and confirm the review. Assigning a development or confirming its details starts a 14-day review period. Due developments are grouped into one reminder per consultant when the scheduled job next runs.
+
+To enable delivery, set `DEVELOPMENT_REVIEW_RESEND_API_KEY` as a secret and `DEVELOPMENT_REVIEW_FROM` to a [verified Resend sender](https://resend.com/docs/dashboard/domains/introduction) in Netlify's production Functions environment, then deploy. The schedule checks for due reviews every hour on the published production site. Emails link to the signed-in staff workspace, and assignments and confirmations work before delivery is configured.
+
 ## Staff accounts and roles
 
 Open **Manage** in the header. Buyers never need an account. Staff use individual email/password accounts with these roles:

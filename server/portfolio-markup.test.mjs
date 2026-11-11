@@ -36,9 +36,9 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
   const base={d:seed.developments[0],stations:[],network:null,saved:false,toggleFavourite(){},close(){}};
   const broker={name:'Test Broker',slug:'owner-link',whatsapp:'+447900000001'};
   const $=load(renderToStaticMarkup(createElement(Detail,{...base,broker,collection:'chosen'})));
-  const links=$('a[href^="https://wa.me/"]');assert.equal(links.length,2);
+  const links=$('a[href^="https://wa.me/"]');assert.equal(links.length,1);assert.equal(links.closest('.detail-viewing-bar').length,1);
   for(const el of links){const url=new URL($(el).attr('href'));assert.equal(url.pathname,'/447900000001');assert.ok(url.searchParams.get('text').includes('book a viewing'));assert.ok(url.searchParams.get('text').includes('collection=chosen'));}
-  assert.ok($('body').text().includes('Book your viewing now'));
+  assert.ok(links.text().includes('Book a viewing via WhatsApp'));
   const generic=load(renderToStaticMarkup(createElement(Detail,base)));assert.ok(generic('button').toArray().some(el=>generic(el).text().includes('Copy viewing request')));assert.equal(generic('a[href^="https://wa.me/"]').length,0);
   const Stock=(await server.ssrLoadModule('/src/Admin.tsx')).default;
   const staff={id:'qa',name:'QA',role:'admin',whatsapp:'+447900000001',shareSlug:'qa'},request=async()=>[];

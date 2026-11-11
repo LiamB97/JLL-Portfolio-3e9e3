@@ -43,7 +43,7 @@ function App() {
   const [region,setRegion]=useState(''),[area,setArea]=useState('');
   const [beds, setBeds] = useState(''),[budget,setBudget]=useState('');
   const [selected, setSelected] = useState<string | null>(null);
-  const [view, setView] = useState<View>('map');
+  const [view, setView] = useState<View>('split');
   const [sort, setSort] = useState('price-desc');
   const isStaff=()=>location.hash==='#admin'||location.hash.startsWith('#invite=');
   const [admin, setAdmin] = useState(isStaff);

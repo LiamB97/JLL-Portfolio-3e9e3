@@ -67,3 +67,8 @@
 .assignment-unsaved{font-size:14px;color:var(--muted)}
 .assignment-feedback{font-size:14px;line-height:1.6;margin:14px 0 0;padding:12px;background:var(--page);border:1px solid var(--line);border-radius:5px;overflow-wrap:anywhere}
 @media(max-width:760px){.pending-assignment-panel .action-row .primary{width:100%;min-height:44px}}
+.development-reviews .admin-panel{margin-block:16px}
+.development-reviews .admin-panel select{display:block;width:100%;max-width:560px;min-height:44px;font-size:16px}
+.development-review-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 20px;padding:16px 0;border-top:1px solid var(--line)}
+.development-review-row h3{margin:0 0 6px}
+.development-review-row p{margin:4px 0;color:var(--muted)}

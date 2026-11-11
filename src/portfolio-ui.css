@@ -22,6 +22,17 @@
 .map-line-options i{width:24px;height:4px;border-radius:4px;flex-shrink:0}
 .map-line-picker small{display:block;font-size:14px;color:var(--muted);line-height:1.6}
 .layer-count{background:var(--selected-bg);min-width:20px;border-radius:50%;font-size:14px}
+.university-pin,.highlighted-station-pin{display:grid;place-items:center;border:2px solid #fff;border-radius:50%;color:#fff;box-shadow:0 2px 6px #172a4560;box-sizing:border-box}
+.university-pin{background:#51448b}
+.university-pin svg{width:17px;height:17px}
+.highlighted-station-pin{background:#00516a;border-width:3px;box-shadow:0 0 0 2px #00516a,0 4px 10px #172a4560}
+.highlighted-station-pin svg{width:20px;height:20px}
+.leaflet-tooltip.university-label,.leaflet-tooltip.highlighted-station-label{max-width:190px;white-space:normal;font:600 13px/1.3 var(--font-body);border:1px solid #fff;padding:5px 8px;border-radius:5px;color:#fff;box-shadow:0 2px 5px #172a4535}
+.leaflet-tooltip.university-label{background:#51448b}
+.leaflet-tooltip.highlighted-station-label{background:#00516a;font-size:14px}
+.leaflet-tooltip-right.university-label:before{border-right-color:#51448b}
+.leaflet-tooltip-right.highlighted-station-label:before{border-right-color:#00516a}
+.transport-popup .station-highlight-action{display:block;margin-top:10px;min-height:40px;padding:6px 10px;color:var(--ink);background:var(--surface)}
 .commute-search-trigger{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;background:var(--surface);color:var(--ink);padding:12px 14px;min-height:44px;font-size:14px}
 .commute-search-trigger>span{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .commute-search-trigger small{font-size:14px;color:var(--muted)}
@@ -35,7 +46,11 @@
 .buyer-filter-dialog .explorer-filter-fields label{font-size:14px}
 .buyer-filter-dialog select{display:block;width:100%;min-height:44px;font-size:16px;margin-top:7px;padding:10px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:5px}
 .buyer-filter-dialog .area-filter-note{font-size:14px;color:var(--muted);margin:18px 0}
-.viewing-top-action{font-size:14px}
+.detail-viewing-bar{position:sticky;inset-block-start:0;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(8px + env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 8px max(14px,env(safe-area-inset-left));background:var(--surface);border-bottom:1px solid var(--line)}
+.detail-viewing-bar .whatsapp-action{min-height:44px;max-width:100%;font-size:14px;white-space:normal;touch-action:manipulation}
+.detail-viewing-bar .whatsapp-action svg{flex-shrink:0}
+.detail-viewing-bar .detail-close{position:static;flex:0 0 44px;width:44px;height:44px;box-shadow:none;touch-action:manipulation}
+.detail:has(.detail-viewing-bar){overscroll-behavior:contain;scroll-padding-top:90px}
 .detail-actions{flex-wrap:wrap}
 .broker-note-copy strong{font-size:23px}
 .broker-note .broker-whatsapp{font-size:15px}

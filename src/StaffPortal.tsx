@@ -9,12 +9,14 @@ import StaffCollections from './StaffCollections';
 import StaffGuide from './StaffGuide';
 import StaffAnalytics from './StaffAnalytics';
 import StaffActivity from './StaffActivity';
+import StaffDevelopmentReviews from './StaffDevelopmentReviews';
 import BrokerProfile from './BrokerProfile';
 import StaffUsers from './StaffUsers';
 import type {Development} from './types';
 import type {StaffUser,StaffRequest} from './staff-types';
+const staffStartTab=()=>new URLSearchParams(location.search).get('staff')==='reviews'?'reviews':'home';
 export default function StaffPortal({items,onChange}:{items:Development[];onChange:()=>Promise<void>}){
- const [user,setUser]=useState<StaffUser|null>(null),[csrf,setCsrf]=useState(''),[ready,setReady]=useState(false),[status,setStatus]=useState({setupRequired:false,setupConfigured:false}),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[tab,setTab]=useState('home'),[visited,setVisited]=useState<string[]>(['home']),[privateItems,setPrivateItems]=useState<Development[]>([]);
+ const [user,setUser]=useState<StaffUser|null>(null),[csrf,setCsrf]=useState(''),[ready,setReady]=useState(false),[status,setStatus]=useState({setupRequired:false,setupConfigured:false}),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[tab,setTab]=useState(staffStartTab),[visited,setVisited]=useState<string[]>(()=>[staffStartTab()]),[privateItems,setPrivateItems]=useState<Development[]>([]);
  const content=useRef<HTMLDivElement>(null);
  useEffect(()=>{const heading=Array.from(content.current?.querySelectorAll<HTMLElement>('h1,h2')||[]).find(node=>!node.closest('[hidden]'));if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}},[tab,user?.id,ready]);
  const [whatsapp,setWhatsapp]=useState('');
@@ -24,7 +26,7 @@ export default function StaffPortal({items,onChange}:{items:Development[];onChan
  const refreshPrivate=useCallback(async()=>{setPrivateItems(await request('developments',undefined,'GET'));},[request]);
  useEffect(()=>{if(user&&user.role!=='broker')void refreshPrivate().catch(e=>setMessage(e.message));},[user,refreshPrivate]);
  useEffect(()=>{if(!user||!csrf)return;let lastInteraction=Date.now();const interaction=()=>{lastInteraction=Date.now();};const ping=()=>{if(document.visibilityState==='visible'&&Date.now()-lastInteraction<5*60000)void request('heartbeat',{}).catch(()=>{});};ping();const timer=window.setInterval(ping,5*60000);document.addEventListener('pointerdown',interaction,{passive:true});document.addEventListener('keydown',interaction);document.addEventListener('scroll',interaction,{passive:true,capture:true});document.addEventListener('visibilitychange',ping);return()=>{clearInterval(timer);document.removeEventListener('pointerdown',interaction);document.removeEventListener('keydown',interaction);document.removeEventListener('scroll',interaction,true);document.removeEventListener('visibilitychange',ping);};},[user?.id,csrf,request]);
- async function authenticate(){setBusy(true);setMessage('');try{const mode=invite?'accept':status.setupRequired?'bootstrap':'login';const body=mode==='accept'?{token:invite,password,email,whatsapp}:mode==='bootstrap'?{name,email,password,setupSecret,whatsapp}:{email,password};const r=await fetch('/api/access/'+mode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error||'Sign-in failed.');setUser(d.user);setCsrf(d.csrf);setTab('home');setVisited(['home']);setPassword('');setSetupSecret('');setInvite('');setStatus(s=>({...s,setupRequired:false}));location.hash='#admin';}catch(e){setMessage(e instanceof Error?e.message:'Sign-in failed.');}finally{setBusy(false);}}
+ async function authenticate(){setBusy(true);setMessage('');try{const mode=invite?'accept':status.setupRequired?'bootstrap':'login';const body=mode==='accept'?{token:invite,password,email,whatsapp}:mode==='bootstrap'?{name,email,password,setupSecret,whatsapp}:{email,password};const r=await fetch('/api/access/'+mode,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw Error(d.error||'Sign-in failed.');setUser(d.user);setCsrf(d.csrf);const start=staffStartTab();setTab(start);setVisited([start]);setPassword('');setSetupSecret('');setInvite('');setStatus(s=>({...s,setupRequired:false}));location.hash='#admin';}catch(e){setMessage(e instanceof Error?e.message:'Sign-in failed.');}finally{setBusy(false);}}
  async function logout(){setBusy(true);try{const r=await fetch('/api/access/logout',{method:'POST',headers:{'X-CSRF-Token':csrf}});if(!r.ok&&r.status!==401)throw Error('Sign-out failed. Please retry.');setUser(null);setCsrf('');setPrivateItems([]);setMessage('Signed out.');}catch(e){setMessage(e instanceof Error?e.message:'Unable to sign out.');}finally{setBusy(false);}}
  function navigate(next:string){if(!user||!workspaceGroups(user.role).some(g=>g.items.some(i=>i.id===next)))return;setTab(next);setVisited(old=>old.includes(next)?old:[...old,next]);window.scrollTo({top:0,behavior:'instant'});}
  if(!ready)return <main className="staff-portal"><p role="status">Loading staff access…</p></main>;
@@ -32,6 +34,7 @@ export default function StaffPortal({items,onChange}:{items:Development[];onChan
  {tab==='home'&&<StaffHome user={user} navigate={navigate}/>}
  {visited.includes('profile')&&<div hidden={tab!=='profile'}><BrokerProfile user={user} request={request} updated={setUser}/></div>}
  {tab==='guide'&&<StaffGuide request={request} onNavigate={navigate} canManageStock={user.role!=='broker'}/>}
+ {tab==='reviews'&&<StaffDevelopmentReviews request={request} user={user}/>}
  {tab==='activity'&&user.role==='admin'&&<StaffActivity request={request}/>}
  {tab==='analytics'&&user.role==='admin'&&<StaffAnalytics request={request}/>}
  {visited.includes('brochures')&&<div hidden={tab!=='brochures'}><StaffBrochures onProfile={()=>navigate('profile')} active={tab==='brochures'} items={items} user={user} request={request}/></div>}
