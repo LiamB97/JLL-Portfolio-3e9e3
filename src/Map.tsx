@@ -1,4 +1,4 @@
-import {CENTRAL_LONDON} from './map-view';
+import {CENTRAL_LONDON, placeStationLabels, type StationLabelSide} from './map-view';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -22,7 +22,26 @@ const osmAttribution='&copy; <a href="https://www.openstreetmap.org/copyright">O
 const vectorAttribution='<a href="https://openfreemap.org">OpenFreeMap</a> · &copy; <a href="https://openmaptiles.org">OpenMapTiles</a>';
 const universityIcon=L.divIcon({className:'university-pin',iconSize:[26,26],iconAnchor:[13,13],html:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10l10-5 10 5-10 5-10-5zM6 12v5c3 3 9 3 12 0v-5m4-2v6"/></svg>'});
 const stationIcon=L.divIcon({className:'highlighted-station-pin',iconSize:[36,36],iconAnchor:[18,18],html:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 17l-2 4m10-4 2 4M9 14h.01M15 14h.01"/></svg>'});
+const mapLayersOpenedKey = 'jll-map-layers-opened-v1';
 function mapLabel(text:string){const label=document.createElement('span');label.textContent=text;return label;}
+
+function showStationLabel(marker: L.CircleMarker, name: string, direction?: L.Direction) {
+  if (!direction) {
+    marker.closeTooltip();
+    return;
+  }
+  const tooltip = marker.getTooltip();
+  if (!tooltip) {
+    marker.bindTooltip(mapLabel(name), {permanent: true, direction, opacity: 1, pane: 'transportStationLabels', className: 'transport-station-label'});
+    return;
+  }
+  if (tooltip.options.direction !== direction) {
+    tooltip.options.direction = direction;
+    tooltip.update();
+  }
+  if (!tooltip.isOpen()) marker.openTooltip();
+}
+
 function frameOptions(m:L.Map):L.FitBoundsOptions{
  // Read the actual overlay bounds, so framing also fits translated controls and
  // short landscape viewports. Desktop and Split controls remain in normal flow.
@@ -55,6 +74,9 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   const landmarkLayer=useRef<L.LayerGroup|null>(null);
   const universityLayer=useRef<L.LayerGroup|null>(null);
   const [showLandmarks,setShowLandmarks]=useState(false),[showUniversities,setShowUniversities]=useState(false),[toolsOpen,setToolsOpen]=useState(false);
+  const [layersOpened, setLayersOpened] = useState(() => {
+    try { return sessionStorage.getItem(mapLayersOpenedKey) === '1'; } catch { return false; }
+  });
   const [lineFilter,setLineFilter]=useState<string[]>([]);
   const [stationFilter,setStationFilter]=useState<string[]>([]);
   useEffect(()=>{setShowLines(transportDefaults?.showLines??false);setShowStations(transportDefaults?.showStations??false);setLineFilter(transportDefaults?.lineIds??[]);setStationFilter(transportDefaults?.stationIds??[]);},[transportDefaults]);
@@ -81,6 +103,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     m.createPane('transportLines');m.getPane('transportLines')!.style.zIndex='410';
     m.createPane('landmarks');m.getPane('landmarks')!.style.zIndex='430';
     m.createPane('transportStations');m.getPane('transportStations')!.style.zIndex='450';
+    m.createPane('transportStationLabels')!.style.zIndex='460';
     m.createPane('universities');m.getPane('universities')!.style.zIndex='510';
     m.createPane('highlightedStations');m.getPane('highlightedStations')!.style.zIndex='620';
     let vector:L.MaplibreGL|null=null, fallback=false, vectorLoaded=false;
@@ -202,7 +225,8 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     }
   },[showLines,shownLines,dark]);
   useEffect(()=>{
-    const group=stationLayer.current;if(!group)return;group.clearLayers();if(!showStations||!network)return;
+    const m=map.current,group=stationLayer.current;if(!m||!group)return;group.clearLayers();if(!showStations||!network)return;
+    const dots: {marker: L.CircleMarker; name: string; connections: number; side?: StationLabelSide; hovered: boolean}[] = [];
     for(const station of shownStations){
       const id=station.id,highlighted=Boolean(id&&stationFilter.includes(id));
       const location:L.LatLngTuple=[station.lat,station.lng];
@@ -214,12 +238,58 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
         continue;
       }
       const colour=network.lines.find(l=>l.id===(lineFilter.find(id=>station.lineIds?.includes(id))||station.lineIds?.[0]))?.colour||'#596575';
-      L.circleMarker(location,{pane:'transportStations',radius:6,color:colour,fillColor:dark?'#1F2A35':'#fff',fillOpacity:1,weight:2.5}).bindTooltip(mapLabel(station.name)).bindPopup(popup).addTo(group);
+      const marker=L.circleMarker(location,{pane:'transportStations',radius:6,color:colour,fillColor:dark?'#1F2A35':'#fff',fillOpacity:1,weight:2.5}).bindPopup(popup).addTo(group);
+      const dot: typeof dots[number] = {marker, name: station.name, connections: station.lineIds?.length ?? 0, hovered: false};
+      marker.on('mouseover', () => {
+        dot.hovered = true;
+        showStationLabel(marker, dot.name, dot.side ?? 'auto');
+        marker.getTooltip()?.bringToFront();
+      }).on('mouseout', () => {
+        dot.hovered = false;
+        if (!dot.side) marker.closeTooltip();
+      });
+      dots.push(dot);
     }
+    if (!dots.length) return;
+    dots.sort((a, b) => b.connections - a.connections);
+    const measure = document.createElement('canvas').getContext('2d');
+    if (measure) measure.font = '600 14px ' + getComputedStyle(m.getContainer()).getPropertyValue('--font-body');
+    const updateLabels = () => {
+      const viewport = m.getBounds();
+      const container = m.getContainer();
+      const frame = container.getBoundingClientRect();
+      const controls = Array.from(container.closest('.map-shell')?.querySelectorAll('.map-utilities, .leaflet-control-zoom, .leaflet-control-attribution') ?? []);
+      const toolbar = container.closest('.discovery-page')?.querySelector('.discovery-toolbar');
+      if (toolbar) controls.push(toolbar);
+      const reserved = controls.map(control => {
+        const rect = control.getBoundingClientRect();
+        return {left: rect.left - frame.left, right: rect.right - frame.left, top: rect.top - frame.top, bottom: rect.bottom - frame.top};
+      });
+      const visible = [];
+      for (const dot of dots) {
+        dot.side = undefined;
+        const location = dot.marker.getLatLng();
+        if (!viewport.contains(location)) continue;
+        const {x, y} = m.latLngToContainerPoint(location);
+        const textWidth = measure?.measureText(dot.name).width ?? dot.name.length * 8;
+        visible.push({dot, x, y, labelWidth: Math.ceil(textWidth) + 18});
+      }
+      const sides = placeStationLabels(visible, m.getSize(), reserved);
+      visible.forEach(({dot}, index) => { dot.side = sides[index]; });
+      for (const dot of dots) showStationLabel(dot.marker, dot.name, dot.side ?? (dot.hovered ? 'auto' : undefined));
+    };
+    updateLabels();
+    m.on('moveend resize', updateLabels);
+    return () => { m.off('moveend resize', updateLabels); };
   },[showStations,shownStations,network,lineFilter,stationFilter,dark,changeStations,t]);
   const activeLayerCount=[showLines,showStations,showLandmarks,showUniversities].filter(Boolean).length;
+  const openMapLayers = () => {
+    setLayersOpened(true);
+    setToolsOpen(true);
+    try { sessionStorage.setItem(mapLayersOpenedKey, '1'); } catch {}
+  };
   return <div className="map-shell" data-map-ready={baseReady}>{!baseReady&&<div className="map-loading-indicator" role="status">{t("Loading London map…")}</div>}<div ref={el} className="map" aria-label={t("Map of London developments")}/>
-    <div className="map-utilities"><button className="map-layer-button" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={()=>setToolsOpen(true)}><SlidersHorizontal size={16}/>{t('Map layers')}{activeLayerCount>0&&<span className="layer-count">{activeLayerCount}</span>}</button>
+    <div className="map-utilities"><button className="map-layer-button" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={openMapLayers}>{!layersOpened&&<span className="map-layer-cue" aria-hidden="true"/>}<SlidersHorizontal size={16}/>{t('Map layers')}{activeLayerCount>0&&<span className="layer-count">{activeLayerCount}</span>}</button>
     <button className="map-fit-button" aria-label={t('Show matching homes')} title={t('Show matching homes')} disabled={!items.length} onClick={()=>{const m=map.current;if(!m||!items.length)return;m.fitBounds(L.latLngBounds([...items,...(commuteDestination?[commuteDestination]:[])].map(d=>[d.lat,d.lng] as [number,number])),frameOptions(m));}}><LocateFixed size={19}/><span>{t('Show matching homes')}</span></button>
     {onReset&&<button className="map-reset-button" aria-label={t('Reset map')} title={t('Reset map')} onClick={onReset}><RotateCcw size={18}/><span>{t('Reset map')}</span></button>}
     </div>

@@ -32,6 +32,15 @@
 .leaflet-tooltip.highlighted-station-label{background:#00516a;font-size:14px}
 .leaflet-tooltip-right.university-label:before{border-right-color:#51448b}
 .leaflet-tooltip-right.highlighted-station-label:before{border-right-color:#00516a}
+.map-shell .leaflet-tooltip.transport-station-label{
+ background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:4px;
+ padding:2px 6px;font:600 14px/18px var(--font-body);box-shadow:0 1px 4px #131e2926;
+}
+.leaflet-tooltip.transport-station-label::before{display:none}
+.leaflet-tooltip-right.transport-station-label{margin-left:10px}
+.leaflet-tooltip-left.transport-station-label{margin-left:-10px}
+.leaflet-tooltip-top.transport-station-label{margin-top:-10px}
+.leaflet-tooltip-bottom.transport-station-label{margin-top:10px}
 .transport-popup .station-highlight-action{display:block;margin-top:10px;min-height:40px;padding:6px 10px;color:var(--ink);background:var(--surface)}
 .commute-search-trigger{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;background:var(--surface);color:var(--ink);padding:12px 14px;min-height:44px;font-size:14px}
 .commute-search-trigger>span{display:flex;align-items:center;gap:8px;flex-wrap:wrap}

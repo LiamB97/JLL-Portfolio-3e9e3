@@ -66,6 +66,28 @@
 /* Controls have one anchor and reserve space for Leaflet zoom controls. */
 .map-utilities{position:absolute;bottom:36px;inset-inline-start:16px;display:flex;gap:8px;z-index:600;max-width:calc(100% - 82px)}
 .map-utilities button{min-height:44px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 2px 8px #0002;padding:10px 12px;font-size:14px;gap:8px}
+.map-layer-button{position:relative}
+.map-utilities .map-layer-button:has(.map-layer-cue){border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.map-layer-cue{display:none}
+@media (prefers-reduced-motion:no-preference){
+ @supports (mask-composite:exclude){
+  .map-layer-cue{
+   display:block;position:absolute;inset:-2px;overflow:hidden;border-radius:7px;padding:2px;pointer-events:none;
+   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+  }
+  .map-layer-button:focus-visible .map-layer-cue{visibility:hidden}
+  .map-layer-cue::before{
+   content:"";position:absolute;top:50%;left:50%;width:160%;aspect-ratio:1;opacity:0;
+   background:conic-gradient(transparent 0 62%,color-mix(in srgb,var(--accent) 30%,transparent) 75%,var(--accent) 91%,transparent 99%);
+   animation:map-layer-sweep 16s linear 3s 3;
+  }
+ }
+}
+@keyframes map-layer-sweep{
+ 0%{opacity:0;transform:translate(-50%,-50%) rotate(-.15turn)}
+ .8%,4.9%{opacity:1}
+ 5.8%,100%{opacity:0;transform:translate(-50%,-50%) rotate(.85turn)}
+}
 .map-fit-button{min-width:44px}
 .discovery-page .map-note{display:none}
 .discovery-page .leaflet-control-zoom{margin-bottom:36px;margin-inline-end:14px}
