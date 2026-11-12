@@ -34,12 +34,36 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
   assert.equal(activity('.activity-filters input[type=date]').length,2);assert.equal(activity('.activity-filters label').length,6);assert.equal(activity('.activity-advanced[open]').length,0);assert.equal(activity('.activity-advanced label').length,3);
   const Detail=(await server.ssrLoadModule('/src/Detail.tsx')).default;
   const base={d:seed.developments[0],stations:[],network:null,saved:false,toggleFavourite(){},close(){}};
-  const broker={name:'Test Broker',slug:'owner-link',whatsapp:'+447900000001'};
+  const broker={name:'Test Broker',slug:'owner-link',whatsapp:'+447900000001',photo:'data:image/jpeg;base64,cGhvdG8='};
   const $=load(renderToStaticMarkup(createElement(Detail,{...base,broker,collection:'chosen'})));
   const links=$('a[href^="https://wa.me/"]');assert.equal(links.length,1);assert.equal(links.closest('.detail-viewing-bar').length,1);
-  for(const el of links){const url=new URL($(el).attr('href'));assert.equal(url.pathname,'/447900000001');assert.ok(url.searchParams.get('text').includes('book a viewing'));assert.ok(url.searchParams.get('text').includes('collection=chosen'));}
-  assert.ok(links.text().includes('Book a viewing via WhatsApp'));
-  const generic=load(renderToStaticMarkup(createElement(Detail,base)));assert.ok(generic('button').toArray().some(el=>generic(el).text().includes('Copy viewing request')));assert.equal(generic('a[href^="https://wa.me/"]').length,0);
+  const enquiry=new URL(links.attr('href'));assert.equal(enquiry.pathname,'/447900000001');
+  assert.match(enquiry.searchParams.get('text'),/current availability, pricing and viewing options/);
+  assert.match(enquiry.searchParams.get('text'),/collection=chosen/);
+  assert.match(links.text(),/Enquire on WhatsApp/);
+  assert.equal($('.detail-broker-identity strong').text(),'Test Broker');
+  assert.equal($('.detail-broker-avatar img').attr('src'),broker.photo);
+  const personal=load(renderToStaticMarkup(createElement(Detail,{...base,broker:{...broker,photo:undefined}})));
+  assert.equal(personal('.detail-broker-avatar').text(),'TB');
+  assert.match(new URL(personal('.detail-enquiry-action').attr('href')).searchParams.get('text'),/broker=owner-link/);
+  globalThis.location=new URL('https://portfolio.example/?utm_source=qa');
+  const publicDetail=load(renderToStaticMarkup(createElement(Detail,base)));
+  const publicEnquiry=publicDetail('.detail-viewing-bar a.detail-enquiry-action');
+  assert.equal(publicEnquiry.length,1);
+  const assistant=new URL(publicEnquiry.attr('href'));
+  assert.equal(assistant.origin,'https://wa.me');
+  assert.equal(assistant.pathname,'/447711939577');
+  const developmentUrl=new URL('https://portfolio.example/');
+  developmentUrl.searchParams.set('development',base.d.id);
+  assert.equal(assistant.searchParams.get('text'),`Hi, I’d like to enquire about ${base.d.name}. Could you share more information?\n${developmentUrl.href}`);
+  assert.equal(publicDetail('.detail-broker-identity strong').text(),'JLL Residential');
+  assert.equal(publicDetail('.detail-broker-role').text(),'Automated assistant');
+  assert.equal(publicDetail('.viewing-copy').length,0);
+  for(const props of [{preview:true},{preview:true,broker},{brokerLoading:true}]){
+   const unavailable=load(renderToStaticMarkup(createElement(Detail,{...base,...props})));
+   assert.equal(unavailable('.detail-enquiry-action').length,0);
+   assert.equal(unavailable('button[aria-label="Close development"]').length,1);
+  }
   const Stock=(await server.ssrLoadModule('/src/Admin.tsx')).default;
   const staff={id:'qa',name:'QA',role:'admin',whatsapp:'+447900000001',shareSlug:'qa'},request=async()=>[];
   const stock=load(renderToStaticMarkup(createElement(Stock,{items:seed.developments,user:staff,request,onChange:async()=>{}})));assert.notEqual(stock('.admin-grid').attr('hidden'),undefined);assert.ok(stock('.admin-row').length>0);

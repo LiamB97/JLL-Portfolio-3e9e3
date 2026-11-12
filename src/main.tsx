@@ -58,7 +58,7 @@ function App() {
   const featuredIds=useMemo(()=>highlightsEnabled?collection?.developmentIds||[]:[],[collection,highlightsEnabled]);
   const initialLink=useRef(false);
   useEffect(()=>{const slug=new URLSearchParams(location.search).get('collection');if(!slug)return;fetch('/api/collections/'+encodeURIComponent(slug)).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'This collection is unavailable.');setCollection(d);setBroker(d.broker||null);}).catch(e=>setCollectionError(e.message)).finally(()=>setLinkLoading(false));},[]);
-  useEffect(()=>{const params=new URLSearchParams(location.search);if(params.has('collection'))return;const slug=params.get('broker');if(!slug)return;fetch('/api/brokers/'+encodeURIComponent(slug)).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'This broker link is unavailable.');setBroker(d);}).catch(e=>setCollectionError(e.message)).finally(()=>setLinkLoading(false));},[]);
+  useEffect(()=>{const params=new URLSearchParams(location.search);if(params.get('collection'))return;const slug=params.get('broker');if(!slug)return;fetch('/api/brokers/'+encodeURIComponent(slug)).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'This broker link is unavailable.');setBroker(d);}).catch(e=>setCollectionError(e.message)).finally(()=>setLinkLoading(false));},[]);
   useEffect(()=>{if(loading||initialLink.current||!items.length)return;initialLink.current=true;const id=new URLSearchParams(location.search).get('development');if(id&&items.some(d=>d.id===id))setSelected(id);},[items,loading]);
   const [filters, setFilters] = useState(false);
   const refresh = useCallback(async () => {
@@ -131,7 +131,7 @@ function App() {
     </main>}
     <AnalyticsConsent/>
     {showFavourites&&!admin&&!howItWorks&&<Favourites items={items} ids={favourites.ids} toggle={toggleFavourite} persistent={favourites.persistent} broker={broker} collection={collection?.slug} close={()=>setShowFavourites(false)} open={id=>{setShowFavourites(false);setSelected(id);}}/>}
-    {active && !admin && !howItWorks && <Detail selectedBedrooms={beds} key={active.id} broker={broker} collection={collection?.slug} d={active} stations={stations} network={network} saved={favourites.ids.includes(active.id)} toggleFavourite={()=>toggleFavourite(active.id)} close={() => setSelected(null)}/>}
+    {active && !admin && !howItWorks && <Detail selectedBedrooms={beds} key={active.id} broker={broker} brokerLoading={linkLoading} collection={collection?.slug} d={active} stations={stations} network={network} saved={favourites.ids.includes(active.id)} toggleFavourite={()=>toggleFavourite(active.id)} close={() => setSelected(null)}/>}
   </div>;
 }
 
