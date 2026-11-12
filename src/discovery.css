@@ -138,8 +138,21 @@
  .discovery-disclaimer{font-size:14px;padding:4px 12px}
  .map-utilities{bottom:36px;inset-inline-start:12px;gap:7px}.map-utilities button{font-size:14px;padding:10px}.map-fit-button span{display:none}
  .discovery-page.view-split{overflow:auto}.discovery-page.view-split .discovery-workspace{display:flex;flex-direction:column;flex:none;height:auto}
- .discovery-page.view-split .map-shell{height:clamp(300px,46svh,460px);flex:none}
+ /* Reserve room for the listing controls and the start of the first card. */
+ .discovery-page.view-split .map-shell{height:clamp(160px,calc(100svh - 390px),320px);flex:none}
  .discovery-page :is(.explorer-list){height:auto;overflow:visible;padding:18px 12px}
+ .discovery-page.view-split .explorer-list{padding:8px 12px 20px}
+ .discovery-page.view-split .listing-heading{
+  display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;margin:0 0 8px;
+ }
+ .discovery-page.view-split .listing-heading h2{display:flex;align-items:center;gap:5px;font-size:16px;font-weight:600}
+ .discovery-page.view-split .listing-heading h2 svg{flex-shrink:0;color:var(--accent)}
+ .discovery-page.view-split .listing-heading>label{width:min(100%,220px);justify-self:end}
+ .discovery-page.view-split .listing-sort-caption{display:none}
+ .discovery-page.view-split .listing-heading select{
+  min-height:44px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+  background:var(--surface);color:var(--ink);font-size:16px;text-overflow:ellipsis;
+ }
  .discovery-page.view-map .discovery-workspace{min-height:150px}
  .discovery-page .leaflet-control-zoom{margin-inline-end:12px}
  .staff-portal .activity-filters{grid-template-columns:minmax(0,1fr);padding:16px;gap:18px}

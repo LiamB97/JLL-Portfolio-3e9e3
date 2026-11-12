@@ -8,7 +8,7 @@ import {commuteMatches,type CommuteReport} from './commute';
 import WhatsAppIcon from './WhatsAppIcon';
 import React, {useCallback, useEffect, useState, useRef, useMemo, lazy, Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ArrowUpRight,ArrowRight,MapPin,Search,SlidersHorizontal,X,TrainFront,Building2,Heart,Star} from 'lucide-react';
+import {ArrowUpRight,ArrowRight,MapPin,Search,SlidersHorizontal,X,TrainFront,Building2,Heart,Star,ChevronDown} from 'lucide-react';
 const PortfolioMap=lazy(()=>import('./Map'));
 const BuyerGuide=lazy(()=>import('./BuyerGuide'));
 const StaffPortal=lazy(()=>import('./StaffPortal'));
@@ -129,7 +129,21 @@ function App() {
       <div className="discovery-workspace">
         {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers} onDimOthers={()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={highlightsEnabled?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
         {view !== 'map' && <section className="explorer-list" aria-label={t("Development listings")}>
-          <div className="listing-heading"><h2>{t("London New Homes")}</h2><label>{t("Sort by")}<select aria-label={t("Sort developments")} value={sort} onChange={e => setSort(e.target.value)}><option value="curated">{t("Our collection")}</option><option value="price-desc">{t('Starting price: high to low')}</option><option value="price">{t('Starting price: low to high')}</option><option value="name">{t("Name: A–Z")}</option><option value="area">{t("Area: A–Z")}</option></select></label></div>
+          <div className="listing-heading">
+            {narrow && view === 'split'
+              ? <h2>{t('Developments')} <ChevronDown size={18} aria-hidden="true"/></h2>
+              : <h2>{t('London New Homes')}</h2>}
+            <label>
+              <span className="listing-sort-caption">{t('Sort by')}</span>
+              <select aria-label={t('Sort developments')} value={sort} onChange={e => setSort(e.target.value)}>
+                <option value="curated">{t('Our collection')}</option>
+                <option value="price-desc">{t('Starting price: high to low')}</option>
+                <option value="price">{t('Starting price: low to high')}</option>
+                <option value="name">{t('Name: A–Z')}</option>
+                <option value="area">{t('Area: A–Z')}</option>
+              </select>
+            </label>
+          </div>
           {loading ? <p className="empty-state">{t("Loading London New Homes…")}</p> : !filtered.length ? <div className="empty-state"><Building2 size={30}/><h2>{t(favouritesOnly?"No favourites match this view":"No homes found")}</h2><p>{t(favouritesOnly?"Save developments with the heart button, or clear your filters to see more favourites.":"Try a different area or broaden your filters.")}</p><button onClick={reset}>{t("Reset filters")}</button></div> : <div className="cards">
             {filtered.map(d => <article className="property-card-wrap" key={d.id}><button className={`property-card ${selected === d.id ? 'selected' : ''}`} key={d.id} onClick={() => setSelected(d.id)}>
               <div className="card-image"><DevelopmentPhoto development={d} loading="lazy"/><span className={featuredIds.includes(d.id)?"card-tag featured-tag":"card-tag"}>{featuredIds.includes(d.id)?t('Featured'):d.sample ? t('Sample collection') : t(d.status)}</span><span className="card-arrow"><ArrowUpRight size={18}/></span></div>
