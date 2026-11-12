@@ -62,31 +62,43 @@
 .discovery-page.view-list .discovery-workspace{display:block;flex:none}
 .discovery-page.view-list .explorer-list{height:auto;overflow:visible;max-width:1440px;margin:auto}
 .discovery-disclaimer{position:static;flex-shrink:0;padding:5px 16px;font-size:14px;line-height:1.4;text-align:center;background:var(--surface);color:var(--muted);border-top:1px solid var(--line)}
-.discovery-list-jump{display:none}
 /* Controls have one anchor and reserve space for Leaflet zoom controls. */
 .map-utilities{position:absolute;bottom:36px;inset-inline-start:16px;display:flex;gap:8px;z-index:600;max-width:calc(100% - 82px)}
 .map-utilities button{min-height:44px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 2px 8px #0002;padding:10px 12px;font-size:14px;gap:8px}
-.map-layer-button{position:relative}
-.map-utilities .map-layer-button:has(.map-layer-cue){border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.map-utilities .map-layer-button{position:relative;background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);font-weight:600}
+.map-layer-button .layer-count{background:color-mix(in srgb,var(--accent-contrast) 20%,transparent)}
+.map-utilities .map-layer-button:active{filter:brightness(.91)}
 .map-layer-cue{display:none}
 @media (prefers-reduced-motion:no-preference){
+ .map-layer-cue{display:block;position:absolute;inset:-4px;border-radius:8px;pointer-events:none}
+ .map-layer-button:focus-visible .map-layer-cue{visibility:hidden}
+ .map-layer-cue::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;border:2px solid var(--accent);
+  box-shadow:0 0 0 2px var(--surface),0 0 15px 5px color-mix(in srgb,var(--accent) 42%,transparent);
+  opacity:0;animation:map-layer-pulse 10s linear .65s 3;
+ }
  @supports (mask-composite:exclude){
-  .map-layer-cue{
-   display:block;position:absolute;inset:-2px;overflow:hidden;border-radius:7px;padding:2px;pointer-events:none;
+  .map-layer-trace{
+   position:absolute;inset:1px;overflow:hidden;border-radius:7px;padding:3px;
    mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
   }
-  .map-layer-button:focus-visible .map-layer-cue{visibility:hidden}
-  .map-layer-cue::before{
+  .map-layer-trace::before{
    content:"";position:absolute;top:50%;left:50%;width:160%;aspect-ratio:1;opacity:0;
-   background:conic-gradient(transparent 0 62%,color-mix(in srgb,var(--accent) 30%,transparent) 75%,var(--accent) 91%,transparent 99%);
-   animation:map-layer-sweep 16s linear 3s 3;
+   background:conic-gradient(transparent 0 62%,color-mix(in srgb,var(--sand) 30%,transparent) 75%,#fff7e8 91%,transparent 99%);
+   animation:map-layer-sweep 10s linear .65s 3;
   }
  }
 }
+@keyframes map-layer-pulse{
+ 0%{opacity:0;transform:scale(.98)}
+ 1.2%{opacity:1;transform:scale(1)}
+ 4.8%{opacity:1}
+ 11%,100%{opacity:0;transform:scale(1.06)}
+}
 @keyframes map-layer-sweep{
  0%{opacity:0;transform:translate(-50%,-50%) rotate(-.15turn)}
- .8%,4.9%{opacity:1}
- 5.8%,100%{opacity:0;transform:translate(-50%,-50%) rotate(.85turn)}
+ 1.2%,9%{opacity:1}
+ 11%,100%{opacity:0;transform:translate(-50%,-50%) rotate(.85turn)}
 }
 .map-fit-button{min-width:44px}
 .discovery-page .map-note{display:none}
@@ -110,11 +122,13 @@
  .discovery-toolbar{grid-template-columns:minmax(240px,1fr) minmax(180px,270px)}.discovery-count{grid-column:1/-1;justify-content:flex-start}
 }
 @media(max-width:760px){
- .portfolio-header,.portfolio-header:not(.with-views){grid-template-columns:minmax(0,1fr) auto;grid-template-rows:64px;padding:0 14px;gap:0 10px}
- .portfolio-header.with-views{grid-template-rows:64px 52px}
- .portfolio-header-brand{width:180px}.portfolio-header-title{display:none}.portfolio-header-buttons{grid-column:2}
- .portfolio-views{grid-column:1/-1;grid-row:2;justify-self:stretch;margin:0 0 4px;width:100%;height:48px;padding:1px;gap:4px}
+ .portfolio-header,.portfolio-header:not(.with-views){grid-template-columns:minmax(0,1fr) auto;grid-template-rows:56px;padding:0 14px;gap:0 10px}
+ .portfolio-header.with-views{grid-template-rows:56px auto}
+ .portfolio-header-brand{width:160px}.portfolio-header-title{display:none}.portfolio-header-buttons{grid-column:2}
+ .portfolio-views{grid-column:1/-1;grid-row:2;justify-self:stretch;margin:0 0 8px;width:100%;padding:2px;gap:4px}
  .portfolio-views button{flex:1;min-width:0;min-height:44px;padding:6px;font-size:14px}
+ .portfolio-views button span{display:inline}
+ .portfolio-views button[aria-pressed=true]{background:var(--accent);color:var(--accent-contrast);font-weight:600}
  .discovery-toolbar{grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:10px 12px}
  .discovery-search{grid-column:1/-1;height:46px;padding-inline-start:10px}.discovery-search input{font-size:16px}.discovery-filter-trigger>span{display:none}
  .discovery-toolbar .commute-search-trigger{min-height:42px;padding:9px 10px;font-size:14px}.commute-label-long{display:none}.commute-label-short{display:inline}.discovery-toolbar .commute-search-trigger small{display:none}
@@ -127,7 +141,6 @@
  .discovery-page.view-split .map-shell{height:clamp(300px,46svh,460px);flex:none}
  .discovery-page :is(.explorer-list){height:auto;overflow:visible;padding:18px 12px}
  .discovery-page.view-map .discovery-workspace{min-height:150px}
- .discovery-page.view-split .discovery-list-jump{display:inline-flex;grid-column:1/-1;justify-content:space-between;min-height:40px;font-size:14px}
  .discovery-page .leaflet-control-zoom{margin-inline-end:12px}
  .staff-portal .activity-filters{grid-template-columns:minmax(0,1fr);padding:16px;gap:18px}
  .staff-portal .activity-filters .primary{justify-self:stretch;width:100%;min-height:46px}
@@ -144,20 +157,13 @@
 
 .activity-advanced{grid-column:1/-1;border-top:1px solid var(--line);padding-top:8px}.activity-advanced summary{min-height:44px;align-content:center;cursor:pointer;font-size:14px}.activity-advanced summary span{font-size:14px;color:var(--accent)}.activity-advanced-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding-top:12px}@media(max-width:760px){.activity-advanced-grid{grid-template-columns:minmax(0,1fr)}}
 
-/* On phones, prioritise the map canvas over persistent navigation rows. */
-.portfolio-mobile-broker,.portfolio-mobile-view-picker,.portfolio-mobile-context{display:none}
-.portfolio-menu-view-options{display:flex;gap:8px}
-.portfolio-menu-view-options button{flex:1;min-width:0;min-height:44px;padding:10px 8px;font-size:14px}
-.portfolio-menu-view-options button[aria-pressed=true]{background:var(--selected-bg);color:var(--accent);border-color:var(--accent)}
+.portfolio-mobile-broker,.portfolio-mobile-context{display:none}
 .portfolio-mobile-context p{font-size:14px;color:var(--muted);margin:0 0 16px}
 .filter-collection-context{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .filter-collection-context strong{display:flex;align-items:center;gap:8px;overflow-wrap:anywhere}
 .filter-collection-context p{font-size:14px;color:var(--muted);margin:8px 0 0}
 @media(max-width:760px){
- .portfolio-header,.portfolio-header:not(.with-views),.portfolio-header.with-views{grid-template-rows:56px}
- .portfolio-header-brand{width:160px}
- .portfolio-header>.portfolio-views{display:none}
- .portfolio-mobile-view-picker,.portfolio-mobile-context{display:block}
+ .portfolio-mobile-context{display:block}
  .portfolio-header-buttons>.portfolio-mobile-broker{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;background:#25d366;color:#071e18;border-radius:50%;padding:6px}
  .portfolio-mobile-broker img{display:block;width:32px;height:32px;object-fit:cover;border-radius:50%}
  .discovery-page.view-map{position:relative}

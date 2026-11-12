@@ -149,3 +149,4 @@
 .friend-share-dialog :is(button,a){min-height:44px}
 
 .workspace-dialog-footer{flex-wrap:wrap}.workspace-dialog-heading h2{min-width:0;overflow-wrap:anywhere}.staff-heading>div{min-width:0}.staff-heading :is(h1,p){overflow-wrap:anywhere}
+.photo-unavailable{position:absolute;inset-inline-start:12px;bottom:12px;padding:4px 8px;border-radius:4px;background:var(--surface);color:var(--ink);font-size:14px}

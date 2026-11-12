@@ -8,7 +8,7 @@ import {commuteMatches,type CommuteReport} from './commute';
 import WhatsAppIcon from './WhatsAppIcon';
 import React, {useCallback, useEffect, useState, useRef, useMemo, lazy, Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ArrowUpRight,ArrowRight,MapPin,Search,SlidersHorizontal,X,TrainFront,Building2,Heart,Star,ChevronDown} from 'lucide-react';
+import {ArrowUpRight,ArrowRight,MapPin,Search,SlidersHorizontal,X,TrainFront,Building2,Heart,Star} from 'lucide-react';
 const PortfolioMap=lazy(()=>import('./Map'));
 const BuyerGuide=lazy(()=>import('./BuyerGuide'));
 const StaffPortal=lazy(()=>import('./StaffPortal'));
@@ -26,8 +26,11 @@ import './review-updates.css';
 import './collection-updates.css';
 import {PreferencesProvider,useLocale} from './i18n';
 import Detail from './Detail';
+import DevelopmentPhoto from './DevelopmentPhoto';
 import AnalyticsConsent from './AnalyticsConsent';
 import {track,setAnalyticsContext,setCurrentDevelopment} from './analytics';
+
+const narrowViewport = '(max-width: 760px)';
 
 function App() {
   const {t,language}=useLocale();
@@ -43,7 +46,16 @@ function App() {
   const [region,setRegion]=useState(''),[area,setArea]=useState('');
   const [beds, setBeds] = useState(''),[budget,setBudget]=useState('');
   const [selected, setSelected] = useState<string | null>(null);
-  const [view, setView] = useState<View>('split');
+  const [chosenView, setView] = useState<View | null>(null);
+  const [narrow, setNarrow] = useState(() => window.matchMedia(narrowViewport).matches);
+  const view = chosenView ?? (narrow ? 'map' : 'split');
+  useEffect(() => {
+    const viewport = window.matchMedia(narrowViewport);
+    const update = () => setNarrow(viewport.matches);
+    update();
+    viewport.addEventListener('change', update);
+    return () => viewport.removeEventListener('change', update);
+  }, []);
   const [sort, setSort] = useState('price-desc');
   const isStaff=()=>location.hash==='#admin'||location.hash.startsWith('#invite=');
   const [admin, setAdmin] = useState(isStaff);
@@ -113,15 +125,14 @@ function App() {
         {collectionError&&<div className="explorer-message" role="status">{collectionError} {t("You can still explore the full portfolio.")}</div>}
         {error && <div className="explorer-message" role="alert">{error}<button onClick={() => { setError(''); void refresh().catch(e => setError(e.message)); }}>{t("Retry")}</button></div>}
         {!loading && !filtered.length && !error && view === 'map' && <div className="explorer-message"><Building2 size={20}/><div><strong>{t(favouritesOnly?"No favourites match this view":"No homes found")}</strong><p>{t(favouritesOnly?"Save developments with the heart button, or clear your filters to see more favourites.":"Try a different area or broaden your filters.")}</p></div><button onClick={reset}>{t("Reset")}</button></div>}
-        {view==='split'&&<button className="discovery-list-jump" onClick={()=>{const heading=document.getElementById('homes-heading');heading?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});heading?.focus({preventScroll:true});}}>{t('View {count} homes below',{count:filtered.length})}<ChevronDown size={17}/></button>}
       </div>
       <div className="discovery-workspace">
         {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers} onDimOthers={()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={highlightsEnabled?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
         {view !== 'map' && <section className="explorer-list" aria-label={t("Development listings")}>
-          <div className="listing-heading"><h2 id="homes-heading" tabIndex={-1}>{t("London New Homes")}</h2><label>{t("Sort by")}<select aria-label={t("Sort developments")} value={sort} onChange={e => setSort(e.target.value)}><option value="curated">{t("Our collection")}</option><option value="price-desc">{t('Starting price: high to low')}</option><option value="price">{t('Starting price: low to high')}</option><option value="name">{t("Name: A–Z")}</option><option value="area">{t("Area: A–Z")}</option></select></label></div>
+          <div className="listing-heading"><h2>{t("London New Homes")}</h2><label>{t("Sort by")}<select aria-label={t("Sort developments")} value={sort} onChange={e => setSort(e.target.value)}><option value="curated">{t("Our collection")}</option><option value="price-desc">{t('Starting price: high to low')}</option><option value="price">{t('Starting price: low to high')}</option><option value="name">{t("Name: A–Z")}</option><option value="area">{t("Area: A–Z")}</option></select></label></div>
           {loading ? <p className="empty-state">{t("Loading London New Homes…")}</p> : !filtered.length ? <div className="empty-state"><Building2 size={30}/><h2>{t(favouritesOnly?"No favourites match this view":"No homes found")}</h2><p>{t(favouritesOnly?"Save developments with the heart button, or clear your filters to see more favourites.":"Try a different area or broaden your filters.")}</p><button onClick={reset}>{t("Reset filters")}</button></div> : <div className="cards">
             {filtered.map(d => <article className="property-card-wrap" key={d.id}><button className={`property-card ${selected === d.id ? 'selected' : ''}`} key={d.id} onClick={() => setSelected(d.id)}>
-              <div className="card-image"><img src={d.images[0] || '/images/city.svg'} alt={d.sample ? 'Architectural illustration' : d.name} loading="lazy" onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/city.svg'; }}/><span className={featuredIds.includes(d.id)?"card-tag featured-tag":"card-tag"}>{featuredIds.includes(d.id)?t('Featured'):d.sample ? t('Sample collection') : t(d.status)}</span><span className="card-arrow"><ArrowUpRight size={18}/></span></div>
+              <div className="card-image"><DevelopmentPhoto development={d} loading="lazy"/><span className={featuredIds.includes(d.id)?"card-tag featured-tag":"card-tag"}>{featuredIds.includes(d.id)?t('Featured'):d.sample ? t('Sample collection') : t(d.status)}</span><span className="card-arrow"><ArrowUpRight size={18}/></span></div>
               <div className="card-body"><p className="card-area"><MapPin size={12}/>{d.area}<span>· {d.postcode}</span></p><h2>{d.name}</h2>{commute&&commuteTimes[d.id]!==undefined&&<span className="commute-duration"><TrainFront size={13}/>{commuteTimes[d.id]} min commute</span>}<p className="card-beds">{bedroomLabel(d.bedrooms).replace('Studio',t('Studio'))} {t("bedrooms")} {specificPropertyTypes(d.propertyTypes).length>0&&<><span>·</span> {specificPropertyTypes(d.propertyTypes).map(ptype=>t(ptype)).join(' & ')}</>}</p><div className="card-bottom"><span>{beds?(Number(beds)===0?t('Studio'):t('{count} bedrooms',{count:Number(beds)}))+' '+t('Prices from'):t('Prices from')} <strong>{startingPrice(d,beds)!==null?money(startingPrice(d,beds)!):t('To be confirmed')}</strong></span><span className="explore">{t("View development")} <ArrowRight size={14}/></span></div></div>
             </button><button className={favourites.ids.includes(d.id)?"save-card saved":"save-card"} aria-pressed={favourites.ids.includes(d.id)} aria-label={favourites.ids.includes(d.id)?`Remove ${d.name} from favourites`:`Save ${d.name} to favourites`} onClick={()=>toggleFavourite(d.id)}><Heart size={17} fill={favourites.ids.includes(d.id)?"currentColor":"none"}/></button></article>)}
           </div>}

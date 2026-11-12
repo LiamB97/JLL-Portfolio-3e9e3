@@ -22,7 +22,6 @@ const osmAttribution='&copy; <a href="https://www.openstreetmap.org/copyright">O
 const vectorAttribution='<a href="https://openfreemap.org">OpenFreeMap</a> · &copy; <a href="https://openmaptiles.org">OpenMapTiles</a>';
 const universityIcon=L.divIcon({className:'university-pin',iconSize:[26,26],iconAnchor:[13,13],html:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10l10-5 10 5-10 5-10-5zM6 12v5c3 3 9 3 12 0v-5m4-2v6"/></svg>'});
 const stationIcon=L.divIcon({className:'highlighted-station-pin',iconSize:[36,36],iconAnchor:[18,18],html:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 17l-2 4m10-4 2 4M9 14h.01M15 14h.01"/></svg>'});
-const mapLayersOpenedKey = 'jll-map-layers-opened-v1';
 function mapLabel(text:string){const label=document.createElement('span');label.textContent=text;return label;}
 
 function showStationLabel(marker: L.CircleMarker, name: string, direction?: L.Direction) {
@@ -74,9 +73,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   const landmarkLayer=useRef<L.LayerGroup|null>(null);
   const universityLayer=useRef<L.LayerGroup|null>(null);
   const [showLandmarks,setShowLandmarks]=useState(false),[showUniversities,setShowUniversities]=useState(false),[toolsOpen,setToolsOpen]=useState(false);
-  const [layersOpened, setLayersOpened] = useState(() => {
-    try { return sessionStorage.getItem(mapLayersOpenedKey) === '1'; } catch { return false; }
-  });
+  const [layersOpened, setLayersOpened] = useState(false);
   const [lineFilter,setLineFilter]=useState<string[]>([]);
   const [stationFilter,setStationFilter]=useState<string[]>([]);
   useEffect(()=>{setShowLines(transportDefaults?.showLines??false);setShowStations(transportDefaults?.showStations??false);setLineFilter(transportDefaults?.lineIds??[]);setStationFilter(transportDefaults?.stationIds??[]);},[transportDefaults]);
@@ -286,10 +283,9 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   const openMapLayers = () => {
     setLayersOpened(true);
     setToolsOpen(true);
-    try { sessionStorage.setItem(mapLayersOpenedKey, '1'); } catch {}
   };
   return <div className="map-shell" data-map-ready={baseReady}>{!baseReady&&<div className="map-loading-indicator" role="status">{t("Loading London map…")}</div>}<div ref={el} className="map" aria-label={t("Map of London developments")}/>
-    <div className="map-utilities"><button className="map-layer-button" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={openMapLayers}>{!layersOpened&&<span className="map-layer-cue" aria-hidden="true"/>}<SlidersHorizontal size={16}/>{t('Map layers')}{activeLayerCount>0&&<span className="layer-count">{activeLayerCount}</span>}</button>
+    <div className="map-utilities"><button className="map-layer-button" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={openMapLayers}>{!layersOpened&&<span className="map-layer-cue" aria-hidden="true"><span className="map-layer-trace"/></span>}<SlidersHorizontal size={16}/>{t('Map layers')}{activeLayerCount>0&&<span className="layer-count">{activeLayerCount}</span>}</button>
     <button className="map-fit-button" aria-label={t('Show matching homes')} title={t('Show matching homes')} disabled={!items.length} onClick={()=>{const m=map.current;if(!m||!items.length)return;m.fitBounds(L.latLngBounds([...items,...(commuteDestination?[commuteDestination]:[])].map(d=>[d.lat,d.lng] as [number,number])),frameOptions(m));}}><LocateFixed size={19}/><span>{t('Show matching homes')}</span></button>
     {onReset&&<button className="map-reset-button" aria-label={t('Reset map')} title={t('Reset map')} onClick={onReset}><RotateCcw size={18}/><span>{t('Reset map')}</span></button>}
     </div>
