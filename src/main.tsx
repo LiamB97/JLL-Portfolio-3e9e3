@@ -57,6 +57,12 @@ function App() {
     return () => viewport.removeEventListener('change', update);
   }, []);
   const [sort, setSort] = useState('price-desc');
+  const [commuteSort, setCommuteSort] = useState('commute');
+  const listingSort = commute ? commuteSort : sort;
+  const changeCommute = (report: CommuteReport | null) => {
+    setCommute(report);
+    if (!report) setCommuteSort('commute');
+  };
   const isStaff=()=>location.hash==='#admin'||location.hash.startsWith('#invite=');
   const [admin, setAdmin] = useState(isStaff);
   const [howItWorks,setHowItWorks]=useState(()=>location.hash==='#how-it-works');
@@ -89,13 +95,13 @@ function App() {
     return () => window.removeEventListener('hashchange', change);
   }, [refresh]);
   const select = useCallback((id: string) => setSelected(id), []);
-  const filtered = searchDevelopments(items,{query,region,area,beds,budget,featuredOnly,featuredIds,favouritesOnly,favouriteIds:favourites.ids,commute,sort});
+  const filtered = searchDevelopments(items,{query,region,area,beds,budget,featuredOnly,featuredIds,favouritesOnly,favouriteIds:favourites.ids,commute,sort:listingSort});
   const active = items.find(d => d.id === selected);
   useEffect(()=>{setAnalyticsContext({language,link_kind:collection?'collection':broker?'broker':'general',...(broker?{broker_link_id:broker.slug}:{}),...(collection?{collection_id:collection.slug}:{})},!loading&&!linkLoading);},[language,broker,collection,loading,linkLoading]);
   useEffect(()=>{setCurrentDevelopment(!admin&&!howItWorks&&active?active.id:null);},[selected,active?.id,admin,howItWorks]);
   useEffect(()=>{if(!query.trim()||admin)return;const timer=setTimeout(()=>track('search_used',{result_count:filtered.length}),700);return()=>clearTimeout(timer);},[query,admin]);
   const filterCount = [beds,budget,region,area,favouritesOnly,featuredOnly].filter(Boolean).length;
-  const reset = () => {setCommute(null);setCommuteResetKey(n=>n+1); setQuery(''); setBeds('');setBudget(''); setFeaturedOnly(false);setFavouritesOnly(false);setRegion('');setArea(''); };
+  const reset = () => {changeCommute(null);setCommuteResetKey(n=>n+1); setQuery(''); setBeds('');setBudget(''); setFeaturedOnly(false);setFavouritesOnly(false);setRegion('');setArea(''); };
 
   const toggleFavourite=(id:string)=>{setShowFavouriteHighlights(true);favourites.toggle(id);};
   const resetMap=()=>{reset();setHighlightsEnabled(false);setShowFavouriteHighlights(false);setDimOthers(false);setCollectionFrameKey(0);setSelected(null);setShowFavourites(false);setFilters(false);setView('map');setSort('price-desc');setMapResetKey(n=>n+1);};
@@ -117,7 +123,7 @@ function App() {
           </div><div className="discovery-filter-checks"><label><input type="checkbox" checked={favouritesOnly} onChange={e=>{setFavouritesOnly(e.target.checked);if(e.target.checked)setShowFavouriteHighlights(true);setSelected(null);}}/><span>{t('Show favourites only')} ({favourites.ids.length})</span></label>{collection&&<label><input type="checkbox" checked={featuredOnly} onChange={e=>{setFeaturedOnly(e.target.checked);if(e.target.checked)setHighlightsEnabled(true);}}/><span>{t('Show featured only')}</span></label>}</div>
           <p className="area-filter-note">{t("Areas show developments within 2 km of the named centre. Regions are approximate geographic sectors.")}</p>
         </Modal>}
-        <CommuteSearch items={items} onChange={setCommute} resetKey={commuteResetKey}/>
+        <CommuteSearch items={items} onChange={changeCommute} resetKey={commuteResetKey}/>
         <div className="discovery-count" role="status" aria-live="polite">{loading?t('Loading London homes…'):<><strong>{t('{count} developments',{count:filtered.length})}</strong>{(query||filterCount>0||commute)&&<button onClick={reset}>{t('Clear all')}</button>}</>}</div>
         {collection&&<CollectionBar collection={collection} broker={broker} active={highlightsEnabled} dimOthers={dimOthers} onlyPicked={featuredOnly} onView={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onDim={()=>setDimOthers(v=>!v)} onOnly={()=>setFeaturedOnly(v=>!v)} onRestore={()=>{setHighlightsEnabled(true);setDimOthers(true);setView('map');}} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})}/>}
 
@@ -133,9 +139,10 @@ function App() {
             {narrow && view === 'split'
               ? <h2>{t('Developments')} <ChevronDown size={18} aria-hidden="true"/></h2>
               : <h2>{t('London New Homes')}</h2>}
-            <label>
+            <label className="listing-sort">
               <span className="listing-sort-caption">{t('Sort by')}</span>
-              <select aria-label={t('Sort developments')} value={sort} onChange={e => setSort(e.target.value)}>
+              <select value={listingSort} onChange={e => (commute ? setCommuteSort : setSort)(e.target.value)}>
+                {commute && <option value="commute">{t('Shortest journey')}</option>}
                 <option value="curated">{t('Our collection')}</option>
                 <option value="price-desc">{t('Starting price: high to low')}</option>
                 <option value="price">{t('Starting price: low to high')}</option>

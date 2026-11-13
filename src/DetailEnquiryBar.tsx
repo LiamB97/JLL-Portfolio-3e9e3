@@ -1,12 +1,12 @@
 import {useState, type ReactNode} from 'react';
-import {ArrowUpRight, Bot} from 'lucide-react';
+import {ArrowUpRight} from 'lucide-react';
 import {developmentLink} from '../shared/sharing';
 import {track} from './analytics';
 import {useLocale} from './i18n';
 import WhatsAppIcon from './WhatsAppIcon';
 import type {BrokerCard, Development} from './types';
 
-const JLL_ASSISTANT_WHATSAPP = '447711939577';
+const JLL_WHATSAPP = '447711939577';
 
 export default function DetailEnquiryBar({broker, development, collection, closeButton}: {
   broker: BrokerCard | null;
@@ -21,7 +21,7 @@ export default function DetailEnquiryBar({broker, development, collection, close
   const words = name.trim().split(/\s+/);
   const initials = (words.length > 1 ? [words[0], words[words.length - 1]] : words)
     .map(word => Array.from(word)[0]).join('').toLocaleUpperCase();
-  const number = broker?.whatsapp.replace(/\D/g, '') ?? JLL_ASSISTANT_WHATSAPP;
+  const number = broker?.whatsapp.replace(/\D/g, '') ?? JLL_WHATSAPP;
   const message = t(broker
     ? 'Hi, I’m interested in {name}. Could you share current availability, pricing and viewing options?'
     : 'Hi, I’d like to enquire about {name}. Could you share more information?', {name: development.name});
@@ -30,15 +30,17 @@ export default function DetailEnquiryBar({broker, development, collection, close
 
   return <div className="detail-viewing-bar">
     <div className="detail-broker-contact">
-      <span className="detail-broker-avatar" aria-hidden="true">
-        {!broker ? <Bot size={24}/> : photo && photo !== unavailablePhoto
+      <span className={broker ? 'detail-broker-avatar' : 'detail-broker-avatar detail-jll-avatar'} aria-hidden="true">
+        {!broker ? <img src="/images/jll-logo.svg" alt="" width={38} height={17}/> : photo && photo !== unavailablePhoto
           ? <img src={photo} alt="" width={48} height={48} onError={() => setUnavailablePhoto(photo)}/>
           : initials}
       </span>
       <div className="detail-broker-identity">
-        <span className="detail-broker-role">{t(broker ? 'Your JLL broker' : 'Automated assistant')}</span>
+        {broker && <span className="detail-broker-role">{t('Your JLL broker')}</span>}
         <strong><bdi>{name}</bdi></strong>
-        <span className="detail-broker-help">{t('Ask about availability, pricing or viewings.')}</span>
+        <span className="detail-broker-help">{t(broker
+          ? 'Ask about availability, pricing or viewings.'
+          : 'Speak to us about availability, pricing or booking a viewing.')}</span>
       </div>
     </div>
     <a className="detail-enquiry-action" href={href} target="_blank" rel="noopener noreferrer"

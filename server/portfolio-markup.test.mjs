@@ -50,14 +50,16 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
   const publicDetail=load(renderToStaticMarkup(createElement(Detail,base)));
   const publicEnquiry=publicDetail('.detail-viewing-bar a.detail-enquiry-action');
   assert.equal(publicEnquiry.length,1);
-  const assistant=new URL(publicEnquiry.attr('href'));
-  assert.equal(assistant.origin,'https://wa.me');
-  assert.equal(assistant.pathname,'/447711939577');
+  const publicChat=new URL(publicEnquiry.attr('href'));
+  assert.equal(publicChat.origin,'https://wa.me');
+  assert.equal(publicChat.pathname,'/447711939577');
   const developmentUrl=new URL('https://portfolio.example/');
   developmentUrl.searchParams.set('development',base.d.id);
-  assert.equal(assistant.searchParams.get('text'),`Hi, I’d like to enquire about ${base.d.name}. Could you share more information?\n${developmentUrl.href}`);
+  assert.equal(publicChat.searchParams.get('text'),`Hi, I’d like to enquire about ${base.d.name}. Could you share more information?\n${developmentUrl.href}`);
   assert.equal(publicDetail('.detail-broker-identity strong').text(),'JLL Residential');
-  assert.equal(publicDetail('.detail-broker-role').text(),'Automated assistant');
+  assert.equal(publicDetail('.detail-broker-role').length,0);
+  assert.equal(publicDetail('.detail-broker-help').text(),'Speak to us about availability, pricing or booking a viewing.');
+  assert.equal(publicDetail('.detail-broker-avatar img').attr('src'),'/images/jll-logo.svg');
   assert.equal(publicDetail('.viewing-copy').length,0);
   for(const props of [{preview:true},{preview:true,broker},{brokerLoading:true}]){
    const unavailable=load(renderToStaticMarkup(createElement(Detail,{...base,...props})));
