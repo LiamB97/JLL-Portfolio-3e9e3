@@ -43,33 +43,41 @@ export function developmentReviewWorkspace(state, actor, emailConfigured) {
 export function assignDevelopmentReview(state, body, now = Date.now()) {
   const development = developments(state).find(item => item.id === body?.developmentId);
   if (!development) throw new AccessError('Published development not found.', 404);
-  const reviews = state.developmentReviews ??= [];
-  const index = reviews.findIndex(review => review.developmentId === body.developmentId);
-  const current = reviews[index];
-  if ((current?.version ?? null) !== body.version) throw new AccessError('The assignment changed. Refresh the list and try again.', 409);
-  if (body.assigneeId !== null && body.assigneeId !== current?.assigneeId &&
-      !activeStaff(state).some(user => user.id === body.assigneeId)) throw new AccessError('Choose an active consultant.');
+  const reviews = state.developmentReviews ?? [];
+  const current = reviews.filter(review => review.developmentId === development.id);
+  const currentAssignments = Object.fromEntries(current.map(review => [review.assigneeId, review.version]));
+  const shared = body.assigneeIds !== undefined;
+  const stillCurrent = shared
+    ? isDeepStrictEqual(body.expectedAssignments, currentAssignments)
+    : current.length < 2 && (current[0]?.version ?? null) === body.version;
+  if (!stillCurrent) throw new AccessError('The assignment changed. Refresh the list and try again.', 409);
+
+  const assigneeIds = shared ? body.assigneeIds : body.assigneeId === null ? [] : [body.assigneeId];
+  const eligible = new Set([...activeStaff(state).map(user => user.id), ...current.map(review => review.assigneeId)]);
+  if (!Array.isArray(assigneeIds) || new Set(assigneeIds).size !== assigneeIds.length ||
+      assigneeIds.some(id => typeof id !== 'string' || !eligible.has(id))) throw new AccessError('Choose active consultants.');
   if (body.region !== undefined) {
     if (body.region !== null && !reviewRegions.includes(body.region)) throw new AccessError('Choose East London, Core or PCL.');
     if (body.expectedRegion !== (development._reviewRegion ?? null)) throw new AccessError('The region changed. Refresh the list and try again.', 409);
     if (body.region === null) delete development._reviewRegion;
     else development._reviewRegion = body.region;
   }
-  if (body.assigneeId === null) {
-    if (current) reviews.splice(index, 1);
-  } else if (current?.assigneeId !== body.assigneeId) {
-    const next = {developmentId: body.developmentId, assigneeId: body.assigneeId, version: randomUUID(), nextReminderAt: now + reviewInterval};
-    if (current) reviews[index] = next;
-    else reviews.push(next);
+  const selected = new Set(assigneeIds);
+  state.developmentReviews = reviews.filter(review => review.developmentId !== development.id || selected.has(review.assigneeId));
+  for (const assigneeId of selected) {
+    if (!Object.hasOwn(currentAssignments, assigneeId)) {
+      state.developmentReviews.push({developmentId: development.id, assigneeId, version: randomUUID(), nextReminderAt: now + reviewInterval});
+    }
   }
   return {ok: true};
 }
 
 function assignedReview(state, actor, body) {
-  const review = (state.developmentReviews ?? []).find(item => item.developmentId === body?.developmentId);
+  const reviews = (state.developmentReviews ?? []).filter(item => item.developmentId === body?.developmentId);
   const development = developments(state).find(item => item.id === body?.developmentId);
-  if (!review || !development) throw new AccessError('Development review not found.', 404);
-  if (review.assigneeId !== actor.id) throw new AccessError('Only the assigned consultant can update this review.', 403);
+  if (!reviews.length || !development) throw new AccessError('Development review not found.', 404);
+  const review = reviews.find(item => item.assigneeId === actor.id);
+  if (!review) throw new AccessError('Only assigned consultants can update this review.', 403);
   if (review.version !== body.version) throw new AccessError('The review changed. Refresh the list and try again.', 409);
   return {review, development};
 }

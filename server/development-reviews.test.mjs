@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resendDevelopmentReview, sendDevelopmentReviewReminders} from './development-reviews.mjs';
+import {applyRegionalReviewPlan} from './regional-review-plan.mjs';
 
 const day = 86400000;
 const dueAt = Date.UTC(2026, 10, 11, 9);
@@ -63,4 +64,29 @@ test('a queued reminder stops when its consultant becomes inactive', async () =>
   await run();
   assert.equal(attempts, 1);
   assert.equal((await repository.read()).developmentReviewMail.length, 0);
+});
+
+test('a deployment review plan groups stock and assigns both managers once', async () => {
+  const repository = environment();
+  await repository.update(state => {
+    state.users.push(
+      {id: 'first', name: 'Alex Lead', active: true, role: 'broker_admin', email: 'alex@example.test'},
+      {id: 'second', name: 'Morgan Lead', active: true, role: 'broker_admin', email: 'morgan@example.test'},
+      {id: 'third', name: 'Casey Lead', active: true, role: 'broker', email: 'casey@example.test'},
+    );
+  });
+  const raw = JSON.stringify({revision: 1, groups: [
+    {region: 'East London', consultants: ['Alex', 'Morgan'], developmentIds: ['a', 'b']},
+    {region: 'Core', consultants: ['Casey'], developmentIds: ['c']},
+  ]});
+  const result = await applyRegionalReviewPlan(repository, raw, dueAt);
+  assert.deepEqual(result, [
+    {region: 'East London', count: 2, consultants: ['Alex', 'Morgan'], unavailable: []},
+    {region: 'Core', count: 1, consultants: [], unavailable: ['Casey']},
+  ]);
+  const state = await repository.read();
+  assert.equal(state.developments[2]._reviewRegion, 'Core');
+  assert.deepEqual(state.developmentReviews.filter(review => review.developmentId === 'b').map(review => review.assigneeId), ['consultant', 'first', 'second']);
+  assert.equal(await applyRegionalReviewPlan(repository, raw, dueAt + day), null);
+  assert.deepEqual(await repository.read(), state);
 });

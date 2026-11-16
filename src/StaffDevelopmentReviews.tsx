@@ -21,7 +21,7 @@ const regionLabel = (region: ReviewRegion | null) => region ?? 'No region';
 export default function StaffDevelopmentReviews({request, user, onStockChange}: {request: StaffRequest; user: StaffUser; onStockChange: () => Promise<void>}) {
   const [data, setData] = useState<ReviewWorkspace | null>(null);
   const [developmentId, setDevelopmentId] = useState('');
-  const [assigneeId, setAssigneeId] = useState('');
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [region, setRegion] = useState<ReviewRegion | null>(null);
   const [priceEditor, setPriceEditor] = useState<{review: Review; values: Record<string, string>} | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,7 +38,7 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
 
   function selectDevelopment(id: string) {
     setDevelopmentId(id);
-    setAssigneeId(data?.reviews.find(review => review.development.id === id)?.assigneeId ?? '');
+    setAssigneeIds(data?.reviews.filter(review => review.development.id === id).map(review => review.assigneeId) ?? []);
     setRegion(data?.developments.find(development => development.id === id)?.region ?? null);
   }
 
@@ -60,9 +60,14 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
     }
   }
 
-  const assignment = data?.reviews.find(review => review.development.id === developmentId);
+  const assignments = data?.reviews.filter(review => review.development.id === developmentId) ?? [];
   const assignedRegion = data?.developments.find(development => development.id === developmentId)?.region ?? null;
-  const changed = (assignment?.assigneeId ?? '') !== assigneeId || assignedRegion !== region;
+  const changed = assignedRegion !== region || assignments.length !== assigneeIds.length ||
+    assignments.some(review => !assigneeIds.includes(review.assigneeId));
+  const consultants = [
+    ...(data?.consultants ?? []),
+    ...assignments.filter(review => !review.assigneeActive).map(review => ({id: review.assigneeId, name: review.assigneeName + ' (inactive)'})),
+  ].sort((a, b) => a.name.localeCompare(b.name));
   const developments = [...(data?.developments ?? [])].sort((a, b) => a.name.localeCompare(b.name));
   const reviews = [...(data?.reviews ?? [])].sort((a, b) => a.nextReminderAt - b.nextReminderAt || a.development.name.localeCompare(b.development.name));
 
@@ -91,7 +96,7 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
       event.preventDefault();
       if (!developmentId || !changed || busy) return;
       void saveReview({
-        developmentId, assigneeId: assigneeId || null, version: assignment?.version ?? null,
+        developmentId, assigneeIds, expectedAssignments: Object.fromEntries(assignments.map(review => [review.assigneeId, review.version])),
         region, expectedRegion: assignedRegion,
       }, 'PUT', 'Region and review assignment saved.');
     }}>
@@ -110,34 +115,49 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
         <option value="">No region</option>
         {reviewRegions.map(group => <option key={group}>{group}</option>)}
       </select></label>
-      <label>Consultant<select value={assigneeId} onChange={event => setAssigneeId(event.target.value)} disabled={busy || !developmentId}>
-        <option value="">Unassigned</option>
-        {assignment && !assignment.assigneeActive && <option value={assignment.assigneeId} disabled>{assignment.assigneeName} (inactive)</option>}
-        {[...data.consultants].sort((a, b) => a.name.localeCompare(b.name)).map(consultant => <option key={consultant.id} value={consultant.id}>{consultant.name} · {consultant.email}</option>)}
-      </select></label>
+      <fieldset className="review-consultants" disabled={busy || !developmentId}>
+        <legend>Consultants</legend>
+        {consultants.map(consultant => <label key={consultant.id}>
+          <input type="checkbox" checked={assigneeIds.includes(consultant.id)} onChange={event => {
+            setAssigneeIds(ids => event.target.checked ? [...ids, consultant.id] : ids.filter(id => id !== consultant.id));
+          }}/>
+          {consultant.name}{'email' in consultant && <> · {consultant.email}</>}
+        </label>)}
+      </fieldset>
       <button className="primary" disabled={busy || !developmentId || !changed}>Save region and assignment</button>
     </form>}
     {data && <section className="admin-panel">
       <h2>{data.canAssign ? 'Assigned developments' : 'Your assigned developments'}</h2>
       {data.reviews.length === 0 && <p>No developments are assigned{data.canAssign ? '.' : ' to you.'}</p>}
       {regions.map(group => {
-        const assigned = reviews.filter(review => review.development.region === group);
-        if (!assigned.length) return null;
+        const assigned = new Map<string, Review[]>();
+        for (const row of reviews) {
+          if (row.development.region !== group) continue;
+          const id = row.development.id;
+          const assignments = assigned.get(id) ?? [];
+          assignments.push(row);
+          assigned.set(id, assignments);
+        }
+        if (!assigned.size) return null;
         return <section className="development-review-group" key={regionLabel(group)}>
           <h3>{regionLabel(group)}</h3>
-          {assigned.map(review => {
-            const id = review.development.id;
-            const ownReview = review.assigneeId === user.id;
+          {[...assigned].map(([id, developmentReviews]) => {
+            const ownAssignment = developmentReviews.find(row => row.assigneeId === user.id);
+            const review = ownAssignment ?? developmentReviews[0];
+            const ownReview = Boolean(ownAssignment);
             const canEditPrices = ownReview && user.role !== 'broker';
             const priced = review.development.bedrooms.filter(beds => review.development.unitPrices[beds]).length;
             const editingPrices = priceEditor?.review.development.id === id ? priceEditor : null;
             return <article className="development-review-row" key={id}>
               <div>
                 <h4>{review.development.name}</h4>
-                <p>{review.development.area} · {review.development.postcode}{data.canAssign && <> · {review.assigneeName}{review.assigneeActive ? '' : ' (inactive)'}</>}</p>
-                <p>{review.lastConfirmedAt ? `Last confirmed ${formatDate(review.lastConfirmedAt)}` : 'Awaiting first review'} · {review.assigneeActive ? `Next review ${formatDate(review.nextReminderAt)}` : 'Reminders paused'}</p>
+                <p>{review.development.area} · {review.development.postcode}</p>
+                {developmentReviews.map(row => <p key={row.assigneeId}>
+                  {data.canAssign && <>{row.assigneeName}{row.assigneeActive ? '' : ' (inactive)'} · </>}
+                  {row.lastConfirmedAt ? `Last confirmed ${formatDate(row.lastConfirmedAt)}` : 'Awaiting first review'} · {row.assigneeActive ? `Next review ${formatDate(row.nextReminderAt)}` : 'Reminders paused'}
+                  {data.canAssign && row.lastFailureAt && <> · Previous email delivery unconfirmed</>}
+                </p>)}
                 {(canEditPrices || data.canAssign) && <p>{priced} of {review.development.bedrooms.length} bedroom prices entered</p>}
-                {data.canAssign && review.lastFailureAt && <p>Previous email could not be confirmed as sent.</p>}
               </div>
               <div className="action-row">
                 <a className="back-link" href={'/?development=' + encodeURIComponent(id)} target="_blank" rel="noopener noreferrer">View development <ExternalLink size={14}/></a>

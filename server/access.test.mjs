@@ -54,6 +54,35 @@ test('regional reviews keep grouping private and let only the assigned stock man
  assert.equal(publicListing.priceFrom,0);
  assert.ok(!('region' in publicListing)&&!('_reviewRegion' in publicListing));
 });
+test('two assigned broker admins can review and edit the same stock without losing each other’s prices',async()=>{
+ const e=environment(),admin=await e.owner();
+ const first=await e.broker(admin,'first@example.test','broker_admin'),second=await e.broker(admin,'second@example.test','broker_admin');
+ const path='admin/development-reviews',developmentId=samples[0].id;
+ await e.repository.update(state=>{state.developments[0].sample=false;});
+ const saveAssignment=body=>e.call(path,{actor:admin,method:'PUT',body:{developmentId,...body}});
+ const reviewFor=async actor=>(await e.call(path,{actor})).data.reviews[0];
+ assert.equal((await saveAssignment({assigneeId:first.user.id,version:null})).status,200);
+ const previous=await reviewFor(first);
+ assert.equal((await saveAssignment({
+  assigneeIds:[first.user.id,second.user.id],expectedAssignments:{[first.user.id]:previous.version},region:'East London',expectedRegion:null,
+ })).status,200);
+ const prices=(actor,review,unitPrices)=>e.call(path,{actor,method:'PATCH',body:{
+  developmentId,version:review.version,unitPrices,expectedBedrooms:review.development.bedrooms,expectedUnitPrices:review.development.unitPrices,
+ }});
+ const [firstReview,secondReview]=await Promise.all([reviewFor(first),reviewFor(second)]);
+ assert.equal(firstReview.version,previous.version);
+ assert.equal(firstReview.development.id,secondReview.development.id);
+ assert.equal((await saveAssignment({assigneeId:null,version:firstReview.version})).status,409);
+ assert.equal((await prices(first,firstReview,{1:600000})).status,200);
+ assert.equal((await prices(second,secondReview,{2:800000})).status,409);
+ const refreshed=await reviewFor(second);
+ assert.equal((await prices(second,refreshed,{...refreshed.development.unitPrices,2:800000})).status,200);
+ const latest=await reviewFor(second);
+ assert.deepEqual(latest.development.unitPrices,{1:600000,2:800000});
+ assert.equal((await e.call(path,{actor:second,method:'POST',body:{developmentId,version:latest.version}})).status,200);
+ assert.ok((await reviewFor(second)).lastConfirmedAt);
+ assert.equal((await reviewFor(first)).lastConfirmedAt,undefined);
+});
 test('owner setup needs the server secret, is one-time, and shared-secret access stops after setup',async()=>{const e=environment();assert.equal((await e.call('access/bootstrap',{method:'POST',body:{setupSecret:'wrong'}})).status,401);const admin=await e.owner();assert.equal(admin.user.role,'admin');assert.equal((await e.call('access/bootstrap',{method:'POST',body:{setupSecret:e.secret,name:'Other',email:'other@example.test',password:randomBytes(18).toString('hex')}})).status,409);const legacyApi=createNetlifyApi({repository:e.repository,password:e.secret});const r=await legacyApi(new Request('https://portfolio.example/api/admin/users',{headers:{Authorization:'Bearer '+e.secret}}));assert.equal(r.status,401);});
 test('staff sessions are HttpOnly, Secure, same-site, CSRF protected and revoked on logout',async()=>{const e=environment();const admin=await e.owner();const status=await e.call('access/me',{actor:admin});assert.equal(status.status,200);assert.equal(status.data.user.email,'owner@example.test');assert.equal('token' in status.data,false);assert.equal((await e.call('admin/collections',{method:'POST',actor:admin,csrf:false,body:{title:'Homes',developmentIds:[samples[0].id]}})).status,403);assert.equal((await e.call('admin/collections',{method:'POST',actor:admin,origin:'https://evil.example',body:{title:'Homes',developmentIds:[samples[0].id]}})).status,403);const logout=await e.call('access/logout',{method:'POST',actor:admin});assert.equal(logout.status,200);assert.match(logout.headers.get('set-cookie'),/HttpOnly/);assert.match(logout.headers.get('set-cookie'),/Secure/);assert.match(logout.headers.get('set-cookie'),/SameSite=Strict/);assert.equal((await e.call('access/me',{actor:admin})).status,401);});
 test('regular brokers cannot change stock, sync, extract, manage staff or assign elevated roles',async()=>{
