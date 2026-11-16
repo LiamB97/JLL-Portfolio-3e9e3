@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resendDevelopmentReview, sendDevelopmentReviewReminders} from './development-reviews.mjs';
-import {applyRegionalReviewPlan} from './regional-review-plan.mjs';
+import {applyRegionalReviewPlan, regionalReviewPlanCoverage} from './regional-review-plan.mjs';
 
 const day = 86400000;
 const dueAt = Date.UTC(2026, 10, 11, 9);
@@ -87,6 +87,9 @@ test('a deployment review plan groups stock and assigns both managers once', asy
   const state = await repository.read();
   assert.equal(state.developments[2]._reviewRegion, 'Core');
   assert.deepEqual(state.developmentReviews.filter(review => review.developmentId === 'b').map(review => review.assigneeId), ['consultant', 'first', 'second']);
+  const [east, core] = regionalReviewPlanCoverage(state, raw);
+  assert.deepEqual(east.consultants, [{name:'Alex',matched:true,count:2},{name:'Morgan',matched:true,count:2}]);
+  assert.deepEqual(core.consultants, [{name:'Casey',matched:false,count:0}]);
   assert.equal(await applyRegionalReviewPlan(repository, raw, dueAt + day), null);
   assert.deepEqual(await repository.read(), state);
 });

@@ -66,3 +66,20 @@ export async function applyRegionalReviewPlan(repository, raw, now = Date.now())
     return results;
   });
 }
+
+export function regionalReviewPlanCoverage(state, raw) {
+  const plan = parsePlan(raw);
+  const stock = new Map(state.developments.filter(item => !item.sample).map(item => [item.id, item]));
+  const reviews = state.developmentReviews ?? [];
+  return plan.groups.map(({region, consultants, developmentIds}) => {
+    const grouped = developmentIds.filter(id => stock.get(id)?._reviewRegion === region);
+    return {
+      region, expected: developmentIds.length, grouped: grouped.length,
+      consultants: consultants.map(name => {
+        const id = resolveConsultant(state.users ?? [], name);
+        const assigned = new Set(reviews.filter(review => review.assigneeId === id).map(review => review.developmentId));
+        return {name, matched: Boolean(id), count: grouped.filter(developmentId => assigned.has(developmentId)).length};
+      }),
+    };
+  });
+}
