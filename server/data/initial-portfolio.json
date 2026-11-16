@@ -62,12 +62,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6404538468112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/25-cuba/london-a0ovb00000efnedmar",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb00000EfneDMAR",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.478Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Waterside",
@@ -106,12 +109,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000009Hfkj/gk3jrp9lk/Waterside%20Evening%2002.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-waterside/london-a0ovb000009hfkjmac",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000009HfkjMAC",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.479Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Southmere",
@@ -154,12 +160,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000003LBA1/gct6378e8/501_Southmere_Block_A_Hummingbird_02.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/southmere/london-a0ovb000003lba1mao",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000003LBA1MAO",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.479Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Regent's View",
@@ -210,12 +219,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000003IrAb/sfyr3h45l/vb5470460_4059_EXT_VIEW-19_NEW_-_PARK_VIEW_CROP_SUN_FINAL_1600x1265.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/regents-view/london-a0ovb000003irabmak",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000003IrAbMAK",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.480Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "BelRise",
@@ -264,12 +276,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6401186418112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/belrise/london-a0ovb0000036akxmau",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb0000036AkXMAU",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.480Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Arden",
@@ -278,7 +293,7 @@
       "description": "Only one apartment remaining at The Crescent Collection.\n\nDiscover The Crescent Collection at Arden, an exceptional new collection of contemporary studios and two-bedroom apartments in the heart of South East London, offering ready-to-move-in homes within meticulously landscaped gardens.\n\nSet within an acre of beautifully designed grounds, this modern residential complex presents a sophisticated urban living experience where contemporary architecture meets tranquil courtyard gardens. Each residence features private balconies and thoughtfully designed interiors, creating elegant spaces that seamlessly blend functionality with style. The two-bedroom apartments offer generous proportions and premium finishes throughout, whilst the development's mid-rise design ensures residents enjoy both privacy and connection to the surrounding landscape.\n\nThe Crescent Collection provides an impressive array of amenities including a dedicated concierge service, resident's fitness suite, co-working hub, and underground parking. The landscaped grounds create a peaceful sanctuary, whilst the building's brick exterior and contemporary design establish a distinguished presence within this prestigious SE10 location. Residents also benefit from secure cycle storage and comprehensive parcel management services.\n\nThe development's enviable position offers immediate access to expansive green spaces including Blackheath Common and Greenwich Park, alongside the cultural treasures of Maritime Greenwich's UNESCO World Heritage sites. The vibrant local scene encompasses everything from Deptford's acclaimed street food markets to the world-renowned O2 Arena. Transport connections are exceptional, with Elverson Road DLR providing direct access to Canary Wharf and London Bridge in under 25 minutes, ensuring effortless connectivity throughout the capital. \n\nAdditional Information:\nService Charge: estimated £5.48 per sq. ft. per annum\nGround Rent: Peppercorn\nTenure: 990-year leasehold",
       "lat": 51.4712258,
       "lng": -0.0129604,
-      "priceFrom": 440000,
+      "priceFrom": 389000,
       "bedrooms": [
         0,
         2
@@ -314,12 +329,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002yi53/gstyiw8au/214_Arden_Aerial-min.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/arden/london-a0ovb000002yi53maa",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000002yi53MAA",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.480Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Lumen",
@@ -367,12 +385,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002ygHl/f4z8o4tdb/Hackney%20Wick%20E3-62.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/lumen/london-a0ovb000002yghlmai",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000002ygHlMAI",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.481Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Printmakers Yard",
@@ -411,12 +432,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002CarN/nfydb5ncp/www.andrewhendry.com7.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Coming soon",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/printmakers-yard/london-a0ovb000002carnmas",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000002CarNMAS",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.481Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Peninsula Riverfront",
@@ -473,12 +497,15 @@
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6368705408112",
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6368710198112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/peninsula-riverfront/london-a0ovb000001fsudmau",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000001fSuDMAU",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.482Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Trillium",
@@ -518,12 +545,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000001dP2n/oqhti5iwh/trillium_exteriors_img3_05022025.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/trillium/london-a0ovb000001dp2nmae",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000001dP2nMAE",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.482Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Bermondsey Place",
@@ -562,12 +592,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000001NKa9/v3pv53vtl/London_BermondseyPlace_SE1_Image.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/bermondsey-place/london-a0ovb000001nka9mag",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000001NKa9MAG",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.483Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Oria at 100 Kensington",
@@ -576,7 +609,7 @@
       "description": "Our brand new marketing suite on Kensington High Street is now open for viewings.\n\nAnticipated Completion: Q4 2027 / Q1 2028.\n\nThe Oria represents a landmark addition to London's Royal Borough, presenting an exceptional collection of 129 one, two and three bedroom apartments within an iconic 29-storey tower that stands as the tallest residential building in Kensington and Chelsea. Forming part of the wider 100 Kensington development, these thoughtfully designed residences offer a rare opportunity to own within one of the borough's most significant new residential addresses.\n\nSoaring 29 storeys above Kensington, The Oria boasts uninterrupted views across the iconic London skyline. Throughout the tower, contemporary interiors by Conran and Partners combine premium finishes with thoughtful functionality. Floor-to-ceiling windows frame spectacular skyline views and maximise natural light, while elegant kitchens feature integrated appliances, sleek worktops and carefully considered detailing. The result is a collection of homes designed to balance sophistication with everyday practicality.\n\nResidents enjoy access to an exceptional suite of amenities at 100 Kensington including a dedicated concierge service, private residents' lounge, cinema room, games and event spaces, and beautifully landscaped podium gardens featuring a sculpture by renowned artist David Harber. The comprehensive wellness facilities include a 20-metre swimming pool, fully equipped gym and dedicated fitness studio.\n\nThe W14 location provides exceptional connectivity with West Kensington, High Street Kensington, Earl's Court and Kensington (Olympia) stations all within easy reach. Residents benefit from proximity to Kensington High Street, Holland Park, Westfield London and Knightsbridge, while Heathrow Airport can be reached in approximately 30 minutes by car.\n\nAdditional Information:\nService Charge: circa £6.50 per sq. ft per annum\nTenure: 255 years, with ability to extend to 985 years on purchase",
       "lat": 51.4924469,
       "lng": -0.2011721,
-      "priceFrom": 894999,
+      "priceFrom": 895000,
       "bedrooms": [
         1,
         2,
@@ -631,12 +664,15 @@
       "videos": [
         "https://www.youtube.com/watch?v=bIiaGtSOs7s"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-oria-at-100-kensington/london-a0ovb000001jhj7mao",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000001JHJ7MAO",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.487Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Wilderly, Elephant Park",
@@ -687,18 +723,21 @@
         "https://bcove.video/3Q37lOX",
         "https://bcove.video/48mt9he"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-wilderly-elephant-park/london-a0ovb000001hj0rmag",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000001HJ0rMAG",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.487Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Wimbledon Place",
       "area": "Wimbledon",
       "postcode": "SW19 1RY",
-      "description": "Welcome to Wimbledon Place- an exceptional collection of 135 meticulously designed apartments in the heart of Wimbledon.\n\nShow homes newly launched – register now for your exclusive viewing.\n\nWimbledon Place presents an exceptional collection of contemporary residences where modern architectural elegance meets the distinctive character of SW19. This striking development showcases curved balconies and sophisticated design elements that create a compelling urban presence whilst celebrating the area's rich heritage.\n\nThe thoughtfully designed apartments feature open-plan living spaces enhanced by floor-to-ceiling windows that flood interiors with natural light throughout the day. Each residence showcases modern interior design with built-in entertainment centres and luxury finishes that complement the contemporary aesthetic. The handle-less kitchens feature white solid stone worktops and integrated Siemens appliances, creating sophisticated culinary spaces perfect for both daily living and entertaining.\n\nResidents benefit from premium building amenities including a gym, daytime concierge service, and versatile co-working spaces. The development's crowning feature includes stunning communal rooftop gardens offering breath-taking views across London's landscape. Ground-floor retail adds convenience and vibrancy to this mixed-use development, whilst underfloor heating ensures year-round comfort throughout each residence.\n\nWimbledon's appeal extends far beyond its tennis heritage, offering 2,147 acres of award-winning green space including the expansive Wimbledon Common. The location provides excellent connectivity to central London with swift 17-minute train connections, perfectly balancing urban accessibility with the tranquility of surrounding parkland. This vibrant area combines village charm with metropolitan convenience, making it one of London's most sought-after postcodes.\n\nAdditional Information:\nService Charge: £4.50 per sq. ft. per annum\nGround Rent: Peppercorn\nTenure: 999 year leasehold with a share of freehold",
+      "description": "Welcome to Wimbledon Place- an exceptional collection of 135 meticulously designed apartments in the heart of Wimbledon.\n\nExclusive developer incentives available for a limited time:2 years' service charge paid, and a first-time buyer stamp duty contribution of up to £15,000. Terms and conditions apply.\n\nWimbledon Place presents an exceptional collection of contemporary residences where modern architectural elegance meets the distinctive character of SW19. This striking development showcases curved balconies and sophisticated design elements that create a compelling urban presence whilst celebrating the area's rich heritage.\n\nThe thoughtfully designed apartments feature open-plan living spaces enhanced by floor-to-ceiling windows that flood interiors with natural light throughout the day. Each residence showcases modern interior design with built-in entertainment centres and luxury finishes that complement the contemporary aesthetic. The handle-less kitchens feature white solid stone worktops and integrated Siemens appliances, creating sophisticated culinary spaces perfect for both daily living and entertaining.\n\nResidents benefit from premium building amenities including a gym, daytime concierge service, and versatile co-working spaces. The development's crowning feature includes stunning communal rooftop gardens offering breath-taking views across London's landscape. Ground-floor retail adds convenience and vibrancy to this mixed-use development, whilst underfloor heating ensures year-round comfort throughout each residence.\n\nWimbledon's appeal extends far beyond its tennis heritage, offering 2,147 acres of award-winning green space including the expansive Wimbledon Common. The location provides excellent connectivity to central London with swift 17-minute train connections, perfectly balancing urban accessibility with the tranquility of surrounding parkland. This vibrant area combines village charm with metropolitan convenience, making it one of London's most sought-after postcodes.\n\nAdditional Information:\nService Charge: £4.50 per sq. ft. per annum\nGround Rent: Peppercorn\nTenure: 999 year leasehold with a share of freehold\n\n*Incentive terms and conditions apply, please ask for details.",
       "lat": 51.4194159,
       "lng": -0.1969063,
       "priceFrom": 432500,
@@ -712,7 +751,8 @@
         "New homes"
       ],
       "amenities": [
-        "Show homes newly launched – Register now for your exclusive viewing",
+        "Limited-time offer: 2 years' service charge paid and up to £15,000 towards stamp duty for first-time buyers*",
+        "New show home at Wimbledon Place launching Friday 20th November – register now for your exclusive private viewing.",
         "Design-led studio, 1, 2 & 3 bed apartments",
         "Centrally located in Wimbledon",
         "Residential amenities include a gym, concierge and co-working space",
@@ -724,26 +764,34 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/11rwuz2ly/Wimbledon%20Place-12.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/hy0qmm8kg/View2.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/eohx8ob50/Wimbledon%20Place-15.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/xej23gap6/Wimbledon%20Place-04.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/lv1xqwwbj/Wimbledon%20Place-05.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/6ty1lmjzr/Wimbledon%20Place-14.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/tk1w17pzi/Wimbledon%20Place-18.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/2u7ailzvg/Wimbledon%20Place-19.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/p49g09tmk/Wimbledon%20Place-13.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/awf2pxdoc/Wimbledon%20Place-07.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/4ztonf3fc/Wimbledon-Place-06-edited.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/yu1lbegoh/Wimbledon%20Place-09.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/rb2ao07vk/Wimbledon%20Place-05.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/kbwzg6k57/Wimbledon%20Place-03.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/a8jxgvc5a/Wimbledon%20Place-01-Bedrooms.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/cfv3rfxe4/Wimbledon%20Place-04.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/7dfiypreg/View6-Terrace.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/b1fnjjpde/Wimbledon%20Place-02.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/rttgjss5a/thornsett-logo.png",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000b7yb/34emk4qcv/Wimbledon_Logo_RGB-01.png"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/wimbledon-place/london-a0ovb000000b7ybmaa",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000000b7ybMAA",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.488Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Wandsworth Mills",
@@ -797,12 +845,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000Zs3x/k7t9ur3bb/STG-RQ_Ext-CGI_B4_Podium_v4.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/wandsworth-mills/london-a0ovb000000zs3xmac",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000000Zs3xMAC",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.489Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Beam",
@@ -845,18 +896,21 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000W1Yr/8n10j2hdy/DSC_4250.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/beam/london-a0ovb000000w1yrmak",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000000W1YrMAK",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.489Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Brent Cross Town",
       "area": "NW2",
       "postcode": "NW2 1FE",
-      "description": "Brent Cross Town | 50 Acres of Parkland Living | The Ashbee & The Delamarre Now Launching.\n\nBrent Cross Town represents the future of urban living, transforming 180 acres of North London into an extraordinary new neighbourhood where nature and modern life converge. Developed by Related Argent in partnership with Barnet Council, this visionary regeneration project establishes a new benchmark for sustainable city living, featuring 50 acres of parkland including five distinct natural habitats: woodland, grassland, wetland, open mosaic, and dedicated food-growing areas.\n\nAt the heart of this thriving community sits Claremont Park, a tranquil natural sanctuary with a central pond perfect for leisurely strolls and summer gatherings. The first residents at The Ashbee and The Delamarre will enjoy prime position adjacent to this rich landscape, living in elegant apartments designed by acclaimed architects Squire & Partners and Maccreanor Lavington respectively. The Ashbee draws inspiration from the Arts & Crafts movement with natural tones and light oak flooring, while The Delamarre celebrates Art Deco styling with bold colours and dark oak herringbone floors. Both buildings feature floor-to-ceiling glazing that frames park views and floods interiors with natural light, complemented by premium kitchens with instant boiling water taps, underfloor heating throughout, and sophisticated home technology.\n\nThe exclusive Claremont Park Club spans both buildings, offering residents a comprehensive lifestyle sanctuary including state-of-the-art gymnasium, fitness studio, private cinema, co-working spaces with meeting rooms, private dining room, and dedicated residents' lounge. With 12-hour concierge services, secure underground parking, and parcel storage, every convenience is thoughtfully provided. Beyond your home, the vibrant new town centre will feature up to 50 independent shops and signature restaurants, while the established Brent Cross Shopping Centre with 120 stores sits just 15 minutes' walk away.\n\nConnectivity defines this exceptional location. The newly opened Brent Cross West station delivers passengers to St Pancras International in just 12 minutes, while Brent Cross Northern line provides Central London access every 5 minutes. Five major airports lie within an hour's reach, and adjacent M1 and A1 connections open up the entire UK. Brent Cross Town doesn't just offer a home, it delivers a complete lifestyle in a pioneering North London neighbourhood where 6,700 new homes, world-class workspaces, and wellness-focused amenities create a community designed for modern living.\n\nAdditional Information:\nService Charge: Ashbee -£5.88 per sq. ft. per annum and Delamarre-£5.46 per sq. ft. per annum\nGround Rent: Peppercorn\nTenure: 999 year leasehold \n\n*Images are of the show apartment and are indicative only.",
+      "description": "Stamp Duty Incentives* | Brent Cross Town | 50 Acres of Parkland Living | The Ashbee & The Delamarre Now Launching.\n\nBrent Cross Town represents the future of urban living, transforming 180 acres of North London into an extraordinary new neighbourhood where nature and modern life converge. Developed by Related Argent in partnership with Barnet Council, this visionary regeneration project establishes a new benchmark for sustainable city living, featuring 50 acres of parkland including five distinct natural habitats: woodland, grassland, wetland, open mosaic, and dedicated food-growing areas.\n\nAt the heart of this thriving community sits Claremont Park, a tranquil natural sanctuary with a central pond perfect for leisurely strolls and summer gatherings. The first residents at The Ashbee and The Delamarre will enjoy prime position adjacent to this rich landscape, living in elegant apartments designed by acclaimed architects Squire & Partners and Maccreanor Lavington respectively. The Ashbee draws inspiration from the Arts & Crafts movement with natural tones and light oak flooring, while The Delamarre celebrates Art Deco styling with bold colours and dark oak herringbone floors. Both buildings feature floor-to-ceiling glazing that frames park views and floods interiors with natural light, complemented by premium kitchens with instant boiling water taps, underfloor heating throughout, and sophisticated home technology.\n\nThe exclusive Claremont Park Club spans both buildings, offering residents a comprehensive lifestyle sanctuary including state-of-the-art gymnasium, fitness studio, private cinema, co-working spaces with meeting rooms, private dining room, and dedicated residents' lounge. With 12-hour concierge services, secure underground parking, and parcel storage, every convenience is thoughtfully provided. Beyond your home, the vibrant new town centre will feature up to 50 independent shops and signature restaurants, while the established Brent Cross Shopping Centre with 120 stores sits just 15 minutes' walk away.\n\nConnectivity defines this exceptional location. The newly opened Brent Cross West station delivers passengers to St Pancras International in just 12 minutes, while Brent Cross Northern line provides Central London access every 5 minutes. Five major airports lie within an hour's reach, and adjacent M1 and A1 connections open up the entire UK. Brent Cross Town doesn't just offer a home, it delivers a complete lifestyle in a pioneering North London neighbourhood where 6,700 new homes, world-class workspaces, and wellness-focused amenities create a community designed for modern living.\n\nAdditional Information:\nService Charge: Ashbee -£5.88 per sq. ft. per annum and Delamarre-£5.46 per sq. ft. per annum\nGround Rent: Peppercorn\nTenure: 999 year leasehold \n*Subject to terms and conditions, please ask for details.\n*Images are of the show apartment and are indicative only.",
       "lat": 51.57132,
       "lng": -0.22013,
       "priceFrom": 399000,
@@ -871,14 +925,14 @@
       ],
       "amenities": [
         "First residents at North London's transformative 180-acre neighbourhood",
+        "Stamp Duty Incentives*",
         "Adjacent to new Claremont Park with 50 acres of parkland and natural habitats",
         "Brand new Brent Cross West station - St Pancras International in 12 minutes",
         "Central London every 5 minutes via Brent Cross Northern line",
         "The Claremont Park Club with gymnasium, fitness studio and wellness facilities",
         "Private cinema, residents' lounge and professional co-working spaces",
         "12-hour concierge service with secure entry and parcel storage",
-        "Premium specifications with underfloor heating and instant boiling water taps",
-        "Vibrant town centre with 50 new independent shops and restaurants on your doorstep"
+        "Premium specifications with underfloor heating and instant boiling water taps"
       ],
       "images": [
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000RI7J/un1k2d4d0/P_BXS_M2013_PRJ002_N7.jpg",
@@ -913,12 +967,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000000RI7J/81jd3jqcv/P_BXS_M2012_PRJ002_N340.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/brent-cross-town/london-a0ovb000000ri7jmaw",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0OVb000000RI7JMAW",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.489Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The HiLight",
@@ -981,12 +1038,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6406953932112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-hilight/london-a0o8w00000ltpypuap",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LTPYpUAP",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.489Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Opus - Bankside Yards",
@@ -995,7 +1055,7 @@
       "description": "Book your appointment at the Opus Sales Gallery\n\nOpus at Bankside Yards represents London's most prestigious new residential address, where cutting-edge design meets riverside heritage. This landmark development introduces next-generation living to the cultural heart of the South Bank.\n\nRising majestically beside fourteen reinvigorated Victorian railway arches, this architectural marvel offers signature suites to three-bedroom lateral apartments alongside exclusive four-bedroom duplex penthouses Floor-to-ceiling windows frame sweeping views across London's iconic skyline, while the open-plan interiors maximise natural light and space. Each residence combines contemporary elegance with thoughtful functionality, creating homes that reflect the sophistication of modern city living. Parking is available* for residents.\n\nThe building delivers state-of-the-art amenities and represents a pioneering approach to sustainable luxury living as part of London's first fossil fuel-free residential destination. Residents enjoy access to premium facilities within this carefully curated community, where innovative workspaces, independent retail, and the new five-star Mandarin Oriental Bankside Yards create an unparalleled living environment. Opus residents benefit from exceptional private amenities including The Summit Club & Deck on level 23 featuring a terrace with spectacular sweeping river views, a double-height lounge and bar, and a private dining room with catering kitchen. The development features a comprehensive gym and spa with a hydrotherapy pool, fully equipped gymnasium, sauna, and yoga and Pilates studio. Residents can enjoy the padel court, while leisure facilities include a screening room, golf simulator, and co-working spaces. Five-star hotel-style concierge service operates 24 hours, complemented by fully automated car parking stacker – The Car Vault.\n\nPositioned along the celebrated cultural walkway connecting the Royal Festival Hall to Tate Modern, SE1 offers immediate access to London's finest galleries, theatres, and dining establishments. The location provides seamless connectivity to both the City and West End, with multiple transport links ensuring effortless travel across the capital. This vibrant neighbourhood perfectly balances cultural richness with commercial convenience, establishing itself as one of London's most sought-after addresses.\n\nContact a JLL broker today for an exclusive viewing and discover exceptional riverside living at London's newest landmark development.\n\nSet for completion in early 2027 - Enquire today \n\nAdditional Information\nService Charge: circa £9.10 per sq. ft per annum\nTenure: 999 years",
       "lat": 51.5076073,
       "lng": -0.1039409,
-      "priceFrom": 760000,
+      "priceFrom": 775000,
       "bedrooms": [
         0,
         1,
@@ -1040,28 +1100,31 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/lowfjnckd/Opus%20River%20Rooms%20Music.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/c0ol84tbq/SCREENING%20ROOM%20-%20%E2%80%8BOpus%20at%20Bankside%20Yards.%20Photo%20credit_%20Native%20Land%20%281%29.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/xi1dpaq6a/PODCAST%20STUDIO%20-%20Opus%20at%20Bankside%20Yards.%20Photo%20credit_%20Native%20Land.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/1bv1180x4/4200_BanksideYards_Ext_Hummingbird-A_002_SB%20%283%29.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/ruya1w6g1/Bankside%20Yards%20-%20Estate%20Thames%20facing%20east%20%281%29.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/cegemka8q/APARTMENT%204%20-%20Opus%20at%20Bankside%20Yards.%20Photo%20credit.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/0r2vox7u5/APARTMENT%203%20-%20Opus%20at%20Bankside%20Yards.%20Photo%20credit.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/l6su9fgg0/Bankside%20Yards%20aerial%20facing%20south.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/w6kibggc8/Opus%20External%20Hummingbird%20facing%20north.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/5fts49nxj/Bankside%20Yards%20Public%20realm%20St%20Pauls%20view.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/90zjmlz2q/Bankside%20Yards%20Public%20realm%20dusk.jpg"
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/90zjmlz2q/Bankside%20Yards%20Public%20realm%20dusk.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/t2750hjsu/Opus%20External%20Entrance%20dusk.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/85y9kn9ko/Bankside%20Yards%20Public%20realm%20arch%20vignette.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTMFg/p1220swiw/Opus%20External%20Southern%20entrance.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/opus-bankside-yards/london-a0o8w00000ltmfguap",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LTMFgUAP",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.490Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Upper East",
       "area": "Bromley by Bow",
       "postcode": "E3 3EW",
-      "description": "Newly completed | Move in now | Three exclusive offers available for a limited time: 5% deposit boost, 6 months mortgage paid, or first-time buyer stamp duty contribution up to £6,250.\n\nDiscover Luxury Living in E3: New Build Homes – Marketing Suite and Show Apartments Now Open – Book Your Appointment Today.\n\nUpper East presents a sophisticated collection of contemporary apartments in the heart of Bromley-by-Bow, where modern urban living meets exceptional connectivity. This remarkable development offers 1-bedroom and 2-bedroom residences, each designed with contemporary elegance and featuring private balconies that frame stunning vistas of Canary Wharf, The City, and Stratford's dynamic skyline.\n\nThree ways to make your move easier - choose the offer that best suits your next move:\n\n- 5% deposit boost - receive a contribution towards your deposit to help make your move happen sooner.\n- 6 months mortgage paid - enjoy support towards your mortgage payments as you settle into your new home.\n- First-time buyer stamp duty contribution - receive a contribution of up to £6,250 towards your stamp duty.\n\nThe apartments showcase modern open-plan living spaces enhanced by natural light flooding through expansive windows, creating bright and welcoming interiors. Each residence features contemporary kitchens with sleek composite quartz worktops and integrated Bosch appliances, complemented by elegant Amtico herringbone flooring throughout living areas. The sophisticated design extends to luxurious bathrooms finished with quality Porcelanosa tiles, whilst efficient underfloor heating ensures year-round comfort. Recessed lighting and contemporary interior design elements create an atmosphere of refined urban sophistication.\n\nResidents enjoy exclusive access to beautifully landscaped roof terraces on the first and top floors, complete with pergolas, planters, and comfortable seating areas perfect for relaxation whilst taking in breathtaking panoramic views. The development features a dedicated residents' terrace, alongside a new pocket park with children's facilities and outdoor fitness equipment, fostering a strong sense of community within this thriving neighbourhood.\n\nBromley-by-Bow offers exceptional connectivity with Underground and DLR stations within walking distance, providing swift access to Canary Wharf, The City, and Stratford in just 15 minutes. The E3 location places residents within easy reach of Victoria Park and Olympic Park, whilst multiple bus routes and dedicated cycle paths enhance transportation options. \n\nAdditional Information:\nService Charge: estimated £4.25 per sq. ft. per annum\nGround Rent: Pepper Corn\nTenure: 250 years less 3 days from 10th March 2023.\n\n*travel times are approximate and are taken from google.com/maps\n**information taken from https://reports.ofsted.gov.uk/search\n\n*Internal computer generated images are intended for illustrative purpose only. They are not representative of final layout or interior. Room styling and all related items such as furniture, soft furnishing, some window treatments and feature wall colours etc are not part of the specification and are for styling purposes only. Please refer to the specification section for more details or check specific layouts with our Sales Consultant. Images showing views are based on the site at the time the image is produced. Views are based upon the apartment location and elevation and are subject to change based on any future neighbouring developments. Therefore, a view which is unrestricted now may be restricted in the future.",
+      "description": "Complete your purchase by 18th December 2026* and enjoy 12 months' complimentary membership at Third Space Canary Wharf.\n\nNewly completed | Move in now | Discover Luxury Living in E3: New Build Homes – Marketing Suite and Show Apartments Now Open | Book Your Appointment Today.\n\nUpper East presents a sophisticated collection of contemporary apartments in the heart of Bromley-by-Bow, where modern urban living meets exceptional connectivity. This remarkable development offers 1-bedroom and 2-bedroom residences, each designed with contemporary elegance and featuring private balconies that frame stunning vistas of Canary Wharf, The City, and Stratford's dynamic skyline.\n\nThe apartments showcase modern open-plan living spaces enhanced by natural light flooding through expansive windows, creating bright and welcoming interiors. Each residence features contemporary kitchens with sleek composite quartz worktops and integrated Bosch appliances, complemented by elegant Amtico herringbone flooring throughout living areas. The sophisticated design extends to luxurious bathrooms finished with quality Porcelanosa tiles, whilst efficient underfloor heating ensures year-round comfort. Recessed lighting and contemporary interior design elements create an atmosphere of refined urban sophistication.\n\nResidents enjoy exclusive access to beautifully landscaped roof terraces on the first and top floors, complete with pergolas, planters, and comfortable seating areas perfect for relaxation whilst taking in breathtaking panoramic views. The development features a dedicated residents' terrace, alongside a new pocket park with children's facilities and outdoor fitness equipment, fostering a strong sense of community within this thriving neighbourhood.\n\nBromley-by-Bow offers exceptional connectivity with Underground and DLR stations within walking distance, providing swift access to Canary Wharf, The City, and Stratford in just 15 minutes. The E3 location places residents within easy reach of Victoria Park and Olympic Park, whilst multiple bus routes and dedicated cycle paths enhance transportation options. \n\nAdditional Information:\nService Charge: estimated £4.28 per sq. ft. per annum\nTenure: 250 years less 3 days from 10th March 2023.\n\n*Travel times are approximate and are taken from google.com/maps\n*Information taken from https://reports.ofsted.gov.uk/search\n*Images are indicative only and may not represent this specific apartment.\n*Incentive terms and conditions apply, please ask for details.",
       "lat": 51.52667,
       "lng": -0.01713,
       "priceFrom": 319950,
@@ -1075,7 +1138,7 @@
       ],
       "amenities": [
         "Newly completed and ready to move in",
-        "Three great offers available: 5% deposit boost, 6 months mortgage paid, or first-time buyer stamp duty contribution up to £6,250",
+        "Complete by 18th December 2026 and receive 12 months' complimentary Third Space Canary Wharf membership*",
         "Private balconies with stunning views of Canary Wharf, The City, and Stratford",
         "15 minutes to Canary Wharf, The City, and Stratford via Underground and DLR",
         "Contemporary 1 & 2 bedroom apartments with open-plan living",
@@ -1109,12 +1172,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LTIWV/96rq6ysyc/Upper%20East-05.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/upper-east/london-a0o8w00000ltiwvua5",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LTIWVUA5",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.490Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Royal Gateway",
@@ -1157,12 +1223,15 @@
       "videos": [
         "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1716367127/Royal_Gateway_-_Discover_the_gateway_to_elevated_living_dpfkim.mp4"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/royal-gateway/london-a0o8w00000lt5ktuad",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LT5ktUAD",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.491Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "King George's Gate",
@@ -1206,12 +1275,15 @@
       "videos": [
         "https://www.youtube.com/watch?v=JS7_Y2XQp_I"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/king-georges-gate/london-a0o8w00000lt1gfuat",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LT1gFUAT",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.495Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Trinity Park",
@@ -1260,18 +1332,21 @@
       "videos": [
         "https://bcove.video/48fJrYV"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/trinity-park/london-a0o8w00000lsqwfuad",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LSqwfUAD",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.496Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Prime Point",
       "area": "Greenwich",
       "postcode": "SE10 0BE",
-      "description": "Ready to move in now.\n\nPrime Point presents an exceptional collection of contemporary apartments in Greenwich's prestigious SE10 district, where modern urban living meets the tranquil beauty of the River Thames. This distinguished development offers 1, 2, and 3-bedroom residences, each thoughtfully designed with private outdoor space and panoramic views across the iconic London landscape.\n\nThe apartments showcase sophisticated open-plan living spaces enhanced by floor-to-ceiling windows that flood interiors with natural light throughout the day. The contemporary kitchens feature elegant island designs, while designer lighting creates an atmosphere of refined luxury. Modern bedrooms offer peaceful retreats with stunning urban vistas, and the carefully curated furnishings demonstrate the development's commitment to premium living standards. Private balconies provide the perfect setting for outdoor dining while enjoying spectacular river views and sunset exposure over the Thames.\n\nPrime Point elevates residential living through its comprehensive amenities, including dedicated 15-hour concierge service, beautifully landscaped gardens, and stunning roof terraces offering panoramic London skyline views. The exclusive residents' lounge provides an elegant space that function as co-working spaces by day and can be reserved for private dining in the evening. The waterfront location ensures residents enjoy some of London's most coveted riverside views.\n\nGreenwich's SE10 district offers an enviable lifestyle with North Greenwich Station just an 8-minute walk away, providing seamless Zone 2 connectivity. Canary Wharf is merely one stop via the Jubilee Line, while the nearby O2 Arena delivers world-class entertainment, dining, and shopping. The Thames Path offers scenic riverside walks, and Greenwich Park provides extensive green space just minutes away. Discover your new home at Prime Point.\n\nShared Ownership homes are now available via L&Q Homes. Please note that, at this time, priority is given to households earning an annual income of up to £71,000.\n\n*Subject to terms and conditions\n*Images and measurements are indicative only, and may be subject to change.\n\nAdditional Information:\nService Charge: Estimated £5.56 per sq. ft. per annum\nGround Rent: None payable\nTenure: 999 year leasehold (from May 2004)",
+      "description": "Ready to move in now.\n\nReserve this November and receive contribution towards stamp duty plus a complimentary furniture pack - with further savings available on selected apartments.* Enquire for more details.\n\nPrime Point presents an exceptional collection of contemporary apartments in Greenwich's prestigious SE10 district, where modern urban living meets the tranquil beauty of the River Thames. This distinguished development offers 1, 2, and 3-bedroom residences, each thoughtfully designed with private outdoor space and panoramic views across the iconic London landscape.\n\nThe apartments showcase sophisticated open-plan living spaces enhanced by floor-to-ceiling windows that flood interiors with natural light throughout the day. The contemporary kitchens feature elegant island designs, while designer lighting creates an atmosphere of refined luxury. Modern bedrooms offer peaceful retreats with stunning urban vistas, and the carefully curated furnishings demonstrate the development's commitment to premium living standards. Private balconies provide the perfect setting for outdoor dining while enjoying spectacular river views and sunset exposure over the Thames.\n\nPrime Point elevates residential living through its comprehensive amenities, including dedicated 15-hour concierge service, beautifully landscaped gardens, and stunning roof terraces offering panoramic London skyline views. The exclusive residents' lounge provides an elegant space that function as co-working spaces by day and can be reserved for private dining in the evening. The waterfront location ensures residents enjoy some of London's most coveted riverside views.\n\nGreenwich's SE10 district offers an enviable lifestyle with North Greenwich Station just an 8-minute walk away, providing seamless Zone 2 connectivity. Canary Wharf is merely one stop via the Jubilee Line, while the nearby O2 Arena delivers world-class entertainment, dining, and shopping. The Thames Path offers scenic riverside walks, and Greenwich Park provides extensive green space just minutes away. Discover your new home at Prime Point.\n\nAdditional Information:\nService Charge: Estimated £5.56 per sq. ft. per annum\nGround Rent: None payable\nTenure: 999 year leasehold (from May 2004)\n\n*Images and measurements are indicative only, and may be subject to change.\n*Incentive terms and conditions apply, please ask for details.",
       "lat": 51.4957527,
       "lng": 0.0099993,
       "priceFrom": 380000,
@@ -1285,6 +1360,7 @@
         "New homes"
       ],
       "amenities": [
+        "Reserve this November and receive contribution towards stamp duty plus a complimentary furniture pack - with further savings available on selected apartment*",
         "A collection of manhattan studios, 1, 2 & 3 bed apartments",
         "8-minute walk to North Greenwich underground station",
         "Situated in Zone 2, only 9 minutes to Canary Wharf via the underground",
@@ -1316,12 +1392,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6364340314112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/prime-point/london-a0o8w00000lsqviuad",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LSqviUAD",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.496Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Marylebone Mansions",
@@ -1330,7 +1409,7 @@
       "description": "Marylebone Mansions: A Prime London Real Estate Opportunity- Now ready to move in to.\n\nDiscover Marylebone Mansions, an exclusive collection of 32 luxury apartments in the heart of London's W1 district. These contemporary homes seamlessly integrate into the historic Marylebone streetscape, offering a unique blend of modern living and classic charm. As a prime Central London location, these premium Marylebone properties boast an exquisite modern design behind a private façade, all set within a prestigious conservation area. \n\nThe architectural highlights of these high-end Marylebone apartments showcase the finest attention to detail. Featuring bespoke buff York handmade long brick, the exterior is complemented by fine Portland Stone window surrounds and metalwork inspired by Georgian terraces. This design approach creates a contemporary twist on the classic Marylebone townhouse, perfectly balancing heritage and modernity.  \n\nThe development offers secure underground parking, ensuring peace of mind for vehicle owners. A grand reception lobby welcomes residents and guests alike, setting the tone for the exceptional living experience within. The convenience of a daytime concierge service adds an extra layer of comfort to daily life. For relaxation and entertainment, residents have exclusive access to a private media lounge.  \n\nExperience the pinnacle of London property with Marylebone Mansions. This development represents a rare opportunity to own a piece of one of London's most sought-after neighbourhoods. The combination of prime location, luxurious features, and thoughtful design makes these apartments an unparalleled choice for those seeking an exceptional home in Central London.  \n\nAdditional Information:\nService Charge: circa £9.70 per sq. ft per annum\nTenure: 990+ years",
       "lat": 51.51822,
       "lng": -0.16453,
-      "priceFrom": 949499,
+      "priceFrom": 949500,
       "bedrooms": [
         1,
         2,
@@ -1380,18 +1459,21 @@
         "https://bcove.video/4sClYut",
         "https://players.brightcove.net/1535572475001/default_default/index.html?videoId=6387597255112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/marylebone-mansions/london-a0o8w00000lsl9auah",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LSL9aUAH",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.497Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "100 George Street",
       "area": "W1U",
       "postcode": "W1U 8AF",
-      "description": "100 George Street is a refined collection of 41 private residences, discreetly positioned in the heart of Marylebone, moments from Mayfair and London’s Royal Parks. Conceived by Native Land in partnership with Derwent London and The Portman Estate, and designed by Hopkins Architects, the development brings together heritage architecture and contemporary design within one of central London’s most established neighbourhoods, with homes available from £1,750,000. \n\nSet within a newly pedestrianised enclave, the building reflects the character of Marylebone’s Georgian streetscape while introducing a calm and considered residential environment. A grand arrival sequence leads into a series of thoughtfully designed spaces, where a dedicated concierge and 24-hour security provide a seamless and discreet living experience.\n\nResidents benefit from a curated collection of amenities, including a private lounge, library and meeting room, alongside a fully equipped fitness studio and spa complete with treatment room and sauna. Secure underground parking with electric vehicle charging and bicycle storage is accessed via direct lift connections to the residences.\n\nThe apartments themselves are defined by generous proportions and a focus on natural light, with open-plan living spaces designed for both comfort and functionality. Interiors combine oak parquet flooring, marble detailing and bronze accents, creating a calm and sophisticated aesthetic. A selection of homes feature private terraces or Juliet balconies overlooking landscaped courtyard gardens and surrounding greenery.\n\nSustainability is embedded throughout the development, with all-electric systems, biodiverse planting and energy-efficient design supporting long-term environmental performance and resident wellbeing.\n\nMarylebone’s distinctive village character offers a rare balance of independent retail, renowned restaurants and cultural institutions, all within walking distance. With excellent connectivity across London and beyond, 100 George Street provides a considered approach to central London living in a location defined by both energy and tranquillity.\n\nAdditional Information\nService Charge: £16.60 per sq. ft per annum\nTerm: 150-year leases will be granted on legal completion with a right to extend for a further 90 years after 2 years of ownership.",
+      "description": "100 George Street is a refined collection of 41 private residences, discreetly positioned in the heart of Marylebone, moments from Mayfair and London’s Royal Parks. Conceived by Native Land in partnership with Derwent London and The Portman Estate, and designed by Hopkins Architects, the development brings together heritage architecture and contemporary design within one of central London’s most established neighbourhoods, with homes available from £1,750,000. \n\nSet within a newly pedestrianised enclave, the building reflects the character of Marylebone’s Georgian streetscape while introducing a calm and considered residential environment. A grand arrival sequence leads into a series of thoughtfully designed spaces, where a dedicated concierge and 24-hour security provide a seamless and discreet living experience.\n\nResidents benefit from a curated collection of amenities, including a private lounge, library and meeting room, alongside a fully equipped fitness studio and spa complete with treatment room and sauna. Secure underground parking with electric vehicle charging and bicycle storage is accessed via direct lift connections to the residences.\n\nThe apartments themselves are defined by generous proportions and a focus on natural light, with open-plan living spaces designed for both comfort and functionality. Interiors combine oak parquet flooring, marble detailing and bronze accents, creating a calm and sophisticated aesthetic. A selection of homes feature private terraces or Juliet balconies overlooking landscaped courtyard gardens and surrounding greenery.\n\nSustainability is embedded throughout the development, with all-electric systems, biodiverse planting and energy-efficient design supporting long-term environmental performance and resident wellbeing.\n\nMarylebone’s distinctive village character offers a rare balance of independent retail, renowned restaurants and cultural institutions, all within walking distance. With excellent connectivity across London and beyond, 100 George Street provides a considered approach to central London living in a location defined by both energy and tranquillity.\n\nAdditional Information\nService Charge: £13.48  per sq. ft per annum\nTerm: 150-year leases will be granted on legal completion with a right to extend for a further 90 years.",
       "lat": 51.51741,
       "lng": -0.15667,
       "priceFrom": 1750000,
@@ -1416,27 +1498,26 @@
       ],
       "images": [
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/5c05pdqda/ANDERS_241014_0176_NL.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/hxmh9saxh/ANDERS_250917_0033_NL_B2_RE%20%282%29.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/1gyh1kbxu/ANDERS_250917_0124_NL_B2%20%281%29.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/m7mrwx4ye/ANDERS_250919_0531_NL_B2%20%282%29.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/96fg19x4n/ANDERS_250917_0093_NL_B2%20%282%29.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/o30vzgv14/ANDERS_250919_0569_NL_B2%20%288%29.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/ystd2hzfl/ANDERS_250919_0602_NL_B2%20%281%29.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/k5f5lw0we/AM01_Reception%20Entrance_Fogra39.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/10jsumozc/AM04_Gym_Fogra39.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/0d4g20lbl/ANDERS_250917_0033_NL_B2_RE%20%282%29.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/ptybj44k2/ANDERS_250917_0124_NL_B2%20%281%29.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/o0w7vl6vp/ANDERS_250919_0531_NL_B2%20%282%29.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/rw70hx58d/AM03_Screening%20Room.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/qe94bp9cy/100GS_External%20panorama.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/v5eu1v17r/100GS_External%20entrance.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/tltqc83dv/100GS_External%20dusk.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/6k9caguh9/George_St-4528_RE.jpg"
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/uca5qybtw/ANDERS_250917_0093_NL_B2%20%282%29.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/xf1j13xzn/ANDERS_250919_0569_NL_B2%20%288%29.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/fuxqg4vw0/ANDERS_250919_0602_NL_B2%20%281%29.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/47blgzdov/George_St-4613_RE.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000LSAl8/4jh9panmv/George_St-4615_RE.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/100-george-street/london-a0o8w00000lsal8uah",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000LSAl8UAH",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.497Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Eeko",
@@ -1474,12 +1555,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000JDNPY/m8ghurwwq/DSC_7950_high.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/eeko/london-a0o8w00000jdnpyua5",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000JDNPYUA5",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.497Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Camden Goods Yard",
@@ -1540,12 +1624,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000JDFKt/pdyboxah8/4350_1032_250721_xfer.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/camden-goods-yard/london-a0o8w00000jdfktuap",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000JDFKtUAP",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.498Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "River Park Tower",
@@ -1599,12 +1686,15 @@
       "videos": [
         "https://bcove.video/4v9jZhk"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/river-park-tower/london-a0o8w00000jcxzruah",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000JCXzrUAH",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.499Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Sterling Place",
@@ -1647,12 +1737,15 @@
       "videos": [
         "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1693296140/videos/Barratt%20Videos/London%20Developments/Developments/Sterling_Place_Video.mp4"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/sterling-place/london-a0o8w00000jbljhuat",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000JBljHUAT",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.499Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "One Clapham",
@@ -1699,12 +1792,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6336298712112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/one-clapham/london-a0o8w00000jbjarual",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000JBjArUAL",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.499Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Woodberry Down",
@@ -1713,7 +1809,7 @@
       "description": "Discover Woodberry Down: Award-Winning Waterside Living in Zone 2 London.\n\nWoodberry Down presents an exceptional waterside community where contemporary urban living meets the tranquility of North London's most ambitious regeneration success story, delivering over 6,400 new homes within 42 acres of pristine reservoirs and 15 acres of landscaped green spaces.\n\nThis award-winning Zone 2 development offers thoughtfully designed suites and one, two and three bedroom residences featuring sophisticated layouts with premium finishes throughout. The Grove Collection, comprising 289 beautifully crafted homes, showcases the latest chapter in Woodberry Down's evolution with expansive podium gardens and public squares totaling the size of Wembley Stadium. Each residence benefits from carefully considered design that harmonizes with the surrounding landscape, featuring lush rose gardens, scented walkways, and floor-to-ceiling windows that capture views across the tranquil waterside setting.\n\nResidents enjoy comprehensive lifestyle amenities including 24-hour private concierge service, state-of-the-art gym facilities, private screening room and games room, plus unique outdoor pursuits through the on-site sailing club and rock climbing centre. The development features an expansive nature reserve, Redmond Community Centre, and the vibrant Woodberry Square offering shops, cafés, restaurants and pubs. Educational facilities span from nursery through senior school, complemented by GP surgery and extensive parklands for complete community living.\n\nLocated moments from Manor House Underground Station, Woodberry Down delivers exceptional connectivity with Kings Cross accessible in just 7 minutes and Oxford Circus in 11 minutes. The development sits surrounded by North London's most desirable neighbourhoods including eclectic Stoke Newington, vibrant Highbury & Islington, creative Hackney, and village-like Crouch End. This landmark collaboration between Berkeley Homes, London Borough of Hackney, and Notting Hill Genesis represents one of Europe's most successful regeneration schemes, offering residents both urban sophistication and waterside serenity in perfect harmony.\n\nAdditional Information:\nService Charge: estimated £4.27 - £4.90 per sq. ft. per annum\nGround Rent: Peppercorn\nTenure: 299-year lease",
       "lat": 51.5721086,
       "lng": -0.0875473,
-      "priceFrom": 514999,
+      "priceFrom": 515000,
       "bedrooms": [
         0,
         1,
@@ -1756,12 +1852,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000ISC8j/l06pi04oy/vb5624890_7740_1600_260119_1600x1031-1397x900.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/woodberry-down/london-a0o8w00000isc8juah",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000ISC8jUAH",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.500Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Claves",
@@ -1810,12 +1909,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000IIDxt/2ilelp1iw/99057_Flat-82-Wrest-House%20%281%29.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-claves/london-a0o8w00000iidxtuah",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000IIDxtUAH",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.512Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Park Hyatt Residences",
@@ -1824,7 +1926,7 @@
       "description": "Coming Soon | Park Hyatt London Residences\n\nConsistently recognised as one of the world's most luxury hotel brands, the first Park Hyatt hotel in the UK has arrived, featuring a highly exclusive collection of private residences to live in.\n\nSituated within a striking 160-metre glass and limestone tower on the south bank of the River Thames, Park Hyatt London Residences offer truly exceptional living. Located on the leafy banks of the River Thames, the exclusive apartments and penthouses give residents a world-famous personalised signature service, all from the comfort of their own home.\n\nResidents enjoy the unparalleled service of Park Hyatt, including a dedicated 24/7 concierge, private residents' lounge, and direct access to the hotel's pool, spa, fitness centre and dining.\n\nDesigned by KPF architects, every residence features floor-to-ceiling windows with uninterrupted views of London’s most iconic landmarks.\n\nEach home reflects understated elegance, with oak flooring, marble and natural stone, bespoke Miele kitchens and bronze satin hardware by Joseph Giles.\n\nResidents enjoy breathtaking views of the River Thames and the London skyline. The beautifully manicured Linear Park is right on your doorstep, while a 15-minute stroll along the river takes you to Battersea Park.\n\nRising majestically above the south London skyline, Park Hyatt London Residences creates a distinguished focal point on the banks of the River Thames within the Nine Elms regeneration.\n\nResidents enjoy world-class dining and designer shopping at nearby Battersea Power Station. Vauxhall and Nine Elms stations are both a six-minute walk away.\n\nBook your private preview viewing with our Prime Central London team today.\n\nAdditional Information:\nService Charge: estimated £15 per sq. ft per annum\nTerm: 999-year leasehold",
       "lat": 51.4838149,
       "lng": -0.128274,
-      "priceFrom": 1794999,
+      "priceFrom": 1795000,
       "bedrooms": [
         1,
         2,
@@ -1865,12 +1967,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6405530173112"
       ],
+      "unitPrices": {},
       "status": "Coming soon",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/park-hyatt-residences/london-a0o8w00000j3q0iuar",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000J3q0IUAR",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.513Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "One Thames Quay",
@@ -1936,12 +2041,15 @@
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6327290752112",
         "https://bcove.video/48aeeq3"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/one-thames-quay/london-a0o8w00000j3cxguar",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000J3cxGUAR",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.514Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Wembley Park Gardens",
@@ -1982,12 +2090,15 @@
       "videos": [
         "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1740466161/WPG_video_Feb_25_uvsf7f.mp4"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/wembley-park-gardens/london-a0o8w00000j3c1ruaf",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000J3C1rUAF",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.514Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Exchange, Watford",
@@ -2032,18 +2143,21 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000GJ7rw/bb74pjte3/vb2051916_220819_027_HR_WATFORD_COMMUNAL_BUSINESS_LOUNGE_3500x2191.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-exchange-watford/london-a0o8w00000gj7rwuad",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000GJ7rwUAD",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.514Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Frankham Walk",
       "area": "Deptford",
       "postcode": "SE8 4RN",
-      "description": "Available now - schedule your viewing.\n\nStunning Victorian 1, 2, 3 & 4 bedroom homes now available in Deptford, SE8\n\nPeabody presents an exceptional collection of Victorian homes in Deptford's historic SE8 district, where stunning period architecture meets contemporary urban living. This distinguished development offers 1, 2, 3, and 4-bedroom residences, each thoughtfully restored with retained period features and panoramic views across the vibrant London landscape.\n\nEach residence showcases sophisticated living spaces enhanced by original high ceilings and large windows that flood interiors with natural light throughout the day. The contemporary kitchens feature integrated Bosch appliances, while the retained intricate brickwork creates an atmosphere of historical elegance. Modern bedrooms offer peaceful retreats with stunning urban vistas, and the professionally designed interiors demonstrate the development's commitment to premium living standards. Private balconies and the communal courtyard garden provide the perfect setting for outdoor relaxation while enjoying the tranquil green space.\n\nFrankham Walk elevates residential living through its comprehensive benefits, including peppercorn ground rent, extensive 990-year lease terms, and beautifully designed communal gardens. The Victorian conversion ensures residents enjoy some of London's most coveted period architecture, while the new buildings share the same architectural language, paying respect to the history of Frankham Street and Deptford itself.\n\nDeptford's SE8 district offers an enviable lifestyle with Deptford Bridge DLR station and Deptford High Street Overground station just a short walk away, providing seamless connectivity. London Bridge is merely 7 minutes by train, while Canary Wharf is just 12 minutes away. The vibrant Deptford High Street delivers world-class bars, eateries, and boutique shops. The heart of Deptford offers rich cultural heritage and extensive urban amenities just moments away.",
+      "description": "Available now - schedule your viewing.\n\nAn exclusive collection of 1, 2, 3 & 4 bedroom homes, set within beautifully converted Victorian buildings with retained period features, is now available in Deptford, SE8.\n\nPeabody presents an exceptional new development in Deptford's historic SE8 district, where stunning period architecture meets contemporary urban living. This distinguished development offers 1, 2, 3, and 4-bedroom residences, each thoughtfully restored with retained period features and panoramic views across the vibrant London landscape.\n\nEach residence showcases sophisticated living spaces enhanced by original high ceilings and large windows that flood interiors with natural light throughout the day. The contemporary kitchens feature integrated Bosch appliances, while the retained intricate brickwork creates an atmosphere of historical elegance. Modern bedrooms offer peaceful retreats with stunning urban vistas, and the professionally designed interiors demonstrate the development's commitment to premium living standards. Private balconies and the communal courtyard garden provide the perfect setting for outdoor relaxation while enjoying the tranquil green space.\n\nFrankham Walk elevates residential living through its comprehensive benefits, including peppercorn ground rent, extensive 990-year lease terms, and beautifully designed communal gardens. The Victorian conversion ensures residents enjoy some of London's most coveted period architecture, while the new buildings share the same architectural language, paying respect to the history of Frankham Street and Deptford itself.\n\nDeptford's SE8 district offers an enviable lifestyle with Deptford Bridge DLR station and Deptford High Street Overground station just a short walk away, providing seamless connectivity. London Bridge is merely 7 minutes by train, while Canary Wharf is just 12 minutes away. The vibrant Deptford High Street delivers world-class bars, eateries, and boutique shops. The heart of Deptford offers rich cultural heritage and extensive urban amenities just moments away. \n\nAdditional Information\nService Charge: estimated between £3.52 and £4.46 per sq. ft per annum\nTenure: 990 years",
       "lat": 51.4772213,
       "lng": -0.024,
       "priceFrom": 415000,
@@ -2089,12 +2203,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000GHW4m/2zh2xvx16/300_Frankham_Aerial.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/frankham-walk/london-a0o8w00000ghw4muah",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000GHW4mUAH",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.515Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Kings Road Park",
@@ -2145,12 +2262,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6300233855001"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/kings-road-park/london-a0o8w00000ggoxsual",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000GGoXsUAL",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.516Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Bermondsey Heights",
@@ -2192,12 +2312,15 @@
       "videos": [
         "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1744193265/bl_bermondsey_investment_lifestyle_v5f_1080p_clm3fj.mp4"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/bermondsey-heights/london-a0o8w00000gfq7guad",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000GFq7gUAD",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.517Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Residences on Paddington Green",
@@ -2240,12 +2363,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6314684339112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-residences-on-paddington-green/london-a0o8w00000gfobluat",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000GFobLUAT",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.517Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Founding",
@@ -2309,18 +2435,21 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6313536961112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-founding/london-a0o8w00000fq0xquad",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000FQ0xqUAD",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.517Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Chelsea Riverview",
       "area": "Chelsea",
       "postcode": "SW6 2UG",
-      "description": "Now completed | Brand-new show apartments unveiled. FINAL HOMES FOR SALE\n\nChelsea Riverview presents an exceptional boutique collection of luxury riverside apartments, where contemporary design meets the timeless elegance of Fulham waterfront living.\n\nNow complete and ready to move into, this prestigious riverside development offers a final collection of beautifully designed one, two and three-bedroom residences, many enjoying far-reaching views across the River Thames. Sophisticated interiors combine premium materials, floor-to-ceiling glazing and thoughtfully designed open-plan layouts, creating bright and elegant living spaces designed for modern London living.\n\nThe contemporary kitchens blend seamlessly with elegant dining spaces, enhanced by integrated LED systems and statement lighting that creates an atmosphere of refined urban living. Throughout the homes, carefully selected finishes, designer lighting and luxurious materials create a calm and sophisticated environment, while private outdoor spaces and river views enhance the connection to the surrounding waterfront setting.\n\nResidents benefit from an exceptional collection of amenities including a 24-hour staffed reception with concierge service, state-of-the-art gym with Peloton bikes, dedicated yoga studio, residents’ cinema, flexible co-working spaces, secure parcel reception and bicycle storage. Secure underground parking is available by separate negotiation.\n\nPositioned on the banks of the Thames in Fulham’s sought-after SW6 postcode, Chelsea Riverview offers immediate access to scenic riverside walks, neighbouring parkland, and the vibrant amenities of both Fulham and Chelsea. Excellent transport connections place Central London within easy reach, while an outstanding selection of restaurants, boutiques, cafés and green spaces are all close by.\n\nWith brand-new show apartments now available to view and homes ready for immediate occupation, now is the perfect time to discover Chelsea Riverview.\n\n*Some images are CGIs and show apartments and are indicative only.\n\nAdditional Information:\nService Charge: estimated £5.85 per sq. ft. per annum\nGround Rent: Peppercorn\nTenure: 999 year leasehold & share of freehold",
+      "description": "This is the final opportunity to secure a residence at Chelsea Riverview, an exceptional riverside development positioned on the banks of the River Thames in Fulham SW6. This is the only remaining apartment at this address.\n\nLocated on the sixth floor, this impressive two-bedroom apartment offers generous internal living space alongside private outdoor space and far-reaching views across the River Thames. Designed for modern London living, the apartment features bright open-plan interiors, floor-to-ceiling glazing and carefully considered finishes throughout, creating an elegant and sophisticated home in one of West London’s most desirable riverside settings.\n\nThe contemporary kitchen flows seamlessly into the living and dining space, making it ideal for both everyday living and entertaining. Premium materials, designer lighting and high-quality specifications have been selected throughout, while the spacious bedrooms and luxury bathrooms provide a calm and refined environment.\n\nResidents benefit from an exceptional collection of amenities including a 24-hour staffed reception with concierge service, state-of-the-art gym with Peloton bikes, dedicated yoga studio, residents’ cinema, flexible co-working spaces, secure parcel reception and bicycle storage. Secure underground parking is available by separate negotiation.\n\nChelsea Riverview enjoys a prime waterfront position, offering immediate access to riverside walks, neighbouring parkland and the vibrant lifestyle destinations of Fulham and Chelsea. Excellent transport connections place Central London within easy reach, while an outstanding selection of restaurants, boutiques, cafés and green spaces are all close by.\n\nWith brand-new show apartments now available to view and homes ready for immediate occupation, now is the perfect time to discover Chelsea Riverview. \n\n*Representative images only; actual apartment specifications, finishes and layout may differ.\n\nAdditional Information:\nService Charge: estimated £5.85 per sq. ft. per annum\nGround Rent: Peppercorn\nTenure: 999 year leasehold & share of freehold",
       "lat": 51.4702281,
       "lng": -0.1835471,
       "priceFrom": 699000,
@@ -2333,7 +2462,8 @@
         "New homes"
       ],
       "amenities": [
-        "Now completed and ready to move into",
+        "The final home – last remaining apartment at Chelsea Riverview",
+        "Now completed – ready to move in",
         "Brand-new show apartments available to view",
         "Stunning River Thames views",
         "24-hour reception and concierge service",
@@ -2371,12 +2501,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6314678134112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/chelsea-riverview/london-a0o8w00000fnhj7uah",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000FNHj7UAH",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.518Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "19 Bolsover Street",
@@ -2385,7 +2518,7 @@
       "description": "Last chance to secure luxury in London's most coveted postcode.\n\nDiscover sophisticated city living at 19 Bolsover Street, where Georgian heritage meets contemporary luxury in the heart of prestigious Fitzrovia. This exceptional development offered discerning buyers the rare opportunity to secure premium residences in one of London's most coveted postcodes, with only one exquisite three-bedroom residence now remaining from the original collection of 17 exclusive homes.\n\nThis exceptional apartment occupies the coveted first floor of this elegant heritage building, boasting spectacular west-facing views that flood the space with natural light throughout the day. Step into a world where modern luxury interiors seamlessly blend with the building's distinguished Georgian architecture and charming red brick facade, creating a rare blend of period grandeur and cutting-edge comfort.\n\nThe heart of this home is a stunning open-plan living space where the high-specification kitchen, dining, and lounge areas flow seamlessly together. Enhanced by elegant coffered ceilings and sophisticated tray ceiling lighting, this space is perfect for London entertaining or quiet evenings. The thoughtfully designed layout maximises every square foot of the generous 1,986 sq. ft space, featuring high-end finishes throughout, from gleaming marble flooring to premium wood cabinets paired with pristine white quartz countertops in the contemporary kitchen.\n\nThree substantial double bedrooms each feature their own ensuite bathroom - a hotel-like luxury rarely found in London conversions. These beautifully appointed bathrooms showcase spa-style soaking tubs and high-end fixtures, while comfort cooling throughout ensures year-round sophistication. City-view windows frame London's dynamic streetscape, and the residence features a private balcony terrace, perfect for al fresco entertaining in this vibrant urban setting.\n\nFitzrovia's cosmopolitan character places residents at the centre of London's cultural and commercial heartbeat. The area's tree-lined streets house world-renowned galleries, independent boutiques, and acclaimed restaurants. Transport connections include nearby Oxford Circus, Goodge Street, and Great Portland Street stations, providing swift access to the City, Canary Wharf, and beyond. This prime W1 location ensures effortless connectivity across the capital while maintaining the neighbourhood's distinctive village atmosphere.\n\nThis represents your final opportunity to secure your place in this exclusive development. Don't miss this last chance to own this sophisticated urban sanctuary that delivers on every level.\n\nAdditional Information:\nService Charge: circa £12.66 per sq. ft per annum\nGround Rent: £1 per annum\nTenure: 899 years\n\n*Images are of the show apartment and are indicative only.",
       "lat": 51.52107,
       "lng": -0.14222,
-      "priceFrom": 4350000,
+      "priceFrom": 3950000,
       "bedrooms": [
         3
       ],
@@ -2402,28 +2535,36 @@
         "Three ensuite bedrooms offering hotel-style luxury"
       ],
       "images": [
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/6zqpxhbu5/19%20Bolsover-%203%20bed%20lounge.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/qjq9pw5ad/WS191081-15-HiRes.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/xzbg7940w/19%20Bolsover-%203%20bed%20lounge%202.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/08tjy8vue/19%20Bolsover-%203%20bed%20lounge%20dining%20room.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/q3hpc5qel/19%20Bolsover-%203%20bed%20kitchen.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/57d5o60sg/200807%20-%2019%20Bolsover,%20Apt%202%20-%2045.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/tr300dwxj/19%20Bolsover-%203%20bed%20master%20bedroom%202.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/c9am1yvlx/19%20Bolsover-%203%20bed%20bathroom.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/wti61pvd4/19%20Bolsover-%203%20bed%20master%20bedroom.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/hsh2qquox/19%20Bolsover-%203%20bed%20bedroom.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/bmabytnku/19%20Bolsover-%203%20bed%20bedroom%202.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/uef1axe9k/Bolsover%20St-1.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/qsd0uxctg/Bolsover%20St-3.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/kga79d2fe/Bolsover%20St-6.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/ndk6ni9kc/Bolsover%20St-2.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/44a8c5f4y/Bolsover%20St-18.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/414fix6ke/Bolsover%20St-5.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/haimllg29/Bolsover%20St-7.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/35utj8tuv/Bolsover%20St-24.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/4odi1cxr0/Bolsover%20St-23.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/6oztnz7qx/Bolsover%20St-33.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/rc0iwc71v/Bolsover%20St-34.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/5svbccdqm/Bolsover%20St-26.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/k6mdaxocu/Bolsover%20St-27.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/lqiakddlj/Bolsover%20St-37.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/v9o5dlysm/Bolsover%20St-20.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EjUjD/k9q2z4rd9/200807%20-%2019%20Bolsover,%20Apt%202%20-%2050.jpg"
       ],
       "videos": [
         "https://players.brightcove.net/1535572475001/default_default/index.html?videoId=6372747159112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/19-bolsover-street/london-a0o8w00000ejujduav",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000EjUjDUAV",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.518Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Triptych Bankside",
@@ -2457,20 +2598,20 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/k5yve2s4b/Triptych%20Bankside-1.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/kp6w7stxh/vb5382643_JTRE_03_-__Bankside_06.02.25_0020_1600x1200.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/kw89u9zvm/230914_Squire_Partners_Triptych_v2_031.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/8z2g4unb5/Triptych_1004_014.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/i3itbix7p/Triptych_1004_007.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/guy0dzjyd/vb2251389_Triptych_Bankside_Main_Lobby.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/7doc0ycrh/230914_Squire_Partners_Triptych_v2_007.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/a2nwwrcgc/230914_Squire_Partners_Triptych_v2_014.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/orxf9j56e/HERO%20Triptych_1004_014.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/w3povyeyj/Triptych_1004_009.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/2q5s1abq5/Triptych_1004_011.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/skbfbk80q/Triptych_E1104_019.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/3qj7x2p2i/Triptych_1004_017.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/ym5debrvm/Triptych_1004_001.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/b8sr34goe/Triptych_E1104_058_dp.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/hus0rtmm7/Triptych_E1104_031.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/mdf6ta7fn/Triptych_E1104_036.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/fg7ez4ri8/Triptych_E1104_025.jpg",
-        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/57p6wcymk/Triptych_E1104_034.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/7fl4uy65j/Triptych_1004_009.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/jcfsh9bx6/Triptych_E1104_019.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/9ndpivz7n/Triptych_1004_017.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/uqpug7hoi/Triptych_E1104_058_dp.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/1m7e4p8g6/Triptych_1004_001.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/xabvk9v1z/Triptych_E1104_031.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/f6251m4qj/Triptych_E1104_036.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/if9d2s6v8/Triptych_E1104_025.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/zx9ubty4i/Triptych_E1104_034.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/femhphz2y/Triptych_Facilities_005.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/7mfbnuggj/Triptych_Facilities_007.jpg",
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EiMbN/hhktltob4/230914_Squire_Partners_Triptych_v2_016.jpg",
@@ -2488,12 +2629,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6315368001112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/triptych-bankside/london-a0o8w00000eimbnuav",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000EiMbNUAV",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.518Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Ebury SW1",
@@ -2551,12 +2695,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O8W00000EOILI/dj10redy1/4061_EB_PUBLIC_BLOCK_7_RETAIL_DUSK_DM.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/ebury-sw1/london-a0o8w00000eoiliua5",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000EOILIUA5",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.519Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Hendon Waterside",
@@ -2600,12 +2747,15 @@
       "videos": [
         "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1744192395/discover-hendon-waterside-nw9-2160-ytshorts.savetube.me_qlfmte.mp4"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/hendon-waterside/london-a0o8w00000e38sbuab",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000E38sbUAB",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.519Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Eastman Village",
@@ -2648,12 +2798,15 @@
       "videos": [
         "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1641825356/videos/Barratt%20Videos/London%20Developments/Developments/EASTMAN_VILLAGE_INVEST_V6.mp4_1.mp4"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/eastman-village/london-a0o8w00000e38sruar",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000E38sRUAR",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.520Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Elephant Park - Park & Sayer",
@@ -2696,12 +2849,15 @@
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6389563175112",
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6389560574112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/elephant-park-park-and-sayer/london-a0o8w00000e1i6juaf",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000E1I6jUAF",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.520Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Hayes Village",
@@ -2742,12 +2898,15 @@
       "videos": [
         "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1731062908/Discover_life_at_Hayes_Village_vrpa93.mp4"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/hayes-village/london-a0o8w00000e0v2uuar",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O8W00000E0v2UUAR",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.520Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Riverscape",
@@ -2756,7 +2915,7 @@
       "description": "Riverscape presents a distinctive collection of one-, two- and three-bedroom apartments where the Thames meets the tranquil expanses of Lyle Park in Royal Docks.\n\nSet within an extraordinary riverside location in East London, this waterfront development occupies a unique position where the river's natural curvature creates uninterrupted panoramic vistas. The south-facing orientation captures exceptional natural light throughout spacious interiors, whilst floor-to-ceiling windows frame views spanning the Thames, verdant parkland, and the distinctive Canary Wharf skyline. Each residence features thoughtfully designed open-plan living spaces, generous kitchens, and private outdoor areas including balconies or enclosed day rooms that extend the living experience into nature's embrace.\n\nInteriors by acclaimed London studio Amos & Amos reflect sophisticated artisanal craftsmanship through reeded glass details, bespoke joinery, and brushed brassware finishes. The flexible day rooms provide additional versatility for home offices, creative studios, or dining spaces, all bathed in stunning natural light. Residents enjoy exclusive access to the 16th floor Sky Lounge, creating elevated spaces for socialising and collaboration with panoramic city perspectives.\n\nRoyal Docks offers an established community atmosphere within extensive parkland settings, perfectly balancing urban connectivity with natural tranquillity. Canary Wharf lies just 4 minutes away, whilst Liverpool Street can be reached in 12 minutes, providing seamless access to the City and West End. The location in E16 delivers exceptional transport links whilst maintaining the serene, almost coastal living experience that defines this remarkable waterfront address.\n\nAdditional Information:\nService Charge: \nThe Latham building: £6.06 per square foot per annum \nThe Pearsall building: £5.93 per square foot per annum \nGround Rent: Nil\nTenure: Leasehold 1,000 years  \nParking: £30,000 per space, right to park. Service charge £801.35 per annum\n\n*Images are CGI and are indicative only.",
       "lat": 51.5019241,
       "lng": 0.0302553,
-      "priceFrom": 459500,
+      "priceFrom": 459499,
       "bedrooms": [
         1,
         2,
@@ -2790,12 +2949,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O1I00000DAJUF/0gt2wtry4/Endurance%20House-35.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/riverscape/london-a0o1i00000dajufua5",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I00000DAJUFUA5",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.521Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Heron Wharf",
@@ -2846,12 +3008,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O1I00000CTuxz/mav0nc9e5/Poplar%20Riverside-3.png"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/heron-wharf/london-a0o1i00000ctuxzuad",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I00000CTuxzUAD",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.521Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Harcourt Gardens, South Quay Plaza",
@@ -2898,12 +3063,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6301693816001"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/harcourt-gardens-south-quay-plaza/london-a0o1i00000bimltuaz",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I00000BimLTUAZ",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.521Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Chiswick Green",
@@ -2959,12 +3127,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O1I00000ApZVz/efn0vvg1g/Chiswick%20Green%20%283%29.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/chiswick-green/london-a0o1i00000apzvzuan",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I00000ApZVzUAN",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.522Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Paddington Gardens",
@@ -3015,12 +3186,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6319209534112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/paddington-gardens/london-a0o1i00000a8c4ouar",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I00000A8c4OUAR",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.522Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "10 Park Drive",
@@ -3059,12 +3233,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O1I0000086aZC/d6s8ew9w3/10%20park%20drive%20balcony%20night.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/10-park-drive/london-a0o1i0000086azcuay",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I0000086aZCUAY",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.522Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "London Dock",
@@ -3122,12 +3299,15 @@
         "https://bcove.video/4tB7cEN",
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6389162105112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/london-dock/london-a0o1i000005od8zuaa",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000005od8zUAA",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.523Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Green Quarter",
@@ -3169,12 +3349,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O1I000005oCSR/7da5gi0cm/TGQ220906-109a.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-green-quarter/london-a0o1i000005ocsrua2",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000005oCSRUA2",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.523Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Battersea Power Station",
@@ -3232,12 +3415,15 @@
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6306467500112",
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6314135337112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/battersea-power-station/london-a0o1i0000069vg5uae",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I0000069Vg5UAE",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.524Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "White City Living",
@@ -3300,12 +3486,15 @@
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6389556216112",
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6389557325112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/white-city-living/london-a0o1i000004lvdbuaq",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000004lvdBUAQ",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.524Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Trent Park",
@@ -3355,12 +3544,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O1I000002iFNq/evnsskvx9/vb1956885_vb1956410_BH_TP_Int_2149_HKG.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/trent-park/london-a0o1i000002ifnquam",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000002iFNqUAM",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.525Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Centre Point Residences",
@@ -3399,12 +3591,15 @@
         "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0O1I000002AfUa/j2bmbkv2a/Reception%20-%20architecture.jpg"
       ],
       "videos": [],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/centre-point-residences/london-a0o1i000002afuauak",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000002AfUaUAK",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.525Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Landmark Pinnacle",
@@ -3462,12 +3657,15 @@
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6340355758112",
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6314861128112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/landmark-pinnacle/london-a0o1i000001jvgnuac",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000001JvgnUAC",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.525Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Broadway, St James's Park",
@@ -3531,12 +3729,15 @@
       "videos": [
         "https://bcove.video/48cQP8z"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-broadway-st-jamess-park/london-a0o1i000001jvg4uac",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000001Jvg4UAC",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.526Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "One Park Drive",
@@ -3584,12 +3785,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6205555309001"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/one-park-drive/london-a0o1i000001jvfouas",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000001JvfOUAS",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.526Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Goodluck Hope",
@@ -3646,12 +3850,15 @@
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6387938265112",
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6387938245112"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/goodluck-hope/london-a0o1i000001jvduuac",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000001JvduUAC",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.526Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "SEVEN, Southbank Place",
@@ -3705,12 +3912,15 @@
       "videos": [
         "https://bcove.video/3OpeD20"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/seven-southbank-place/london-a0o1i000001jvdxuac",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000001JvdxUAC",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.527Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "The Residences at Mandarin Oriental, Mayfair",
@@ -3761,12 +3971,15 @@
       "videos": [
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6150315825001"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/the-residences-at-mandarin-oriental-mayfair/london-a0o1i000001jvd9uac",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000001Jvd9UAC",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.528Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     },
     {
       "name": "Prince of Wales Drive",
@@ -3817,27 +4030,183 @@
         "https://players.brightcove.net/1268729899001/default_default/index.html?videoId=6283836268001",
         "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1643728102/videos/WeChat%20Videos/Prince_of_Wales_Drive.mp4"
       ],
+      "unitPrices": {},
       "status": "Available",
       "sample": false,
       "sourceUrl": "https://residential.jll.co.uk/sale-development/prince-of-wales-drive/london-a0o1i000001jvcxuas",
+      "importSource": "",
+      "translations": {},
       "id": "jll-a0O1I000001JvcXUAS",
       "source": "JLL website",
-      "lastSyncedAt": "2026-10-26T22:27:28.528Z"
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
+    },
+    {
+      "name": "The Penthouses at Landmark Pinnacle",
+      "area": "Canary Wharf",
+      "postcode": "E14 9AB",
+      "description": "Landmark Pinnacle: The Penthouse Collection\n\nLandmark Pinnacle presents two exceptional three-bedroom penthouses on the 74th floor of London's tallest residential tower. Positioned over 200 metres above the Thames, these exclusive residences represent the pinnacle of luxury living in the capital's most iconic address.\n\nEach penthouse features three generously proportioned bedrooms, all with ensuite bathrooms, plus an additional guest WC. Floor-to-ceiling windows frame breathtaking 360-degree panoramic views across London's skyline, from the historic City to the verdant expanse of the Royal Parks, creating an unparalleled sense of space and light throughout.\n\nThe contemporary interiors showcase open-concept layouts with bespoke kitchens featuring marble countertops, sophisticated cabinetry, and premium finishes meticulously selected for these signature residences. Every detail has been thoughtfully considered to deliver a living experience befitting this extraordinary elevation.\n\nPenthouse residents enjoy exclusive access to five floors of private amenity space, including the spectacular 75th floor rooftop terrace offering unrivalled London views. The 56th floor wellness centre features a fully equipped gym, Pilates studios, residents' lounge, and entertainment spaces including virtual golf and games rooms. An elegant lobby with 24-hour concierge service, private cinema, and media rooms complete the exceptional offering.\n\nCanary Wharf, London's premier financial district, offers excellent connectivity across the capital, with multiple transport links including the DLR and Elizabeth line ensuring seamless access to the City, West End, and beyond. The waterfront location provides residents with both urban sophistication and riverside tranquillity, with extensive shopping, dining, and cultural venues on the doorstep.\n\nAdditional Information:\nService Charge: circa £9.71 per sq. ft per annum\nGround Rent: Suite: £999 p.a.\nTenure: 999 years",
+      "lat": 51.5026521,
+      "lng": -0.0253415,
+      "priceFrom": 5500000,
+      "bedrooms": [
+        3
+      ],
+      "propertyTypes": [
+        "Penthouses"
+      ],
+      "amenities": [
+        "Two exclusive three-bedroom penthouses on the 74th floor",
+        "Over 200 metres above the Thames in London's tallest residential tower",
+        "All bedrooms ensuite plus additional guest WC",
+        "Exclusive access to five floors of private amenity space",
+        "Spectacular 75th floor rooftop terrace with 360-degree London views",
+        "Floor-to-ceiling windows with breathtaking panoramic vistas",
+        "Bespoke interiors with premium finishes throughout",
+        "Comprehensive 56th floor wellness centre with gym and Pilates studios",
+        "24-hour concierge, private cinema and residents' lounge"
+      ],
+      "images": [
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/n3y5zxejb/Landmark%20Pinnacle%20Penthouse%2074.02%20-1-%20Living.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/wglzphx9e/Landmark%20Pinnacle%20Penthouse%2074.02%20-13-%20Views.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/q9w1byklj/Landmark%20Pinnacle%20Penthouse%2074.02%20-7-%20Kitchen.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/6hxbsnj6h/Landmark%20Pinnacle%20Penthouse%2074.02%20-8-%20Kitchen.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/g7w9vmayd/Landmark%20Pinnacle%20Penthouse%2074.02%20-6-%20Kitchen.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/hgivp8b7u/LP%20Sept%2022%20002.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/svamev1f7/Landmark%20Pinnacle%20Penthouse%2074.02%20-14-%20Views.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/ewnocbsrf/Landmark%20Pinnacle%20Penthouse%2074.02%20-16-%20Guest%20WC.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/uxno02ggo/Landmark%20Pinnacle%20Penthouse%2074.02%20-17-%20Principle%20Bedroom.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/g9nl41mg5/Landmark%20Pinnacle%20Penthouse%2074.02%20-19-%20Principle%20Bedroom%20Ensuite.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/vtcey9fng/Landmark%20Pinnacle%20Penthouse%2074.02%20-20-%20Principle%20Bedroom%20Walk-in%20Wardrobe.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/7mzgkd9xj/Landmark%20Pinnacle%20Penthouse%2074.02%20-21-%20Bedroom%202.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/sauth7zm9/Landmark%20Pinnacle%20Penthouse%2074.02%20-26-%20Bedroom%203%20Layout.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/nbz6o4218/Landmark%20Pinnacle%20Penthouse%2074.02%20-23-%20Bedroom%202%20Ensuite.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/yx7w58xex/Landmark%20Pinnacle%20Penthouse%2074.02%20-24-%20Bedroom%203.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/2rvs1al7g/Landmark%20Pinnacle%20Penthouse%2074.02%20-25-%20Bedroom%203.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/4bu0d5vaw/LP%20Sept%2022%20157.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/gd6k6gdhd/LP%20Sept%2022%20001.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/fhcn1atxu/LP%20Sept%2022%20076.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000LS1zZ/9ay61lixj/LP%20Sept%2022%20011.jpg"
+      ],
+      "videos": [],
+      "unitPrices": {},
+      "status": "Available",
+      "sample": false,
+      "sourceUrl": "https://residential.jll.co.uk/sale-development/the-penthouses-at-landmark-pinnacle/london-a0ovb00000ls1zzmat",
+      "importSource": "",
+      "translations": {},
+      "id": "jll-a0OVb00000LS1zZMAT",
+      "source": "JLL website",
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
+    },
+    {
+      "name": "The Albion Nord Penthouse at SEVEN",
+      "area": "SE1",
+      "postcode": "SE1 7GZ",
+      "description": "The Albion Nord Penthouse at SEVEN \n\nDiscover London's most distinctive penthouse residence. A four-bedroom duplex sanctuary designed by award-winning British studio Albion Nord.\n\nCrowning SEVEN at Southbank Place, this exceptional 3,800 sq. ft duplex penthouse with approximately 900 sq. ft of private wraparound terrace represents the pinnacle of contemporary London living. Award-winning British interior design studio Albion Nord has reimagined penthouse living, creating a serene retreat that captures the understated elegance of a New York penthouse whilst celebrating the creative heritage of London's South Bank through premium British craftsmanship.\n\nOccupying the 12th and 13th floors, the residence is connected by a spectacular spiral staircase. Albion Nord has masterfully layered rich materials, sculptural forms and timeless detailing, introducing darker timbers, warm-toned polished plaster, and exposed travertine alongside soft, tactile fabrics in earthy tones. The sophisticated design continues the architectural silhouettes that define SEVEN, creating an unmistakable connection between the interiors and extraordinary 360-degree views across London, from Battersea to Canary Wharf, encompassing the River Thames, Houses of Parliament, London Eye, and The Shard.\n\nThe expansive open-plan living space features formal living and dining areas alongside a contemporary kitchen with leathered marble worktops, integrated Miele appliances and Wolf enclosed appliances.  The principal bedroom suite features an impressive ensuite bathroom with fluted stone wall, feature bath and dual walk-in dressing rooms. Three additional bedroom suites, each with bespoke detailing, a private study, and the substantial wraparound terrace complete this extraordinary residence.\n\nResidents at SEVEN enjoy direct lift access to exceptional amenities including a 17,000 sq. ft health club and spa operated by Educated Body, featuring a 25-metre swimming pool, private cinema and screening room, and 24-hour concierge and security. The development's prime SE1 location places cultural treasures like the National Theatre, Royal Festival Hall, and Tate Modern within moments' reach, while boutique shopping and riverside dining complete the luxury lifestyle offering.\n\nWaterloo Station provides effortless connectivity via multiple underground lines, ensuring swift access throughout London and beyond. Set within 5.25 acres of beautifully landscaped public realm at Southbank Place, The Penthouse at SEVEN represents a truly exceptional opportunity.",
+      "lat": 51.5041481,
+      "lng": -0.1165152,
+      "priceFrom": 20000000,
+      "bedrooms": [
+        4
+      ],
+      "propertyTypes": [
+        "Penthouses"
+      ],
+      "amenities": [
+        "Four-bedroom duplex penthouse designed by award-winning Albion Nord",
+        "3,800 sq. ft interior with a c.900 sq. ft private wraparound terrace",
+        "360-degree views: Featuring the River Thames, Houses of Parliament, London Eye, The Shard",
+        "Bespoke furniture and commissioned artworks by UK artisans",
+        "Principal suite with fluted stone bathroom and dual walk-in dressing rooms",
+        "Spectacular spiral staircase connecting 12th & 13th floors",
+        "Contemporary kitchen with Miele appliances and polished marble worktops",
+        "SEVEN has direct lift access to 17,000 sq. ft Health Club & Spa with 25m pool",
+        "Direct access within Southbank Place to Waterloo Station, with secure underground parking"
+      ],
+      "images": [
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/wyvy1yi9c/Reception.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/g877mfdoz/Balcony.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/501k3ijqt/Kitchen.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/l3yowmrgf/Dining.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/tplc76lzf/Bedroom.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/oh2c6v3gz/Bathroom.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/pcsfg8xr1/Pool.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/rrw8w4ucc/Amenities.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb00000L5nVS/2k4mkrono/Amenities1.jpg"
+      ],
+      "videos": [],
+      "unitPrices": {},
+      "status": "Available",
+      "sample": false,
+      "sourceUrl": "https://residential.jll.co.uk/sale-development/the-albion-nord-penthouse-at-seven/london-a0ovb00000l5nvsmaz",
+      "importSource": "",
+      "translations": {},
+      "id": "jll-a0OVb00000L5nVSMAZ",
+      "source": "JLL website",
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
+    },
+    {
+      "name": "The Lanes",
+      "area": "Tooting",
+      "postcode": "SW17 0YH",
+      "description": "The Lanes presents a remarkable collection of contemporary apartments nestled within London's largest new park development. This exceptional residential community in SW17 offers one, two and three-bedroom homes starting from prices to be confirmed, perfectly positioned between the vibrant energy of Tooting and the leafy charm of Earlsfield.\n\nStep into a world where modern urban living seamlessly blends with natural tranquillity. Each thoughtfully designed residence showcases contemporary finishes and spacious layouts, complemented by floor-to-ceiling windows that frame views of the surrounding landscaped grounds. The development's architectural vision creates a harmonious balance between sophisticated apartment living and the serenity of 32 acres of urban parkland right on your doorstep.\n\nThe Springfield Village neighbourhood enhances daily convenience with an on-site supermarket, gym and café, ensuring everything you need is within walking distance. Residents can enjoy the best of both worlds - quick transport connections providing seamless access to central London when needed, or the opportunity to disconnect completely within the extensive green spaces and planned community areas that define this unique waterfront setting.\n\nThis prime SW17 location offers exceptional connectivity whilst maintaining its distinctive suburban character. The surrounding area provides excellent transport links for swift commutes to the capital's business districts, while locally you'll discover the dynamic dining scene of Tooting and the peaceful residential streets of Earlsfield. With Springfield Park as your neighbour and thoughtfully planned community spaces throughout, The Lanes represents a new standard of hybrid living in South London.\n\nAdditional Information:\nService Charge: circa £4 per sq. ft per annum\nGround Rent: Peppercorn\nTenure: 999-year leasehold\nParking: No parking available\n\n*Computer-generated images for illustrative purposes only",
+      "lat": 51.43579,
+      "lng": -0.17139,
+      "priceFrom": 0,
+      "bedrooms": [
+        1,
+        2,
+        3
+      ],
+      "propertyTypes": [
+        "New homes"
+      ],
+      "amenities": [
+        "Show Apartment now available to view",
+        "Contemporary 1, 2 & 3-bedroom homes",
+        "Move-in ready from Spring 2027",
+        "London's largest new park development - 32 acres",
+        "Springfield Village amenities: supermarket, gym & café",
+        "Central London connectivity - London Bridge in 19 minutes",
+        "Prime SW17 location between Tooting & Earlsfield"
+      ],
+      "images": [
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/nd0u85kpc/4350_Springfield_Place_Ext_View_001_Final_AB.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/5z6okyyg0/4350_Springfield_Place_Ext_View_002_Final_AB.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/25il0dw38/4350_Springfield_Place_Ext_View_003_Final_AB.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/aauprruut/4350_Springfield_Place_Ext_View_004_Final_AB.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/90ng5ndwf/4350_Springfield_Place_Ext_View_005_Final_AB.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/av8dbu9h7/4350_Springfield_Place_Ext_View_006_Final_AB.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/fwlfvjx61/4350_Springfield_Place_Ext_View_007_Final_AB.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/20s9mqdbh/Storymakers_TheLanesShowflat_June25_09A4440.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/boitxb44c/Storymakers_TheLanesShowflat_June25_09A4450.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/7qqcihhto/Storymakers_TheLanesShowflat_June25_09A4455.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/b3tiv11jt/Storymakers_TheLanesShowflat_June25_09A4479.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/3qg4syhy1/Storymakers_TheLanesShowflat_June25_09A4487.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/wrsywh2vd/Storymakers_TheLanesShowflat_June25_09A4494.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/h9dnlf53e/Storymakers_TheLanesShowflat_June25_09A4499.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/akjgte44e/Storymakers_TheLanesShowflat_June25_09A4517.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/oarjlb671/Storymakers_TheLanesShowflat_June25_09A4594.jpg",
+        "https://res.cloudinary.com/jll-global-olm-np/image/upload/w_1920,c_limit,q_auto:good,f_auto,fl_progressive/resi/gb/resiforce/00D1I000000m4lcUAA/a0OVb000002Az97/ctswcguz7/Site%20plan%20web%20ready.jpg"
+      ],
+      "videos": [
+        "https://res.cloudinary.com/drt5ol8ck/video/upload/f_auto,q_auto/v1744188370/introducing-the-lanes-the-greener-side-of-london-1080-ytshorts.savetube.me_faxohg.mp4"
+      ],
+      "unitPrices": {},
+      "status": "Available",
+      "sample": false,
+      "sourceUrl": "https://residential.jll.co.uk/sale-development/the-lanes/london-a0ovb000002az97mac",
+      "importSource": "",
+      "translations": {},
+      "id": "jll-a0OVb000002Az97MAC",
+      "source": "JLL website",
+      "lastSyncedAt": "2026-11-16T11:46:19.747Z"
     }
   ],
   "lastSync": {
-    "imported": 69,
-    "skipped": [
-      {
-        "name": "The Albion Nord Penthouse at SEVEN",
-        "reason": "At least one bedroom option and property type are required."
-      },
-      {
-        "name": "The Lanes",
-        "reason": "priceFrom must be a positive whole number in GBP."
-      }
-    ],
-    "syncedAt": "2026-10-26T22:27:28.533Z",
+    "imported": 72,
+    "skipped": [],
+    "syncedAt": "2026-11-16T11:46:19.747Z",
     "note": "Website-managed records are refreshed in place. Manual records are preserved. Missing website stock is retained for review, not automatically withdrawn."
   }
 }

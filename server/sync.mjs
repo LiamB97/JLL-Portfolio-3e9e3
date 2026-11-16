@@ -4,14 +4,34 @@ import {validateDevelopment} from './model.mjs';
 export const SEARCH_URL='https://residential.jll.co.uk/search?tenureType=sale&flags=new-home&sortBy=newestListed&currencyType=GBP';
 export function sourceRecords(html){const $=cheerio.load(html);const text=$('#__NEXT_DATA__').text();if(!text)throw Error('JLL changed its page format; existing stock was kept.');const p=JSON.parse(text).props?.pageProps;if(!Array.isArray(p?.allDevelopments)||!p.allDevelopments.length||p.allDevelopments.length!==p.propertiesTotalResults)throw Error('JLL returned an incomplete development collection; existing stock was kept.');return p.allDevelopments;}
 function plain(value){return cheerio.load(String(value||'').replace(/<br\s*\/?>/gi,'\n')).text().trim();}
+const bedroomWords=['one','two','three','four','five','six','seven','eight','nine','ten'];
+function sourceBedrooms(labels,amenities){
+ const bedrooms=[...new Set(labels.flatMap(label=>{
+  if(/^studio$/i.test(label))return [0];
+  const count=String(label).match(/^(\d+)\s*(?:bed(?:room)?s?)?$/i);
+  return count?[Number(count[1])]:[];
+ }))];
+ if(bedrooms.length||!labels.some(label=>/^penthouse$/i.test(String(label).trim())))return bedrooms;
+ // When JLL uses a property type as its bedroom label, use an unambiguous count from its highlights.
+ const counts=new Set();
+ for(const highlight of amenities){
+  for(const [,count] of highlight.matchAll(/\b([1-9]|10|one|two|three|four|five|six|seven|eight|nine|ten)[\s‐‑–-]+bedrooms?\b/gi)){
+   counts.add(Number(count)||bedroomWords.indexOf(count.toLowerCase())+1);
+  }
+ }
+ return counts.size===1?[...counts]:[];
+}
 export function convertSource(p){
  if(p.city!=='London'||!p.tenureType?.includes('sale')||!p.isNewDevelopment)throw Error('Not a London new-home sale development.');
- const bedrooms=[...new Set((p.rooms?.bedrooms||[]).flatMap(s=>{if(/^studio$/i.test(s))return [0];const m=String(s).match(/^(\d+)\s*(?:bed(?:room)?s?)?$/i);return m?[Number(m[1])]:[];}))];
+ const {minAmount,maxAmount,currencyCode}=p.price??{};
+ if(currencyCode!=='GBP')throw Error('Listing price is not in GBP.');
+ const allowUnconfirmedPrice=(minAmount===0&&maxAmount===0)||(minAmount===null&&maxAmount===null);
+ const amenities=(p.amenities||[]).slice(0,30).map(plain);
+ const bedrooms=sourceBedrooms(p.rooms?.bedrooms||[],amenities);
  const description=plain(p.description).split(/\n\s*\n/).filter(x=>!/(?:register your interest|contact us|call us|enquire now|arrange a viewing)/i.test(x)).join('\n\n');
  const headline=plain(p.developmentHeadline);const area=headline.includes(',')?headline.split(',').slice(1).join(',').trim():String(p.postcode||'').split(' ')[0];
  const videos=(p.videos||[]).map(v=>typeof v==='string'?v:v.url).filter(v=>typeof v==='string'&&/^https:\/\//.test(v));
- const d=validateDevelopment({name:plain(p.title),area,postcode:p.postcode,lat:Number(p.lat),lng:Number(p.lng),priceFrom:Number(p.price?.minAmount),bedrooms,propertyTypes:[/penthouse/i.test(p.title)?'Penthouses':'New homes'],amenities:(p.amenities||[]).slice(0,30).map(plain),images:(p.images||[]).slice(0,30),videos:videos.slice(0,30),description,status:p.showComingSoon?'Coming soon':'Available',sample:false,sourceUrl:new URL(p.pageUrl,'https://residential.jll.co.uk').href});
- if(p.price?.currencyCode!=='GBP')throw Error('Listing price is not in GBP.');
+ const d=validateDevelopment({name:plain(p.title),area,postcode:p.postcode,lat:Number(p.lat),lng:Number(p.lng),priceFrom:Number(minAmount),bedrooms,propertyTypes:[/penthouse/i.test(p.title)?'Penthouses':'New homes'],amenities,images:(p.images||[]).slice(0,30),videos:videos.slice(0,30),description,status:p.showComingSoon?'Coming soon':'Available',sample:false,sourceUrl:new URL(p.pageUrl,'https://residential.jll.co.uk').href},{allowUnconfirmedPrice});
  if(!p.id)throw Error('Missing stable source identifier.');
  return {...d,id:'jll-'+p.id,source:'JLL website',lastSyncedAt:new Date().toISOString()};
 }

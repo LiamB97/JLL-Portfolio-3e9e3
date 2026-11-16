@@ -1,4 +1,4 @@
-export function validateDevelopment(raw) {
+export function validateDevelopment(raw,{allowUnconfirmedPrice=false}={}) {
  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw Error('Each development must be an object.');
  if(raw._requiresReview&&raw._reviewConfirmed!==true)throw Error('Review and confirm the imported details and media before publishing.');
  const d = {};
@@ -11,7 +11,7 @@ export function validateDevelopment(raw) {
   d[key] = raw[key];
  }
  if(d.lat<51.28 || d.lat>51.7 || d.lng<-.52 || d.lng>.34) throw Error('Coordinates must be within Greater London.');
- if(d.priceFrom<=0 || !Number.isSafeInteger(d.priceFrom)) throw Error('priceFrom must be a positive whole number in GBP.');
+ if(!Number.isSafeInteger(d.priceFrom)||d.priceFrom<0||(d.priceFrom===0&&!allowUnconfirmedPrice)) throw Error('priceFrom must be a positive whole number in GBP.');
  for(const key of ['bedrooms','propertyTypes','amenities','images','videos']) {
   if(!Array.isArray(raw[key]) || raw[key].length>30) throw Error(`${key} must be an array of up to 30 items.`);
   d[key]=raw[key].map(x=>{

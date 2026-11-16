@@ -17,7 +17,7 @@ import {validateDevelopment} from './model.mjs';
 import {extractListing} from './import.mjs';
 import {fetchSource} from './sync.mjs';
 import {ConflictError,refreshPortfolio} from './netlify-store.mjs';
-const reviewedDevelopment=raw=>{try{return validateDevelopment(raw);}catch(e){throw new AccessError(e.message);}};
+const reviewedDevelopment=(raw,options)=>{try{return validateDevelopment(raw,options);}catch(e){throw new AccessError(e.message);}};
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export function createNetlifyApi({repository,password,fetchListings=fetchSource,extract=extractListing,network,connections,translations=defaultTranslations,visitorRepository,pendingOptions,brochureFiles,commute=defaultCommute,reviewEmailConfigured=false}){
  const access=accessService(repository,password);
@@ -119,7 +119,7 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    let body;try{body=JSON.parse(text);}catch{return json({error:'Request must contain valid JSON.'},400);}
    if(method==='POST'&&route==='/api/admin/activity'){if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);if(!['personal_link_copy','personal_whatsapp_click','personal_email_click','collection_link_copy','collection_whatsapp_click','collection_email_click'].includes(body?.event))throw new AccessError('Unsupported staff activity.');return json(await repository.update(state=>{const acting=access.current(state,actor);let c;if(body.event.startsWith('collection_')){c=(state.collections||[]).find(c=>c.id===body.collectionId);if(!c)throw new AccessError('Collection not found.',404);if(acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('This collection belongs to another broker.',403);}else if(!acting.whatsapp||!acting.shareSlug)throw new AccessError('Add your WhatsApp number first.');recordStaff(state,acting,body.event,{id:c?.id||'',label:c?.title||''});return {ok:true};}));}
    if(method==='PUT'&&route==='/api/admin/analytics'){access.admin(actor);let settings;try{settings=validateAnalyticsConfiguration(body);}catch(e){throw new AccessError(e.message);}return json(await repository.update(state=>{access.admin(access.current(state,actor));state.analytics=settings;return analyticsConfiguration(state,{privateView:true});}));}
-   if(method==='POST'&&route==='/api/admin/source-review'){access.stock(actor);return json(await repository.update(state=>{const acting=access.current(state,actor);access.stock(acting);const i=state.developments.findIndex(d=>d.id===body.id);if(i<0)throw new AccessError('Development not found.',404);let next;try{next=resolveSourceField(state.developments[i],body.field,body.choice,body.version);validateDevelopment(next);}catch(e){throw new AccessError(e.message,409);}state.developments[i]=next;recordStaff(state,acting,'stock_edit',{id:next.id,label:next.name});return {ok:true};}));}
+   if(method==='POST'&&route==='/api/admin/source-review'){access.stock(actor);return json(await repository.update(state=>{const acting=access.current(state,actor);access.stock(acting);const i=state.developments.findIndex(d=>d.id===body.id);if(i<0)throw new AccessError('Development not found.',404);let next;try{next=resolveSourceField(state.developments[i],body.field,body.choice,body.version);validateDevelopment(next,{allowUnconfirmedPrice:next.source==='JLL website'});}catch(e){throw new AccessError(e.message,409);}state.developments[i]=next;recordStaff(state,acting,'stock_edit',{id:next.id,label:next.name});return {ok:true};}));}
    if(method==='POST'&&route==='/api/admin/profile')return json(await access.updateProfile(actor,body));
    if(method==='POST'&&route==='/api/admin/drafts'){access.stock(actor);if(!body||typeof body.data!=='object'||!body.data)throw new AccessError('A draft needs development data.');return json(await repository.update(s=>{const acting=access.current(s,actor);access.stock(acting);s.drafts||=[];let d=body.id?s.drafts.find(d=>d.id===body.id):null;if(body.id&&!d)throw new AccessError('Draft no longer exists. Save a new draft.',404);if(d&&acting.role!=='admin'&&d.ownerId!==actor.id)throw new AccessError('You can only edit your own drafts.',403);if(!d){if(s.drafts.length>=200)throw new AccessError('Remove an old draft before adding another.');d={id:randomBytes(12).toString('hex'),ownerId:actor.id};s.drafts.push(d);}d.data=structuredClone(body.data);d.editingId=typeof body.editingId==='string'?body.editingId:null;d.name=String(body.name||'Untitled development').slice(0,100);d.updatedAt=new Date().toISOString();recordStaff(s,acting,'draft_save',{id:d.id,label:d.name});return structuredClone(d);}),201);}
    if(method==='POST'&&route==='/api/admin/users/invite')return json(await access.invite(actor,body),201);
@@ -135,8 +135,19 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
     await repository.update(state=>{const acting=access.current(state,actor);access.stock(acting);const checked=[...state.developments];for(const item of items){rejectDuplicate(checked,item);checked.push(item);}state.developments.push(...items);for(const item of items)recordStaff(state,acting,'stock_add',{id:item.id,label:item.name});});return json({created:items.length},201);
    }
    if(method==='PUT'&&route.startsWith('/api/admin/developments/')){
-    const id=decodeURIComponent(route.slice('/api/admin/developments/'.length));const data={...reviewedDevelopment(body),id};
-    const found=await repository.update(state=>{const acting=access.current(state,actor);access.stock(acting);const i=state.developments.findIndex(d=>d.id===id);if(i<0)return false;if(!access.canEdit(acting,state.developments[i]))throw new AccessError('You can only edit your own developments.',403);rejectDuplicate(state.developments,data,id);state.developments[i]=markManualEdit(state.developments[i],data,acting);recordStaff(state,acting,'stock_edit',{id,label:data.name});return true;});return json(found?{ok:true}:{error:'Development not found.'},found?200:404);
+    const id=decodeURIComponent(route.slice('/api/admin/developments/'.length));
+    const found=await repository.update(state=>{
+     const acting=access.current(state,actor);access.stock(acting);
+     const i=state.developments.findIndex(d=>d.id===id);
+     if(i<0)return false;
+     const existing=state.developments[i];
+     if(!access.canEdit(acting,existing))throw new AccessError('You can only edit your own developments.',403);
+     const data={...reviewedDevelopment(body,{allowUnconfirmedPrice:existing.source==='JLL website'&&existing.priceFrom===0}),id};
+     rejectDuplicate(state.developments,data,id);
+     state.developments[i]=markManualEdit(existing,data,acting);
+     recordStaff(state,acting,'stock_edit',{id,label:data.name});
+     return true;
+    });return json(found?{ok:true}:{error:'Development not found.'},found?200:404);
    }
    return json({error:'API endpoint not found.'},404);
   }catch(e){if(e.duplicateId)return json({error:e.message,duplicateId:e.duplicateId},409);if(e instanceof AccessError)return json({error:e.message},e.status);if(e instanceof ConflictError)return json({error:e.message},409);console.error('Portfolio API request failed:',e.message);return json({error:'Unable to complete the request. Check your data or retry shortly; saved stock has been preserved.'},422);}
