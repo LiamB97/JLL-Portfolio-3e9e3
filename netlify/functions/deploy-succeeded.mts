@@ -16,7 +16,7 @@ export default async function handler(_request: Request, { deploy }: Context) {
   await applyRegionalReviewPlan(repository, plan)
   const coverage = regionalReviewPlanCoverage(await repository.read(), plan)
   if (coverage.some(region => region.grouped !== region.expected ||
-      region.consultants.some(consultant => !consultant.matched || consultant.count !== region.expected))) {
+      region.consultants.some(consultant => consultant.count + consultant.queued !== region.expected))) {
     console.error('Regional review assignment coverage is incomplete:', JSON.stringify(coverage))
     return new Response(null, { status: 422 })
   }

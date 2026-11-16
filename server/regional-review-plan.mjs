@@ -32,7 +32,7 @@ function parsePlan(raw) {
   return plan;
 }
 
-export function matchesConsultant(person, name) {
+function matchesConsultant(person, name) {
   if (!person.email) return false;
   const key = name.toLowerCase();
   if (key.includes('@')) return person.email.toLowerCase() === key;
