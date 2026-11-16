@@ -3,11 +3,10 @@ import {isDeepStrictEqual} from 'node:util';
 import {reviewRegions} from '../shared/development-review.ts';
 import {AccessError} from './access.mjs';
 import {recordStaff} from './activity.mjs';
+import {newDevelopmentReview, reviewInterval} from './development-review-record.mjs';
 import {validateUnitPrices} from './model.mjs';
 import {markManualEdit} from './source-review.mjs';
 
-const day = 24 * 60 * 60 * 1000;
-const reviewInterval = 14 * day;
 // Resend honours a request's idempotency key for 24 hours. Leave room for a slow invocation.
 const retryWindow = 20 * 60 * 60 * 1000;
 const batchSize = 4;
@@ -66,7 +65,7 @@ export function assignDevelopmentReview(state, body, now = Date.now()) {
   state.developmentReviews = reviews.filter(review => review.developmentId !== development.id || selected.has(review.assigneeId));
   for (const assigneeId of selected) {
     if (!Object.hasOwn(currentAssignments, assigneeId)) {
-      state.developmentReviews.push({developmentId: development.id, assigneeId, version: randomUUID(), nextReminderAt: now + reviewInterval});
+      state.developmentReviews.push(newDevelopmentReview(development.id, assigneeId, now));
     }
   }
   return {ok: true};

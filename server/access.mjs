@@ -1,6 +1,7 @@
 import {profilePhoto} from './profile-photo.mjs';
 import transportNetwork from './data/tfl-network.json' with {type:'json'};
 import {recordStaff} from './activity.mjs';
+import {newDevelopmentReview} from './development-review-record.mjs';
 import {randomBytes,createHash,timingSafeEqual,scrypt as scryptCallback} from 'node:crypto';
 import {promisify} from 'node:util';
 const scrypt=promisify(scryptCallback),SESSION_MS=8*3600000,INVITE_MS=7*24*3600000,LOCK_MS=15*60000;
@@ -23,6 +24,17 @@ export function publicUser(u){return {id:u.id,name:u.name,email:u.email,role:u.r
 export function publicDevelopment(d){const {createdBy,updatedBy,importSource,...safe}=d;for(const key of Object.keys(safe))if(key.startsWith('_'))delete safe[key];return safe;}
 function init(s){for(const key of ['users','sessions','invites','collections','authFailures'])if(!Array.isArray(s[key]))s[key]=[];}
 function ownerGuard(s,u,nextRole,nextActive){if(u.role==='admin'&&u.active&&(nextRole!=='admin'||!nextActive)&&s.users.filter(x=>x.active&&x.role==='admin').length<=1)throw new AccessError('Keep at least one active administrator.');}
+function activateInvitedReviews(state, invitation, user, now){
+ if(!invitation._reviewDevelopments?.length||!['admin','broker_admin'].includes(user.role))return;
+ const assignments=state.developmentReviews??=[];
+ const assigned=new Set(assignments.filter(review=>review.assigneeId===user.id).map(review=>review.developmentId));
+ const regions=new Map(state.developments.filter(d=>!d.sample).map(d=>[d.id,d._reviewRegion]));
+ for(const {id,region} of invitation._reviewDevelopments){
+  if(regions.get(id)!==region||assigned.has(id))continue;
+  assignments.push(newDevelopmentReview(id,user.id,now));
+  assigned.add(id);
+ }
+}
 function cookies(request){return Object.fromEntries((request.headers.get('cookie')||'').split(';').map(x=>x.trim().split('=')).filter(x=>x.length===2));}
 export function sessionCookie(token,request,clear=false){return `jll_session=${clear?'':token}; Path=/api; HttpOnly; SameSite=Strict; Max-Age=${clear?0:SESSION_MS/1000}${new URL(request.url).protocol==='https:'?'; Secure':''}`;}
 export function checkOrigin(request){const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin)throw new AccessError('This request must come from the portfolio.',403);}
@@ -59,13 +71,14 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
  async function invite(actor,body){if(actor.legacy)throw new AccessError('Create the owner account first.',409);const address=email(body.email),display=name(body.name),assigned=role(body.role||'broker');const token=randomBytes(32).toString('base64url');
   const data=await repository.update(s=>{init(s);const acting=current(s,actor);const u=s.users.find(x=>x.email===address);if(acting.role!=='admin'&&(assigned!=='broker'||u||s.invites.some(x=>x.email===address&&x.expiresAt>now())))throw new AccessError('You may invite new regular brokers only. Ask an Admin to change roles or reset an account.',403);if(u)ownerGuard(s,u,assigned,true);s.invites=s.invites.filter(x=>x.email!==address&&x.expiresAt>now());const invitation={id:randomBytes(12).toString('hex'),tokenHash:digest(token),email:address,name:display,role:assigned,expiresAt:now()+INVITE_MS,createdBy:actor.id};s.invites.push(invitation);recordStaff(s,acting,'invite_create',{id:invitation.id,label:display,now:now()});return {id:invitation.id,email:address,name:display,role:assigned,expiresAt:invitation.expiresAt};});return {...data,token};
  }
- async function invites(actor){return ((await repository.read()).invites||[]).filter(x=>x.expiresAt>now()&&(actor.role==='admin'||x.createdBy===actor.id)).map(({tokenHash,...safe})=>safe);}
+ async function invites(actor){return ((await repository.read()).invites||[]).filter(x=>x.expiresAt>now()&&(actor.role==='admin'||x.createdBy===actor.id)).map(({tokenHash,_reviewDevelopments,...safe})=>safe);}
  async function revokeInvite(actor,id){return repository.update(s=>{init(s);const acting=current(s,actor);const invite=s.invites.find(x=>x.id===id);if(invite&&acting.role!=='admin'&&invite.createdBy!==actor.id)throw new AccessError('You can only revoke your own invitations.',403);const before=s.invites.length;s.invites=s.invites.filter(x=>x.id!==id);if(before===s.invites.length)throw new AccessError('Invitation not found.',404);recordStaff(s,acting,'invite_revoke',{id,now:now()});return {ok:true};});}
  async function accept(body){
   if(typeof body.token!=='string'||body.token.length>100)throw new AccessError('This invitation is invalid or expired.',410);
   const hash=await passwordHash(body.password);return repository.update(s=>{init(s);const invitation=s.invites.find(x=>x.expiresAt>now()&&equal(x.tokenHash,digest(body.token)));const inviter=invitation&&s.users.find(x=>x.id===invitation.createdBy&&x.active);if(!invitation||!inviter||(inviter.role!=='admin'&&(invitation.role!=='broker'||s.users.some(x=>x.email===invitation.email))))throw new AccessError('This invitation is invalid or expired.',410);
    if(email(body.email)!==invitation.email)throw new AccessError('Use the email address your invitation was sent to.');const phone=whatsappNumber(body.whatsapp);let u=s.users.find(x=>x.email===invitation.email);if(u){ownerGuard(s,u,invitation.role,true);u.passwordHash=hash;u.role=invitation.role;u.active=true;u.name=invitation.name;}else{u={id:randomBytes(12).toString('hex'),email:invitation.email,name:invitation.name,role:invitation.role,active:true,passwordHash:hash,createdAt:new Date(now()).toISOString()};s.users.push(u);}
    u.whatsapp=phone;if(!u.shareSlug){u.shareSlug=randomBytes(12).toString('base64url');recordStaff(s,u,'personal_link_created',{now:now()});}
+   activateInvitedReviews(s,invitation,u,now());
    s.invites=s.invites.filter(x=>x.id!==invitation.id);s.sessions=s.sessions.filter(x=>x.userId!==u.id);s.authFailures=s.authFailures.filter(x=>x.key!==digest(u.email));return addSession(s,u);
   });
  }

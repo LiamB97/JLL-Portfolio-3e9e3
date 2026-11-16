@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 import type { Context } from '@netlify/functions'
 import { portfolioRepository } from '../../server/netlify-store.mjs'
-import { regionalReviewPlanCoverage } from '../../server/regional-review-plan.mjs'
+import { matchesConsultant, regionalReviewPlanCoverage } from '../../server/regional-review-plan.mjs'
 
 // Temporary, read-only support for the private production rollout.
 export default async function handler(request: Request, { deploy }: Context) {
@@ -18,14 +18,11 @@ export default async function handler(request: Request, { deploy }: Context) {
   const state = await portfolioRepository().read()
   const coverage = regionalReviewPlanCoverage(state, raw)
   const accounts = coverage.flatMap(group => group.consultants).map(({ name }) => {
-    const first = name.toLowerCase()
-    const matches = (person: { name?: string; email?: string }) =>
-      person.name?.trim().toLowerCase().split(/\s+/)[0] === first ||
-      person.email?.toLowerCase().split(/[^a-z0-9]/)[0] === first
+    const matches = (person: { name?: string; email?: string }) => matchesConsultant(person, name)
     return {
       name,
       roles: (state.users ?? []).filter(matches).map(({ role, active }) => ({ role, active })),
-      hasPendingInvitation: (state.invites ?? []).some(invite => matches(invite) && invite.expiresAt > Date.now()),
+      pendingInvitationRoles: (state.invites ?? []).filter(invite => matches(invite) && invite.expiresAt > Date.now()).map(({ role }) => role),
     }
   })
   return Response.json({ coverage, accounts }, { headers: { 'Cache-Control': 'no-store' } })

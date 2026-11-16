@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {randomBytes} from 'node:crypto';
 import {createNetlifyApi} from './netlify-api.mjs';import {accessService,digest} from './access.mjs';import {samples} from './model.mjs';
+import {applyRegionalReviewPlan,regionalReviewPlanCoverage} from './regional-review-plan.mjs';
 function environment(config={}){let state={developments:structuredClone(samples),lastSync:null};const secret=randomBytes(24).toString('hex');const repository={read:async()=>structuredClone(state),update:async fn=>{const next=structuredClone(state);const result=fn(next);state=next;return result;}};const api=createNetlifyApi({repository,password:secret,...config});
  async function call(path,{body,method='GET',actor,origin='https://portfolio.example',csrf=true}={}){const r=await api(new Request('https://portfolio.example/api/'+path,{method,headers:{'Content-Type':'application/json',Origin:origin,...(actor?{Cookie:actor.cookie,...(csrf?{'X-CSRF-Token':actor.csrf}:{})}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})}));const data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],headers:r.headers};}
  async function owner(){const r=await call('access/bootstrap',{method:'POST',body:{setupSecret:secret,name:'Owner',email:'owner@example.test',whatsapp:'+447900000001',password:randomBytes(18).toString('hex')}});assert.equal(r.status,200);return {cookie:r.cookie,csrf:r.data.csrf,user:r.data.user};}
@@ -82,6 +83,28 @@ test('two assigned broker admins can review and edit the same stock without losi
  assert.equal((await e.call(path,{actor:second,method:'POST',body:{developmentId,version:latest.version}})).status,200);
  assert.ok((await reviewFor(second)).lastConfirmedAt);
  assert.equal((await reviewFor(first)).lastConfirmedAt,undefined);
+});
+test('reviews queued for a matching broker-admin invitation appear on account activation',async()=>{
+ const e=environment(),admin=await e.owner(),path='admin/development-reviews';
+ const developmentId=samples[0].id,email='morgan.river-test@example.test';
+ await e.repository.update(state=>{state.developments[0].sample=false;});
+ const invitation=await e.call('admin/users/invite',{actor:admin,method:'POST',body:{email,name:'Morgan River Test',role:'broker_admin'}});
+ assert.equal(invitation.status,201);
+ const plan=JSON.stringify({revision:1,groups:[
+  {region:'East London',consultants:['Morgan River-Test','Unmatched'],developmentIds:[developmentId]},
+ ]});
+ const rollout=await applyRegionalReviewPlan(e.repository,plan);
+ assert.deepEqual(rollout[0].pending,['Morgan River-Test']);
+ assert.deepEqual(rollout[0].unavailable,['Unmatched']);
+ assert.equal(regionalReviewPlanCoverage(await e.repository.read(),plan)[0].consultants[0].queued,1);
+ assert.equal((await e.call(path,{actor:admin})).data.reviews.length,0);
+ const accepted=await e.call('access/accept',{method:'POST',body:{token:invitation.data.token,email,whatsapp:'+447900000002',password:randomBytes(18).toString('hex')}});
+ assert.equal(accepted.status,200);
+ const actor={cookie:accepted.cookie,csrf:accepted.data.csrf};
+ const [review]=(await e.call(path,{actor})).data.reviews;
+ assert.equal(review.development.id,developmentId);
+ assert.equal(review.development.region,'East London');
+ assert.equal(regionalReviewPlanCoverage(await e.repository.read(),plan)[0].consultants[0].count,1);
 });
 test('owner setup needs the server secret, is one-time, and shared-secret access stops after setup',async()=>{const e=environment();assert.equal((await e.call('access/bootstrap',{method:'POST',body:{setupSecret:'wrong'}})).status,401);const admin=await e.owner();assert.equal(admin.user.role,'admin');assert.equal((await e.call('access/bootstrap',{method:'POST',body:{setupSecret:e.secret,name:'Other',email:'other@example.test',password:randomBytes(18).toString('hex')}})).status,409);const legacyApi=createNetlifyApi({repository:e.repository,password:e.secret});const r=await legacyApi(new Request('https://portfolio.example/api/admin/users',{headers:{Authorization:'Bearer '+e.secret}}));assert.equal(r.status,401);});
 test('staff sessions are HttpOnly, Secure, same-site, CSRF protected and revoked on logout',async()=>{const e=environment();const admin=await e.owner();const status=await e.call('access/me',{actor:admin});assert.equal(status.status,200);assert.equal(status.data.user.email,'owner@example.test');assert.equal('token' in status.data,false);assert.equal((await e.call('admin/collections',{method:'POST',actor:admin,csrf:false,body:{title:'Homes',developmentIds:[samples[0].id]}})).status,403);assert.equal((await e.call('admin/collections',{method:'POST',actor:admin,origin:'https://evil.example',body:{title:'Homes',developmentIds:[samples[0].id]}})).status,403);const logout=await e.call('access/logout',{method:'POST',actor:admin});assert.equal(logout.status,200);assert.match(logout.headers.get('set-cookie'),/HttpOnly/);assert.match(logout.headers.get('set-cookie'),/Secure/);assert.match(logout.headers.get('set-cookie'),/SameSite=Strict/);assert.equal((await e.call('access/me',{actor:admin})).status,401);});

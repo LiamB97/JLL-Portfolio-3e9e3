@@ -11,7 +11,7 @@ function parsePlan(raw) {
   for (const group of plan.groups) {
     if (!reviewRegions.includes(group?.region) || regions.has(group.region) ||
         !Array.isArray(group.consultants) || !group.consultants.length ||
-        group.consultants.some(name => typeof name !== 'string' || !/^[a-z]+$/i.test(name)) ||
+        group.consultants.some(name => typeof name !== 'string' || name.length > 100 || !/^[a-z][a-z .’'-]*$/i.test(name)) ||
         new Set(group.consultants.map(name => name.toLowerCase())).size !== group.consultants.length ||
         !Array.isArray(group.developmentIds) || !group.developmentIds.length) {
       throw Error('Invalid group in regional review plan.');
@@ -25,15 +25,28 @@ function parsePlan(raw) {
   return plan;
 }
 
-function resolveConsultant(users, name) {
+export function matchesConsultant(person, name) {
+  if (!person.email) return false;
   const key = name.toLowerCase();
-  const matches = users.filter(user => {
-    const firstName = user.name?.trim().toLowerCase().split(/\s+/)[0];
-    const emailPrefix = user.email?.toLowerCase().split(/[^a-z0-9]/)[0];
-    return user.active && user.email && (firstName === key || emailPrefix === key);
-  });
+  if (/\s/.test(key)) {
+    const normalise = value => (value ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return normalise(person.name) === normalise(key) || normalise(person.email.split('@')[0]) === normalise(key);
+  }
+  const firstName = person.name?.trim().toLowerCase().split(/\s+/)[0];
+  const emailPrefix = person.email?.toLowerCase().split(/[^a-z0-9]/)[0];
+  return firstName === key || emailPrefix === key;
+}
+
+function resolveConsultant(users, name) {
+  const matches = users.filter(user => user.active && matchesConsultant(user, name));
   const [user] = matches;
   return matches.length === 1 && ['admin', 'broker_admin'].includes(user.role) ? user.id : null;
+}
+
+function resolveInvitation(state, name, now) {
+  const matches = (state.invites ?? []).filter(invite => invite.expiresAt > now && matchesConsultant(invite, name));
+  const [invite] = matches;
+  return matches.length === 1 && ['admin', 'broker_admin'].includes(invite.role) ? invite : null;
 }
 
 export async function applyRegionalReviewPlan(repository, raw, now = Date.now()) {
@@ -46,10 +59,15 @@ export async function applyRegionalReviewPlan(repository, raw, now = Date.now())
     const stock = new Map(state.developments.filter(item => !item.sample).map(item => [item.id, item]));
     const results = [];
     for (const {region, consultants, developmentIds} of plan.groups) {
-      const reviewers = consultants.map(name => ({name, id: resolveConsultant(state.users ?? [], name)}));
-      const unavailable = reviewers.filter(reviewer => !reviewer.id ||
-        reviewers.some(other => other !== reviewer && other.id === reviewer.id)).map(reviewer => reviewer.name);
-      const reviewerIds = unavailable.length ? [] : reviewers.map(reviewer => reviewer.id);
+      const reviewers = consultants.map(name => {
+        const id = resolveConsultant(state.users ?? [], name);
+        return {name, id, invite: id ? null : resolveInvitation(state, name, now)};
+      });
+      const active = reviewers.filter(reviewer => reviewer.id &&
+        reviewers.filter(other => other.id === reviewer.id).length === 1);
+      const pending = reviewers.filter(reviewer => reviewer.invite &&
+        reviewers.filter(other => other.invite === reviewer.invite).length === 1);
+      const reviewerIds = active.map(reviewer => reviewer.id);
       for (const developmentId of developmentIds) {
         const development = stock.get(developmentId);
         if (!development) throw Error('The regional review plan includes stock that is no longer published.');
@@ -60,14 +78,24 @@ export async function applyRegionalReviewPlan(repository, raw, now = Date.now())
           expectedAssignments: Object.fromEntries(current.map(review => [review.assigneeId, review.version])),
         }, now);
       }
-      results.push({region, count: developmentIds.length, consultants: unavailable.length ? [] : consultants, unavailable});
+      for (const {invite} of pending) {
+        const previous = new Map((invite._reviewDevelopments ?? []).map(entry => [entry.id, entry]));
+        for (const id of developmentIds) previous.set(id, {id, region});
+        invite._reviewDevelopments = [...previous.values()];
+      }
+      results.push({
+        region, count: developmentIds.length,
+        consultants: active.map(reviewer => reviewer.name),
+        pending: pending.map(reviewer => reviewer.name),
+        unavailable: reviewers.filter(reviewer => !active.includes(reviewer) && !pending.includes(reviewer)).map(reviewer => reviewer.name),
+      });
     }
     state.regionalReviewPlanRevision = plan.revision;
     return results;
   });
 }
 
-export function regionalReviewPlanCoverage(state, raw) {
+export function regionalReviewPlanCoverage(state, raw, now = Date.now()) {
   const plan = parsePlan(raw);
   const stock = new Map(state.developments.filter(item => !item.sample).map(item => [item.id, item]));
   const reviews = state.developmentReviews ?? [];
@@ -78,7 +106,12 @@ export function regionalReviewPlanCoverage(state, raw) {
       consultants: consultants.map(name => {
         const id = resolveConsultant(state.users ?? [], name);
         const assigned = new Set(reviews.filter(review => review.assigneeId === id).map(review => review.developmentId));
-        return {name, matched: Boolean(id), count: grouped.filter(developmentId => assigned.has(developmentId)).length};
+        const invitation = id ? null : resolveInvitation(state, name, now);
+        const queued = new Set((invitation?._reviewDevelopments ?? []).filter(entry => entry.region === region).map(entry => entry.id));
+        return {
+          name, matched: Boolean(id), count: grouped.filter(developmentId => assigned.has(developmentId)).length,
+          queued: grouped.filter(developmentId => queued.has(developmentId)).length,
+        };
       }),
     };
   });

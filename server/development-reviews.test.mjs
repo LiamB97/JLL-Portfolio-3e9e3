@@ -81,15 +81,15 @@ test('a deployment review plan groups stock and assigns both managers once', asy
   ]});
   const result = await applyRegionalReviewPlan(repository, raw, dueAt);
   assert.deepEqual(result, [
-    {region: 'East London', count: 2, consultants: ['Alex', 'Morgan'], unavailable: []},
-    {region: 'Core', count: 1, consultants: [], unavailable: ['Casey']},
+    {region: 'East London', count: 2, consultants: ['Alex', 'Morgan'], pending: [], unavailable: []},
+    {region: 'Core', count: 1, consultants: [], pending: [], unavailable: ['Casey']},
   ]);
   const state = await repository.read();
   assert.equal(state.developments[2]._reviewRegion, 'Core');
   assert.deepEqual(state.developmentReviews.filter(review => review.developmentId === 'b').map(review => review.assigneeId), ['consultant', 'first', 'second']);
   const [east, core] = regionalReviewPlanCoverage(state, raw);
-  assert.deepEqual(east.consultants, [{name:'Alex',matched:true,count:2},{name:'Morgan',matched:true,count:2}]);
-  assert.deepEqual(core.consultants, [{name:'Casey',matched:false,count:0}]);
+  assert.deepEqual(east.consultants, [{name:'Alex',matched:true,count:2,queued:0},{name:'Morgan',matched:true,count:2,queued:0}]);
+  assert.deepEqual(core.consultants, [{name:'Casey',matched:false,count:0,queued:0}]);
   assert.equal(await applyRegionalReviewPlan(repository, raw, dueAt + day), null);
   assert.deepEqual(await repository.read(), state);
 });
