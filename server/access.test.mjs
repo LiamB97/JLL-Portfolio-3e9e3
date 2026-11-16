@@ -90,12 +90,15 @@ test('reviews queued for a matching broker-admin invitation appear on account ac
  await e.repository.update(state=>{state.developments[0].sample=false;});
  const invitation=await e.call('admin/users/invite',{actor:admin,method:'POST',body:{email,name:'Morgan River Test',role:'broker_admin'}});
  assert.equal(invitation.status,201);
+ const other=await e.call('admin/users/invite',{actor:admin,method:'POST',body:{email:'morgan.river-test@other.example.test',name:'Morgan River Test',role:'broker_admin'}});
+ assert.equal(other.status,201);
  const plan=JSON.stringify({revision:1,groups:[
-  {region:'East London',consultants:['Morgan River-Test','Unmatched'],developmentIds:[developmentId]},
+  {region:'East London',consultants:[email,'Unmatched'],developmentIds:[developmentId]},
  ]});
  const rollout=await applyRegionalReviewPlan(e.repository,plan);
- assert.deepEqual(rollout[0].pending,['Morgan River-Test']);
+ assert.deepEqual(rollout[0].pending,[email]);
  assert.deepEqual(rollout[0].unavailable,['Unmatched']);
+ assert.equal((await e.repository.read()).invites.find(item=>item.id===other.data.id)._reviewDevelopments,undefined);
  assert.equal(regionalReviewPlanCoverage(await e.repository.read(),plan)[0].consultants[0].queued,1);
  assert.equal((await e.call(path,{actor:admin})).data.reviews.length,0);
  const accepted=await e.call('access/accept',{method:'POST',body:{token:invitation.data.token,email,whatsapp:'+447900000002',password:randomBytes(18).toString('hex')}});

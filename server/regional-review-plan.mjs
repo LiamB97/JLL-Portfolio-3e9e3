@@ -1,6 +1,13 @@
 import {reviewRegions} from '../shared/development-review.ts';
 import {assignDevelopmentReview} from './development-reviews.mjs';
 
+function validConsultant(value) {
+  if (typeof value !== 'string') return false;
+  return value.includes('@')
+    ? value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    : value.length <= 100 && /^[a-z][a-z .’'-]*$/i.test(value);
+}
+
 function parsePlan(raw) {
   const plan = JSON.parse(raw);
   if (!Number.isSafeInteger(plan?.revision) || plan.revision < 1 || !Array.isArray(plan.groups) || !plan.groups.length) {
@@ -11,7 +18,7 @@ function parsePlan(raw) {
   for (const group of plan.groups) {
     if (!reviewRegions.includes(group?.region) || regions.has(group.region) ||
         !Array.isArray(group.consultants) || !group.consultants.length ||
-        group.consultants.some(name => typeof name !== 'string' || name.length > 100 || !/^[a-z][a-z .’'-]*$/i.test(name)) ||
+        group.consultants.some(name => !validConsultant(name)) ||
         new Set(group.consultants.map(name => name.toLowerCase())).size !== group.consultants.length ||
         !Array.isArray(group.developmentIds) || !group.developmentIds.length) {
       throw Error('Invalid group in regional review plan.');
@@ -28,6 +35,7 @@ function parsePlan(raw) {
 export function matchesConsultant(person, name) {
   if (!person.email) return false;
   const key = name.toLowerCase();
+  if (key.includes('@')) return person.email.toLowerCase() === key;
   if (/\s/.test(key)) {
     const normalise = value => (value ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
     return normalise(person.name) === normalise(key) || normalise(person.email.split('@')[0]) === normalise(key);

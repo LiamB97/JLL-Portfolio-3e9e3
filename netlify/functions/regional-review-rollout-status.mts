@@ -19,10 +19,12 @@ export default async function handler(request: Request, { deploy }: Context) {
   const coverage = regionalReviewPlanCoverage(state, raw)
   const accounts = coverage.flatMap(group => group.consultants).map(({ name }) => {
     const matches = (person: { name?: string; email?: string }) => matchesConsultant(person, name)
+    const invitations = (state.invites ?? []).filter(invite => matches(invite) && invite.expiresAt > Date.now())
     return {
       name,
       roles: (state.users ?? []).filter(matches).map(({ role, active }) => ({ role, active })),
-      pendingInvitationRoles: (state.invites ?? []).filter(invite => matches(invite) && invite.expiresAt > Date.now()).map(({ role }) => role),
+      pendingInvitationRoles: invitations.map(({ role }) => role),
+      choices: invitations.length > 1 ? invitations.map(({ email }) => email) : undefined,
     }
   })
   return Response.json({ coverage, accounts }, { headers: { 'Cache-Control': 'no-store' } })
