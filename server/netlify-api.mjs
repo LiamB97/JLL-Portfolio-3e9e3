@@ -2,7 +2,7 @@ import {brochureService,memoryBrochureFiles} from './brochures.mjs';
 import {markManualEdit,resolveSourceField} from './source-review.mjs';
 import {defaultCommute,CommuteError} from './commute.mjs';
 import {pendingInputService} from './pending-input.mjs';
-import {assignDevelopmentReview,confirmDevelopmentReview,developmentReviewWorkspace} from './development-reviews.mjs';
+import {assignDevelopmentReview,confirmDevelopmentReview,developmentReviewWorkspace,saveDevelopmentReviewPrices} from './development-reviews.mjs';
 import {recordStaff,touchStaff,initializeActivity,engagementService,activityReport} from './activity.mjs';
 import {translations as defaultTranslations} from './translations.mjs';
 import {staffGuide} from './staff-guide.mjs';
@@ -57,13 +57,17 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
      const state=await repository.read();
      return json(developmentReviewWorkspace(state,access.current(state,actor),reviewEmailConfigured));
     }
-    if(method==='PUT'||method==='POST'){
+    if(['PUT','POST','PATCH'].includes(method)){
      const text=await request.text();
      if(Buffer.byteLength(text)>4000)throw new AccessError('Development review request is too large.',413);
      let body;try{body=JSON.parse(text);}catch{throw new AccessError('Send valid development review data.');}
      return json(await repository.update(state=>{
       const acting=access.current(state,actor);
       if(method==='POST')return confirmDevelopmentReview(state,acting,body);
+      if(method==='PATCH'){
+       access.stock(acting);
+       return saveDevelopmentReviewPrices(state,acting,body);
+      }
       access.admin(acting);
       return assignDevelopmentReview(state,body);
      }));

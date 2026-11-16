@@ -28,6 +28,32 @@ test('development reviews are private, assigned by admins, and confirmed by the 
  assert.equal((await e.call(path,{actor:admin,method:'PUT',body:{...body,assigneeId:null,version:confirmed.version}})).status,200);
  assert.equal((await e.call(path,{actor:consultant})).data.reviews.length,0);
 });
+test('regional reviews keep grouping private and let only the assigned stock manager save valid bedroom prices',async()=>{
+ const e=environment(),admin=await e.owner();
+ const manager=await e.broker(admin,'manager@example.test','broker_admin');
+ const other=await e.broker(admin,'other-manager@example.test','broker_admin');
+ const developmentId=samples[0].id,path='admin/development-reviews';
+ await e.repository.update(state=>{Object.assign(state.developments[0],{sample:false,priceFrom:0,source:'JLL website'});});
+ const assignment={developmentId,assigneeId:manager.user.id,version:null,region:'East London',expectedRegion:null};
+ assert.equal((await e.call(path,{actor:manager,method:'PUT',body:assignment})).status,403);
+ assert.equal((await e.call(path,{actor:admin,method:'PUT',body:{...assignment,region:'North'}})).status,422);
+ assert.equal((await e.call(path,{actor:admin,method:'PUT',body:assignment})).status,200);
+ const [review]=(await e.call(path,{actor:manager})).data.reviews;
+ assert.equal(review.development.region,'East London');
+ assert.deepEqual(review.development.bedrooms,samples[0].bedrooms);
+ const prices={developmentId,version:review.version,unitPrices:{1:550000},expectedBedrooms:review.development.bedrooms,expectedUnitPrices:{}};
+ assert.equal((await e.call(path,{actor:other,method:'PATCH',body:prices})).status,403);
+ assert.equal((await e.call(path,{actor:manager,method:'PATCH',body:{...prices,unitPrices:{9:550000}}})).status,422);
+ assert.equal((await e.call(path,{actor:manager,method:'PATCH',body:{...prices,expectedUnitPrices:{1:520000}}})).status,409);
+ assert.equal((await e.call(path,{actor:manager,method:'PATCH',body:prices})).status,200);
+ assert.equal((await e.call(path,{actor:manager,method:'PATCH',body:prices})).status,409);
+ const [updated]=(await e.call(path,{actor:manager})).data.reviews;
+ assert.equal(updated.nextReminderAt,review.nextReminderAt);
+ const publicListing=(await e.call('developments')).data[0];
+ assert.deepEqual(publicListing.unitPrices,{1:550000});
+ assert.equal(publicListing.priceFrom,0);
+ assert.ok(!('region' in publicListing)&&!('_reviewRegion' in publicListing));
+});
 test('owner setup needs the server secret, is one-time, and shared-secret access stops after setup',async()=>{const e=environment();assert.equal((await e.call('access/bootstrap',{method:'POST',body:{setupSecret:'wrong'}})).status,401);const admin=await e.owner();assert.equal(admin.user.role,'admin');assert.equal((await e.call('access/bootstrap',{method:'POST',body:{setupSecret:e.secret,name:'Other',email:'other@example.test',password:randomBytes(18).toString('hex')}})).status,409);const legacyApi=createNetlifyApi({repository:e.repository,password:e.secret});const r=await legacyApi(new Request('https://portfolio.example/api/admin/users',{headers:{Authorization:'Bearer '+e.secret}}));assert.equal(r.status,401);});
 test('staff sessions are HttpOnly, Secure, same-site, CSRF protected and revoked on logout',async()=>{const e=environment();const admin=await e.owner();const status=await e.call('access/me',{actor:admin});assert.equal(status.status,200);assert.equal(status.data.user.email,'owner@example.test');assert.equal('token' in status.data,false);assert.equal((await e.call('admin/collections',{method:'POST',actor:admin,csrf:false,body:{title:'Homes',developmentIds:[samples[0].id]}})).status,403);assert.equal((await e.call('admin/collections',{method:'POST',actor:admin,origin:'https://evil.example',body:{title:'Homes',developmentIds:[samples[0].id]}})).status,403);const logout=await e.call('access/logout',{method:'POST',actor:admin});assert.equal(logout.status,200);assert.match(logout.headers.get('set-cookie'),/HttpOnly/);assert.match(logout.headers.get('set-cookie'),/Secure/);assert.match(logout.headers.get('set-cookie'),/SameSite=Strict/);assert.equal((await e.call('access/me',{actor:admin})).status,401);});
 test('regular brokers cannot change stock, sync, extract, manage staff or assign elevated roles',async()=>{

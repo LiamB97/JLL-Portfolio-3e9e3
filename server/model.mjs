@@ -1,3 +1,12 @@
+export function validateUnitPrices(unitPrices,bedrooms){
+ if(!unitPrices||typeof unitPrices!=='object'||Array.isArray(unitPrices))throw Error('unitPrices must contain prices by bedroom count.');
+ const prices={};
+ for(const [beds,price] of Object.entries(unitPrices)){
+  if(!/^(?:[0-9]|10)$/.test(beds)||!bedrooms.includes(Number(beds))||!Number.isSafeInteger(price)||price<=0)throw Error('Unit prices must be positive whole GBP amounts for available bedroom options.');
+  prices[beds]=price;
+ }
+ return prices;
+}
 export function validateDevelopment(raw,{allowUnconfirmedPrice=false}={}) {
  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw Error('Each development must be an object.');
  if(raw._requiresReview&&raw._reviewConfirmed!==true)throw Error('Review and confirm the imported details and media before publishing.');
@@ -26,10 +35,7 @@ export function validateDevelopment(raw,{allowUnconfirmedPrice=false}={}) {
   });
  }
  if(!d.bedrooms.length||!d.propertyTypes.length)throw Error('At least one bedroom option and property type are required.');
- d.unitPrices={};
- if(raw.unitPrices!==undefined){if(!raw.unitPrices||typeof raw.unitPrices!=='object'||Array.isArray(raw.unitPrices))throw Error('unitPrices must contain prices by bedroom count.');
-  for(const [beds,price] of Object.entries(raw.unitPrices)){if(!/^(?:[0-9]|10)$/.test(beds)||!d.bedrooms.includes(Number(beds))||!Number.isSafeInteger(price)||price<=0)throw Error('Unit prices must be positive whole GBP amounts for available bedroom options.');d.unitPrices[beds]=price;}
- }
+ d.unitPrices=raw.unitPrices===undefined?{}:validateUnitPrices(raw.unitPrices,d.bedrooms);
  d.status = raw.status==='Coming soon'?'Coming soon':'Available';
  d.sample = raw.sample === true;
  d.sourceUrl = '';

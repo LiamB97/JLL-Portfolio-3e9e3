@@ -1,5 +1,10 @@
 import {randomUUID} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
+import {reviewRegions} from '../shared/development-review.ts';
 import {AccessError} from './access.mjs';
+import {recordStaff} from './activity.mjs';
+import {validateUnitPrices} from './model.mjs';
+import {markManualEdit} from './source-review.mjs';
 
 const day = 24 * 60 * 60 * 1000;
 const reviewInterval = 14 * day;
@@ -9,7 +14,7 @@ const batchSize = 4;
 
 const developments = state => state.developments.filter(development => !development.sample);
 const activeStaff = state => (state.users ?? []).filter(user => user.active && user.email);
-const summary = ({id, name, area, postcode}) => ({id, name, area, postcode});
+const summary = ({id, name, area, postcode, _reviewRegion}) => ({id, name, area, postcode, region: _reviewRegion ?? null});
 
 export function developmentReviewWorkspace(state, actor, emailConfigured) {
   const stock = developments(state);
@@ -19,7 +24,12 @@ export function developmentReviewWorkspace(state, actor, emailConfigured) {
     const development = stock.find(item => item.id === review.developmentId);
     if (!development || (!canAssign && review.assigneeId !== actor.id)) return [];
     const assignee = consultants.find(user => user.id === review.assigneeId);
-    return [{...review, development: summary(development), assigneeName: assignee?.name ?? 'Former staff member', assigneeActive: Boolean(assignee?.active)}];
+    return [{
+      ...review,
+      development: {...summary(development), bedrooms: development.bedrooms, unitPrices: development.unitPrices ?? {}},
+      assigneeName: assignee?.name ?? 'Former staff member',
+      assigneeActive: Boolean(assignee?.active),
+    }];
   });
   return {
     reviews,
@@ -31,12 +41,20 @@ export function developmentReviewWorkspace(state, actor, emailConfigured) {
 }
 
 export function assignDevelopmentReview(state, body, now = Date.now()) {
-  if (!developments(state).some(development => development.id === body?.developmentId)) throw new AccessError('Published development not found.', 404);
-  if (body.assigneeId !== null && !activeStaff(state).some(user => user.id === body.assigneeId)) throw new AccessError('Choose an active consultant.');
+  const development = developments(state).find(item => item.id === body?.developmentId);
+  if (!development) throw new AccessError('Published development not found.', 404);
   const reviews = state.developmentReviews ??= [];
   const index = reviews.findIndex(review => review.developmentId === body.developmentId);
   const current = reviews[index];
   if ((current?.version ?? null) !== body.version) throw new AccessError('The assignment changed. Refresh the list and try again.', 409);
+  if (body.assigneeId !== null && body.assigneeId !== current?.assigneeId &&
+      !activeStaff(state).some(user => user.id === body.assigneeId)) throw new AccessError('Choose an active consultant.');
+  if (body.region !== undefined) {
+    if (body.region !== null && !reviewRegions.includes(body.region)) throw new AccessError('Choose East London, Core or PCL.');
+    if (body.expectedRegion !== (development._reviewRegion ?? null)) throw new AccessError('The region changed. Refresh the list and try again.', 409);
+    if (body.region === null) delete development._reviewRegion;
+    else development._reviewRegion = body.region;
+  }
   if (body.assigneeId === null) {
     if (current) reviews.splice(index, 1);
   } else if (current?.assigneeId !== body.assigneeId) {
@@ -47,11 +65,37 @@ export function assignDevelopmentReview(state, body, now = Date.now()) {
   return {ok: true};
 }
 
-export function confirmDevelopmentReview(state, actor, body, now = Date.now()) {
+function assignedReview(state, actor, body) {
   const review = (state.developmentReviews ?? []).find(item => item.developmentId === body?.developmentId);
-  if (!review || !developments(state).some(development => development.id === review.developmentId)) throw new AccessError('Development review not found.', 404);
-  if (review.assigneeId !== actor.id) throw new AccessError('Only the assigned consultant can confirm this review.', 403);
+  const development = developments(state).find(item => item.id === body?.developmentId);
+  if (!review || !development) throw new AccessError('Development review not found.', 404);
+  if (review.assigneeId !== actor.id) throw new AccessError('Only the assigned consultant can update this review.', 403);
   if (review.version !== body.version) throw new AccessError('The review changed. Refresh the list and try again.', 409);
+  return {review, development};
+}
+
+export function saveDevelopmentReviewPrices(state, actor, body) {
+  const {review, development} = assignedReview(state, actor, body);
+  const prices = development.unitPrices ?? {};
+  if (!isDeepStrictEqual(body.expectedUnitPrices, prices) || !isDeepStrictEqual(body.expectedBedrooms, development.bedrooms)) {
+    throw new AccessError('The bedroom options or prices changed. Refresh the list and try again.', 409);
+  }
+  let unitPrices;
+  try {
+    unitPrices = validateUnitPrices(body.unitPrices, development.bedrooms);
+  } catch (error) {
+    throw new AccessError(error.message);
+  }
+  if (isDeepStrictEqual(unitPrices, prices)) return {ok: true};
+  const index = state.developments.indexOf(development);
+  state.developments[index] = markManualEdit(development, {unitPrices}, actor);
+  review.version = randomUUID();
+  recordStaff(state, actor, 'stock_edit', {id: development.id, label: development.name});
+  return {ok: true};
+}
+
+export function confirmDevelopmentReview(state, actor, body, now = Date.now()) {
+  const {review} = assignedReview(state, actor, body);
   Object.assign(review, {version: randomUUID(), lastConfirmedAt: now, nextReminderAt: now + reviewInterval});
   delete review.lastFailureAt;
   return {ok: true};
