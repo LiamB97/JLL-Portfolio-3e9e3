@@ -1,4 +1,4 @@
-// A consistent central London starting point for ordinary, collection and reset views.
+// A consistent central London starting point for ordinary and reset views.
 export const CENTRAL_LONDON={centre:[51.5074,-.1278] as [number,number],zoom:13};
 
 export type StationLabelSide = 'left' | 'right' | 'top' | 'bottom';

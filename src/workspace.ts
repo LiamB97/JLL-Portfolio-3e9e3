@@ -7,3 +7,8 @@ export function workspaceGroups(role:StaffUser['role']){
   {label:'Help',items:[{id:'guide',label:'How it works'}]},
  ];
 }
+
+export function workspaceStartTab(search: string, role: StaffUser['role'] = 'broker') {
+ const requested = new URLSearchParams(search).get('staff') ?? 'home';
+ return workspaceGroups(role).some(group => group.items.some(item => item.id === requested)) ? requested : 'home';
+}

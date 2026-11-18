@@ -180,6 +180,17 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   },[showUniversities,dark]);
   const framedFavourites=useRef(false);
   useEffect(()=>{if(!favouritesOnly){framedFavourites.current=false;return;}if(framedFavourites.current||!items.length||!map.current)return;map.current.fitBounds(L.latLngBounds(items.map(d=>[d.lat,d.lng] as [number,number])),frameOptions(map.current));framedFavourites.current=true;},[favouritesOnly,items,dark]);
+  const framedOpeningCollection = useRef(false);
+  useEffect(() => {
+    if (framedOpeningCollection.current || resetKey || collectionFrameKey || favouritesOnly || commuteDestination) return;
+    const homes = items.filter(development => featuredIds.includes(development.id));
+    const m = map.current;
+    if (!m || !homes.length) return;
+    m.fitBounds(L.latLngBounds(homes.map(({lat, lng}) => [lat, lng] as [number, number])), {
+      ...frameOptions(m), animate: false,
+    });
+    framedOpeningCollection.current = true;
+  }, [items, featuredIds, dark, resetKey, collectionFrameKey, favouritesOnly, commuteDestination]);
   const framedCollection=useRef('');
   useEffect(()=>{
     if(!collectionFrameKey||favouritesOnly||commuteDestination)return;
