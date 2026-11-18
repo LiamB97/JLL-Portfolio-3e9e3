@@ -1,7 +1,9 @@
-import {useState} from 'react';
+import {lazy, Suspense, useState} from 'react';
 import {Eye, EyeOff, LockKeyhole} from 'lucide-react';
 import {useLocale} from './i18n';
 import type {BuyerLock} from './buyer-access';
+
+const PortfolioMap = lazy(() => import('./Map'));
 
 export default function BuyerPasswordGate({scope, unlock}: {scope: BuyerLock; unlock: (password: string) => Promise<void>}) {
   const {t} = useLocale();
@@ -10,6 +12,11 @@ export default function BuyerPasswordGate({scope, unlock}: {scope: BuyerLock; un
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return <main className="buyer-password-gate" aria-labelledby="buyer-password-title">
+    <div className="buyer-password-map" aria-hidden="true" inert>
+      <Suspense fallback={null}>
+        <PortfolioMap items={[]} selected={null} onSelect={() => {}} network={null} transportError=""/>
+      </Suspense>
+    </div>
     <form onSubmit={event => {
       event.preventDefault();
       if (busy || !password.trim()) return;
@@ -21,7 +28,7 @@ export default function BuyerPasswordGate({scope, unlock}: {scope: BuyerLock; un
     }}>
       <LockKeyhole size={26} aria-hidden="true"/>
       <h1 id="buyer-password-title">{t(scope === 'collection' ? 'Your private collection' : 'JLL Residential portfolio')}</h1>
-      <p>{t('Enter the password your JLL consultant shared with you.')}</p>
+      <p>{t('Enter the password your JLL Residential broker shared with you.')}</p>
       <label htmlFor="buyer-password">{t('Password')}</label>
       <div className="buyer-password-field">
         <input id="buyer-password" dir="ltr" type={visible ? 'text' : 'password'} autoComplete="off" autoCapitalize="characters" autoCorrect="off" spellCheck={false}
@@ -36,5 +43,10 @@ export default function BuyerPasswordGate({scope, unlock}: {scope: BuyerLock; un
         {t(busy ? 'Unlocking…' : scope === 'collection' ? 'Unlock collection' : 'Unlock portfolio')}
       </button>
     </form>
+    <div className="buyer-password-attribution" dir="ltr">
+      © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>
+      {' · '}<a href="https://openfreemap.org" target="_blank" rel="noopener noreferrer">OpenFreeMap</a>
+      {' · '}© <a href="https://openmaptiles.org" target="_blank" rel="noopener noreferrer">OpenMapTiles</a>
+    </div>
   </main>;
 }

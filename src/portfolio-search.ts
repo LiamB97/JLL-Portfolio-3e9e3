@@ -14,6 +14,8 @@ export function searchDevelopments(items:Development[],filters:PortfolioFilters)
   (!f.commute||commuteMatches(journeys.get(d.id),f.commute.maxMinutes))
  );
  return matching.sort((a,b)=>{
+  const featuredOrder = Number(f.featuredIds.includes(b.id)) - Number(f.featuredIds.includes(a.id));
+  if (featuredOrder) return featuredOrder;
   switch(f.sort){
    case 'commute': {
     const first = journeys.get(a.id)?.durationMinutes ?? Infinity;
@@ -24,7 +26,7 @@ export function searchDevelopments(items:Development[],filters:PortfolioFilters)
    case 'area': return a.area.localeCompare(b.area);
    case 'price': return (startingPrice(a,f.beds)??Infinity)-(startingPrice(b,f.beds)??Infinity);
    case 'price-desc': return (startingPrice(b,f.beds)??-Infinity)-(startingPrice(a,f.beds)??-Infinity);
-   default: return Number(f.featuredIds.includes(b.id))-Number(f.featuredIds.includes(a.id));
+   default: return 0;
   }
  });
 }

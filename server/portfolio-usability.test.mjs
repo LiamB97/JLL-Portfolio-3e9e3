@@ -9,8 +9,19 @@ const homes=[
  {id:'family',name:'Riverside Homes',area:'Greenwich',postcode:'SE10 9AA',lat:51.48,lng:0,priceFrom:900000,bedrooms:[2,3]},
 ];
 const find=(change={})=>searchDevelopments(homes,{...defaults,...change}).map(d=>d.id);
-test('the portfolio opens with every home, while featured pins only change the default order',()=>{
+test('the portfolio opens with every home and puts active collection choices first',()=>{
  assert.deepEqual(find(),['unknown','studio','family']);assert.deepEqual(find({featuredIds:['family']}),['family','unknown','studio']);assert.deepEqual(find({featuredIds:['family'],featuredOnly:true}),['family']);assert.deepEqual(homes.map(d=>d.id),['unknown','studio','family']);
+});
+test('shared collections keep picked homes first across listing sorts and preserve sorting within each group',()=>{
+ const picked={featuredIds:['studio']};
+ assert.deepEqual(find({...picked,sort:'price-desc'}),['studio','family','unknown']);
+ assert.deepEqual(find({...picked,sort:'price'}),['studio','family','unknown']);
+ assert.deepEqual(find({...picked,sort:'name'}),['studio','unknown','family']);
+ assert.deepEqual(find({...picked,sort:'area'}),['studio','family','unknown']);
+ assert.deepEqual(find({featuredIds:['studio','family'],sort:'price-desc'}),['family','studio','unknown']);
+ assert.deepEqual(find({featuredIds:['unknown','studio'],sort:'price-desc'}),['studio','unknown','family']);
+ assert.deepEqual(find({featuredIds:['missing'],sort:'price-desc'}),['family','studio','unknown']);
+ assert.deepEqual(find({...picked,sort:'price-desc',beds:'2'}),['family']);
 });
 test('starting-price filters include their boundary and never treat an unknown price as an affordable home',()=>{
  assert.deepEqual(find({budget:'500000'}),['studio']);assert.deepEqual(find({budget:'1000000',sort:'price'}),['studio','family']);assert.deepEqual(find({sort:'price'}),['studio','family','unknown']);assert.deepEqual(find({beds:'0'}),['studio']);assert.deepEqual(find({query:'  sw1a 2aa  '}),['studio']);
@@ -27,6 +38,8 @@ test('commute matches can be ranked by journey time while other sort options rem
  ]};
  assert.deepEqual(find({commute,sort:'commute'}),['studio','family']);
  assert.deepEqual(find({commute,sort:'price-desc'}),['family','studio']);
+ assert.deepEqual(find({commute,sort:'commute',featuredIds:['family']}),['family','studio']);
+ assert.deepEqual(find({commute,sort:'commute',featuredIds:['family','studio']}),['studio','family']);
 });
 test('broker navigation exposes buyer tasks while stock and account administration follow existing roles',()=>{
  const ids=role=>workspaceGroups(role).flatMap(g=>g.items.map(i=>i.id));

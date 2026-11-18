@@ -2,7 +2,7 @@
   "ar": {
     "Your private collection": "مجموعتك الخاصة",
     "JLL Residential portfolio": "مجموعة عقارات JLL السكنية",
-    "Enter the password your JLL consultant shared with you.": "أدخل كلمة المرور التي شاركها معك مستشارك في JLL.",
+    "Enter the password your JLL Residential broker shared with you.": "أدخل كلمة المرور التي شاركها معك وسيطك العقاري في JLL Residential.",
     "Password": "كلمة المرور",
     "Show password": "إظهار كلمة المرور",
     "Hide password": "إخفاء كلمة المرور",
@@ -288,7 +288,7 @@
   "zh-CN": {
     "Your private collection": "您的专属房源合集",
     "JLL Residential portfolio": "JLL 住宅房源",
-    "Enter the password your JLL consultant shared with you.": "请输入 JLL 顾问分享给您的密码。",
+    "Enter the password your JLL Residential broker shared with you.": "请输入 JLL Residential 经纪人分享给您的密码。",
     "Password": "密码",
     "Show password": "显示密码",
     "Hide password": "隐藏密码",
@@ -574,7 +574,7 @@
   "tr": {
     "Your private collection": "Size özel koleksiyon",
     "JLL Residential portfolio": "JLL Konut portföyü",
-    "Enter the password your JLL consultant shared with you.": "JLL danışmanınızın paylaştığı şifreyi girin.",
+    "Enter the password your JLL Residential broker shared with you.": "JLL Residential emlak danışmanınızın paylaştığı şifreyi girin.",
     "Password": "Şifre",
     "Show password": "Şifreyi göster",
     "Hide password": "Şifreyi gizle",

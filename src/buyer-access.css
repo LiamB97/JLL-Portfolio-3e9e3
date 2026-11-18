@@ -5,12 +5,53 @@
 }
 
 .buyer-password-gate {
-  min-height: min(570px, calc(100svh - 86px));
-  padding: clamp(22px, 6vw, 70px) 18px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: calc(100svh - 81px);
+  padding: clamp(28px, 6vw, 70px) 18px 70px;
   display: grid;
   place-items: center;
   background: var(--page);
 }
+
+.buyer-password-map {
+  position: absolute;
+  inset: -12px;
+  z-index: -2;
+  pointer-events: none;
+  filter: blur(6px);
+}
+.buyer-password-map .map-shell {
+  position: relative;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+}
+.buyer-password-map .map-shell > :not(.map),
+.buyer-password-map .leaflet-control-container { display: none; }
+.buyer-password-gate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--surface) 32%, transparent);
+  pointer-events: none;
+}
+.buyer-password-attribution {
+  position: absolute;
+  inset-inline-end: 0;
+  bottom: 0;
+  max-width: 100%;
+  padding: 5px 10px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  color: var(--muted);
+  font-size: 14px;
+  text-align: end;
+}
+.buyer-password-attribution a { text-decoration: underline; text-underline-offset: 2px; }
 
 .buyer-password-gate form {
   width: min(100%, 440px);
@@ -18,7 +59,7 @@
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 16px 44px color-mix(in srgb, var(--midnight) 9%, transparent);
+  box-shadow: 0 18px 60px color-mix(in srgb, var(--midnight) 18%, transparent);
 }
 
 .buyer-password-gate form > svg { color: var(--accent); margin-bottom: 18px; }
@@ -62,5 +103,11 @@
 .collection-password-status { display: flex; align-items: center; gap: 6px; }
 
 @media (max-width: 760px) {
-  .buyer-password-gate { min-height: calc(100svh - 56px); align-items: start; padding-top: clamp(38px, 9vh, 90px); }
+  .buyer-password-gate {
+    min-height: calc(100svh - 57px - env(safe-area-inset-top, 0px));
+    align-items: start;
+    padding-top: clamp(38px, 9svh, 90px);
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  }
+  .buyer-password-attribution { padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)); }
 }
