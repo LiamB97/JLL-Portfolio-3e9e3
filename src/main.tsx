@@ -1,4 +1,6 @@
 import CollectionBar from './CollectionBar';
+import BuyerPasswordGate from './BuyerPasswordGate';
+import {buyerApiPath,type BuyerLock,type BuyerPortfolio} from './buyer-access';
 import {startingPrice} from '../shared/pricing';
 import Modal from './Modal';
 import PortfolioHeader,{type PortfolioView as View} from './PortfolioHeader';
@@ -24,6 +26,7 @@ import './discovery.css';
 import './readability.css';
 import './review-updates.css';
 import './collection-updates.css';
+import './buyer-access.css';
 import {PreferencesProvider,useLocale} from './i18n';
 import Detail from './Detail';
 import DevelopmentPhoto from './DevelopmentPhoto';
@@ -68,46 +71,82 @@ function App() {
   const [howItWorks,setHowItWorks]=useState(()=>location.hash==='#how-it-works');
   const favourites=useFavourites();
   const [showFavourites,setShowFavourites]=useState(false),[favouritesOnly,setFavouritesOnly]=useState(false);
-  const [linkLoading,setLinkLoading]=useState(()=>{const q=new URLSearchParams(location.search);return Boolean(q.get('broker')||q.get('collection'));});
+  const [buyerLock,setBuyerLock]=useState<BuyerLock|null>(null);
+  const [collectionOnly,setCollectionOnly]=useState(false);
   const [broker,setBroker]=useState<BrokerCard|null>(null);
   const [collection,setCollection]=useState<BuyerCollection|null>(null),[collectionError,setCollectionError]=useState(''),[featuredOnly,setFeaturedOnly]=useState(false);
   const [showFavouriteHighlights,setShowFavouriteHighlights]=useState(true);
   const [highlightsEnabled,setHighlightsEnabled]=useState(true),[dimOthers,setDimOthers]=useState(true),[mapResetKey,setMapResetKey]=useState(0),[collectionFrameKey,setCollectionFrameKey]=useState(0);
-  const featuredIds=useMemo(()=>highlightsEnabled?collection?.developmentIds||[]:[],[collection,highlightsEnabled]);
+  const showHighlights=collectionOnly||highlightsEnabled;
+  const featuredIds=useMemo(()=>showHighlights?collection?.developmentIds||[]:[],[collection,showHighlights]);
   const initialLink=useRef(false);
-  useEffect(()=>{const slug=new URLSearchParams(location.search).get('collection');if(!slug)return;fetch('/api/collections/'+encodeURIComponent(slug)).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'This collection is unavailable.');setCollection(d);setBroker(d.broker||null);}).catch(e=>setCollectionError(e.message)).finally(()=>setLinkLoading(false));},[]);
-  useEffect(()=>{const params=new URLSearchParams(location.search);if(params.get('collection'))return;const slug=params.get('broker');if(!slug)return;fetch('/api/brokers/'+encodeURIComponent(slug)).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'This broker link is unavailable.');setBroker(d);}).catch(e=>setCollectionError(e.message)).finally(()=>setLinkLoading(false));},[]);
   useEffect(()=>{if(loading||initialLink.current||!items.length)return;initialLink.current=true;const id=new URLSearchParams(location.search).get('development');if(id&&items.some(d=>d.id===id))setSelected(id);},[items,loading]);
   const [filters, setFilters] = useState(false);
+  const loadVersion=useRef(0);
   const refresh = useCallback(async () => {
-    const response = await fetch('/api/developments');
+    const version=++loadVersion.current;
+    const response=await fetch(buyerApiPath('/api/buyer/portfolio'),{cache:'no-store'});
+    if(version!==loadVersion.current)return false;
+    if(response.status===423){
+      const {passwordRequired}=await response.json();
+      if(version!==loadVersion.current)return false;
+      setBuyerLock(passwordRequired==='collection'?'collection':'portfolio');
+      setCollection(null);setBroker(null);setCollectionOnly(false);setItems([]);setSelected(null);setShowFavourites(false);setCommute(null);
+      initialLink.current=false;
+      return false;
+    }
     if (!response.ok) throw Error('Unable to load the portfolio. Please try again.');
-    setItems(await response.json());
+    const data:BuyerPortfolio=await response.json();
+    if(version!==loadVersion.current)return false;
+    setBuyerLock(null);setItems(data.developments);setCollection(data.collection);
+    setBroker(data.broker);setCollectionOnly(data.collectionOnly);setCollectionError(data.linkError);setError('');
+    return true;
   }, []);
+  const load=useCallback(()=>void refresh().catch(e=>setError(e.message)).finally(()=>setLoading(false)),[refresh]);
+  async function unlock(password:string){
+    const response=await fetch(buyerApiPath('/api/buyer/unlock'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
+    if(!response.ok){const data=await response.json().catch(()=>null);throw Error(data?.error||'Unable to open this link. Please try again.');}
+    if(!await refresh())throw Error('Unable to open this link. Please try again.');
+  }
+  useEffect(()=>{
+    if(admin)return;
+    load();
+    const recheck=()=>{if(document.visibilityState==='visible')load();};
+    const restore=(event:PageTransitionEvent)=>{if(event.persisted)recheck();};
+    document.addEventListener('visibilitychange',recheck);
+    window.addEventListener('pageshow',restore);
+    return ()=>{document.removeEventListener('visibilitychange',recheck);window.removeEventListener('pageshow',restore);};
+  },[admin,load]);
   useEffect(() => {
-    void refresh().catch(e=>setError(e.message)).finally(()=>setLoading(false));
     void fetch('/api/transport').then(response => {
         if (!response.ok) throw Error('The TfL network is temporarily unavailable.');
         return response.json();
       }).then(setNetwork).catch(e=>setTransportError(e.message));
-    const change = () => {setAdmin(isStaff());setHowItWorks(location.hash==='#how-it-works');};
+    let wasStaff=isStaff();
+    const change = () => {
+      const staff=isStaff();
+      if(wasStaff&&!staff)setLoading(true);
+      wasStaff=staff;
+      setAdmin(staff);setHowItWorks(location.hash==='#how-it-works');
+    };
     window.addEventListener('hashchange', change);
     return () => window.removeEventListener('hashchange', change);
-  }, [refresh]);
+  }, []);
   const select = useCallback((id: string) => setSelected(id), []);
-  const filtered = searchDevelopments(items,{query,region,area,beds,budget,featuredOnly,featuredIds,favouritesOnly,favouriteIds:favourites.ids,commute,sort:listingSort});
+  const visibleFavourites = collectionOnly ? favourites.ids.filter(id => items.some(item => item.id === id)) : favourites.ids;
+  const filtered = searchDevelopments(items,{query,region,area,beds,budget,featuredOnly:featuredOnly&&!collectionOnly,featuredIds,favouritesOnly,favouriteIds:favourites.ids,commute,sort:listingSort});
   const active = items.find(d => d.id === selected);
-  useEffect(()=>{setAnalyticsContext({language,link_kind:collection?'collection':broker?'broker':'general',...(broker?{broker_link_id:broker.slug}:{}),...(collection?{collection_id:collection.slug}:{})},!loading&&!linkLoading);},[language,broker,collection,loading,linkLoading]);
+  useEffect(()=>{setAnalyticsContext({language,link_kind:collection?'collection':broker?'broker':'general',...(broker?{broker_link_id:broker.slug}:{}),...(collection?{collection_id:collection.slug}:{})},!loading&&!buyerLock&&!admin);},[language,broker,collection,loading,buyerLock,admin]);
   useEffect(()=>{setCurrentDevelopment(!admin&&!howItWorks&&active?active.id:null);},[selected,active?.id,admin,howItWorks]);
   useEffect(()=>{if(!query.trim()||admin)return;const timer=setTimeout(()=>track('search_used',{result_count:filtered.length}),700);return()=>clearTimeout(timer);},[query,admin]);
-  const filterCount = [beds,budget,region,area,favouritesOnly,featuredOnly].filter(Boolean).length;
+  const filterCount = [beds,budget,region,area,favouritesOnly,featuredOnly&&!collectionOnly].filter(Boolean).length;
   const reset = () => {changeCommute(null);setCommuteResetKey(n=>n+1); setQuery(''); setBeds('');setBudget(''); setFeaturedOnly(false);setFavouritesOnly(false);setRegion('');setArea(''); };
 
   const toggleFavourite=(id:string)=>{setShowFavouriteHighlights(true);favourites.toggle(id);};
   const resetMap=()=>{reset();setHighlightsEnabled(false);setShowFavouriteHighlights(false);setDimOthers(false);setCollectionFrameKey(0);setSelected(null);setShowFavourites(false);setFilters(false);setView('map');setSort('price-desc');setMapResetKey(n=>n+1);};
   return <div className={`portfolio-app ${admin ? 'admin-active' : 'explorer-active'}`}>
-    <PortfolioHeader onResetMap={resetMap} broker={broker} collection={collection} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})} exploring={!admin&&!howItWorks} staff={admin} view={view} setView={next=>{setView(next);track('view_change',{view_mode:next});}} saved={favourites.ids.length} openFavourites={()=>{setSelected(null);setShowFavourites(true);track('shortlist_open',{saved_count:favourites.ids.length});}} onNavigate={()=>{setSelected(null);setShowFavourites(false);setFilters(false);}}/>
-    {admin ? <Suspense fallback={<p className="staff-portal">{t("Loading staff workspace…")}</p>}><div dir="ltr" lang="en"><StaffPortal items={items} onChange={refresh}/></div></Suspense> : howItWorks?<Suspense fallback={<p className="staff-portal">{t('Loading guide…')}</p>}><BuyerGuide/></Suspense> : <main className={`discovery-page view-${view}`} aria-label={t("London development explorer")}>
+    <PortfolioHeader onResetMap={resetMap} broker={broker} collection={collection} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})} exploring={!admin&&!howItWorks&&!buyerLock&&!loading} staff={admin} view={view} setView={next=>{setView(next);track('view_change',{view_mode:next});}} saved={visibleFavourites.length} openFavourites={()=>{setSelected(null);setShowFavourites(true);track('shortlist_open',{saved_count:visibleFavourites.length});}} onNavigate={()=>{setSelected(null);setShowFavourites(false);setFilters(false);}}/>
+    {admin ? <Suspense fallback={<p className="staff-portal">{t("Loading staff workspace…")}</p>}><div dir="ltr" lang="en"><StaffPortal/></div></Suspense> : loading?<main className="buyer-loading" role="status">{t('Loading London homes…')}</main> : buyerLock?<BuyerPasswordGate key={buyerLock} scope={buyerLock} unlock={unlock}/> : howItWorks?<Suspense fallback={<p className="staff-portal">{t('Loading guide…')}</p>}><BuyerGuide/></Suspense> : <main className={`discovery-page view-${view}`} aria-label={t("London development explorer")}>
       <div className="discovery-toolbar">
         <form className="discovery-search" onSubmit={e=>e.preventDefault()}>
           <Search size={18}/>
@@ -120,12 +159,12 @@ function App() {
           {collection&&<section className="filter-collection-context"><strong><Star size={16}/>{collection.title}</strong><p>{featuredIds.length} {t('featured developments · Picked by')} {collection.brokerName}</p></section>}<div className="explorer-filter-fields"><label>{t("London region")}<select aria-label={t("London region")} value={region} onChange={e=>{setRegion(e.target.value);track('filter_apply',{filter_kind:'region'});}}><option value="">{t("All London")}</option>{['Prime central',...regions].map(r=><option key={r} value={r}>{t(r)}</option>)}</select></label><label>{t("Near an area")}<select aria-label={t("Near an area")} value={area} onChange={e=>{setArea(e.target.value);track('filter_apply',{filter_kind:'area'});}}><option value="">{t("All areas")}</option>{areas.map(a=><option key={a.name}>{a.name}</option>)}</select></label>
             <label>{t("Bedrooms")}<select aria-label={t("Bedrooms")} value={beds} onChange={e => {setBeds(e.target.value);track('filter_apply',{filter_kind:'bedrooms'});}}><option value="">{t("Any bedrooms")}</option><option value="0">{t("Studio")}</option>{[1,2,3,4].map(n => <option key={n} value={n}>{t('{count} bedrooms',{count:n})}</option>)}</select></label>
             <label>{t('Budget (starting price)')}<select aria-label={t('Budget (starting price)')} value={budget} onChange={e=>{setBudget(e.target.value);track('filter_apply',{filter_kind:'budget'});}}><option value="">{t('Any price')}</option>{[500000,750000,1000000,1500000,2000000,3000000,5000000].map(n=><option key={n} value={n}>{t('Up to {price}',{price:money(n)})}</option>)}</select></label>
-          </div><div className="discovery-filter-checks"><label><input type="checkbox" checked={favouritesOnly} onChange={e=>{setFavouritesOnly(e.target.checked);if(e.target.checked)setShowFavouriteHighlights(true);setSelected(null);}}/><span>{t('Show favourites only')} ({favourites.ids.length})</span></label>{collection&&<label><input type="checkbox" checked={featuredOnly} onChange={e=>{setFeaturedOnly(e.target.checked);if(e.target.checked)setHighlightsEnabled(true);}}/><span>{t('Show featured only')}</span></label>}</div>
+          </div><div className="discovery-filter-checks"><label><input type="checkbox" checked={favouritesOnly} onChange={e=>{setFavouritesOnly(e.target.checked);if(e.target.checked)setShowFavouriteHighlights(true);setSelected(null);}}/><span>{t('Show favourites only')} ({visibleFavourites.length})</span></label>{collection&&!collectionOnly&&<label><input type="checkbox" checked={featuredOnly} onChange={e=>{setFeaturedOnly(e.target.checked);if(e.target.checked)setHighlightsEnabled(true);}}/><span>{t('Show featured only')}</span></label>}</div>
           <p className="area-filter-note">{t("Areas show developments within 2 km of the named centre. Regions are approximate geographic sectors.")}</p>
         </Modal>}
         <CommuteSearch items={items} onChange={changeCommute} resetKey={commuteResetKey}/>
         <div className="discovery-count" role="status" aria-live="polite">{loading?t('Loading London homes…'):<><strong>{t('{count} developments',{count:filtered.length})}</strong>{(query||filterCount>0||commute)&&<button onClick={reset}>{t('Clear all')}</button>}</>}</div>
-        {collection&&<CollectionBar collection={collection} broker={broker} active={highlightsEnabled} dimOthers={dimOthers} onlyPicked={featuredOnly} onView={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onDim={()=>setDimOthers(v=>!v)} onOnly={()=>setFeaturedOnly(v=>!v)} onRestore={()=>{setHighlightsEnabled(true);setDimOthers(true);setView('map');}} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})}/>}
+        {collection&&<CollectionBar collection={collection} broker={broker} active={showHighlights} dimOthers={dimOthers} onlyPicked={featuredOnly} collectionOnly={collectionOnly} onView={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onDim={()=>setDimOthers(v=>!v)} onOnly={()=>setFeaturedOnly(v=>!v)} onRestore={()=>{setHighlightsEnabled(true);setDimOthers(true);setView('map');}} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})}/>}
 
         {broker&&!collection&&<section className="discovery-broker"><span className="broker-label">{t('Your JLL broker')}</span><a aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={()=>track('whatsapp_click',{surface:'broker_banner'})} href={'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments."))} target="_blank" rel="noopener noreferrer">{broker.photo?<img className="broker-avatar" src={broker.photo} alt=""/>:<WhatsAppIcon size={18}/>}<strong>{broker.name}</strong></a></section>}
         {collectionError&&<div className="explorer-message" role="status">{collectionError} {t("You can still explore the full portfolio.")}</div>}
@@ -133,7 +172,7 @@ function App() {
         {!loading && !filtered.length && !error && view === 'map' && <div className="explorer-message"><Building2 size={20}/><div><strong>{t(favouritesOnly?"No favourites match this view":"No homes found")}</strong><p>{t(favouritesOnly?"Save developments with the heart button, or clear your filters to see more favourites.":"Try a different area or broaden your filters.")}</p></div><button onClick={reset}>{t("Reset")}</button></div>}
       </div>
       <div className="discovery-workspace">
-        {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers} onDimOthers={()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={highlightsEnabled?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
+        {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers&&!collectionOnly} onDimOthers={collectionOnly?undefined:()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={showHighlights?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
         {view !== 'map' && <section className="explorer-list" aria-label={t("Development listings")}>
           <div className="listing-heading">
             {narrow && view === 'split'
@@ -162,8 +201,8 @@ function App() {
       <div className="discovery-disclaimer">{beds&&budget?'Only homes with a confirmed starting price for the selected bedroom count are shown. ':''}{items.some(d => d.sample) ? 'Preview collection · Illustrative stock and prices' : 'Prices & availability subject to broker confirmation'}</div>
     </main>}
     <AnalyticsConsent/>
-    {showFavourites&&!admin&&!howItWorks&&<Favourites items={items} ids={favourites.ids} toggle={toggleFavourite} persistent={favourites.persistent} broker={broker} collection={collection?.slug} close={()=>setShowFavourites(false)} open={id=>{setShowFavourites(false);setSelected(id);}}/>}
-    {active && !admin && !howItWorks && <Detail selectedBedrooms={beds} key={active.id} broker={broker} brokerLoading={linkLoading} collection={collection?.slug} d={active} stations={stations} network={network} saved={favourites.ids.includes(active.id)} toggleFavourite={()=>toggleFavourite(active.id)} close={() => setSelected(null)}/>}
+    {showFavourites&&!admin&&!howItWorks&&!buyerLock&&<Favourites items={items} ids={visibleFavourites} toggle={toggleFavourite} persistent={favourites.persistent} broker={broker} collection={collection?.slug} close={()=>setShowFavourites(false)} open={id=>{setShowFavourites(false);setSelected(id);}}/>}
+    {active && !admin && !howItWorks && !buyerLock && <Detail selectedBedrooms={beds} key={active.id} broker={broker} collection={collection?.slug} d={active} stations={stations} network={network} saved={favourites.ids.includes(active.id)} toggleFavourite={()=>toggleFavourite(active.id)} close={() => setSelected(null)}/>}
   </div>;
 }
 

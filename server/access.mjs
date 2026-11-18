@@ -2,6 +2,7 @@ import {profilePhoto} from './profile-photo.mjs';
 import transportNetwork from './data/tfl-network.json' with {type:'json'};
 import {recordStaff} from './activity.mjs';
 import {newDevelopmentReview} from './development-review-record.mjs';
+import {issueBrokerPassword,privateCollection,updateCollectionPassword} from './buyer-access.mjs';
 import {randomBytes,createHash,timingSafeEqual,scrypt as scryptCallback} from 'node:crypto';
 import {promisify} from 'node:util';
 const scrypt=promisify(scryptCallback),SESSION_MS=8*3600000,INVITE_MS=7*24*3600000,LOCK_MS=15*60000;
@@ -41,9 +42,17 @@ export function checkOrigin(request){const origin=request.headers.get('origin');
 export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
  function addSession(s,user){recordStaff(s,user,'login',{now:now()});const token=randomBytes(32).toString('base64url');s.sessions=s.sessions.filter(x=>x.expiresAt>now());s.sessions.push({tokenHash:digest(token),userId:user.id,createdAt:new Date(now()).toISOString(),expiresAt:now()+SESSION_MS});return {user:publicUser(user),token,csrf:digest('csrf:'+token)};}
  async function status(){const s=await repository.read();return {setupRequired:!(s.users||[]).length,setupConfigured:typeof bootstrapSecret==='string'&&bootstrapSecret.length>=12};}
+ function staffSession(s,request){
+  const token=cookies(request).jll_session;
+  if(!token)return null;
+  const hash=digest(token);
+  const session=(s.sessions||[]).find(x=>x.expiresAt>now()&&equal(x.tokenHash,hash));
+  const user=session&&(s.users||[]).find(x=>x.id===session.userId&&x.active);
+  return user?{user,token}:null;
+ }
  async function authenticate(request,{allowLegacy=true}={}){
-  const s=await repository.read(),token=cookies(request).jll_session;
-  if(token){const session=(s.sessions||[]).find(x=>x.expiresAt>now()&&equal(x.tokenHash,digest(token)));const u=session&&(s.users||[]).find(x=>x.id===session.userId&&x.active);if(u)return {...publicUser(u),csrf:digest('csrf:'+token),token};}
+  const s=await repository.read(),signedIn=staffSession(s,request);
+  if(signedIn){const {user,token}=signedIn;return {...publicUser(user),csrf:digest('csrf:'+token),token};}
   const supplied=request.headers.get('authorization')?.replace(/^Bearer /,'')||'';
   if(allowLegacy&&!(s.users||[]).length&&bootstrapSecret?.length>=12&&supplied&&equal(supplied,bootstrapSecret))return {id:'bootstrap',name:'Administrator',role:'admin',active:true,legacy:true};
   throw new AccessError('Sign in to manage the portfolio.',401);
@@ -78,18 +87,53 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
   const hash=await passwordHash(body.password);return repository.update(s=>{init(s);const invitation=s.invites.find(x=>x.expiresAt>now()&&equal(x.tokenHash,digest(body.token)));const inviter=invitation&&s.users.find(x=>x.id===invitation.createdBy&&x.active);if(!invitation||!inviter||(inviter.role!=='admin'&&(invitation.role!=='broker'||s.users.some(x=>x.email===invitation.email))))throw new AccessError('This invitation is invalid or expired.',410);
    if(email(body.email)!==invitation.email)throw new AccessError('Use the email address your invitation was sent to.');const phone=whatsappNumber(body.whatsapp);let u=s.users.find(x=>x.email===invitation.email);if(u){ownerGuard(s,u,invitation.role,true);u.passwordHash=hash;u.role=invitation.role;u.active=true;u.name=invitation.name;}else{u={id:randomBytes(12).toString('hex'),email:invitation.email,name:invitation.name,role:invitation.role,active:true,passwordHash:hash,createdAt:new Date(now()).toISOString()};s.users.push(u);}
    u.whatsapp=phone;if(!u.shareSlug){u.shareSlug=randomBytes(12).toString('base64url');recordStaff(s,u,'personal_link_created',{now:now()});}
+   issueBrokerPassword(s,u,true);
    activateInvitedReviews(s,invitation,u,now());
    s.invites=s.invites.filter(x=>x.id!==invitation.id);s.sessions=s.sessions.filter(x=>x.userId!==u.id);s.authFailures=s.authFailures.filter(x=>x.key!==digest(u.email));return addSession(s,u);
   });
  }
  async function updateProfile(actor,body){if(body.transportDefaults!==undefined)throw new AccessError('Set transport defaults in a buyer collection.');const phone=body.whatsapp===undefined?undefined:whatsappNumber(body.whatsapp);let jobTitle;if(body.jobTitle!==undefined){if(typeof body.jobTitle!=='string'||body.jobTitle.length>100)throw new AccessError('Enter a job title of up to 100 characters.');jobTitle=body.jobTitle.trim().replace(/\s+/g,' ');}let photo;if(body.photo!==undefined){try{photo=profilePhoto(body.photo);}catch(e){throw new AccessError(e.message);}}return repository.update(s=>{const acting=current(s,actor);const u=s.users.find(u=>u.id===acting.id);if(!u)throw new AccessError('Create a staff account first.',409);if(phone!==undefined)u.whatsapp=phone;if(jobTitle!==undefined)u.jobTitle=jobTitle;if(photo!==undefined)u.photo=photo;if(!u.shareSlug){u.shareSlug=randomBytes(12).toString('base64url');recordStaff(s,u,'personal_link_created',{now:now()});}recordStaff(s,acting,'profile_update',{now:now()});return publicUser(u);});}
  function brokerCard(u){return u?.active&&u.whatsapp&&u.shareSlug?{name:u.name,whatsapp:u.whatsapp,slug:u.shareSlug,photo:u.photo||''}:null;}
- async function publicBroker(slug){const s=await repository.read();const u=(s.users||[]).find(u=>u.shareSlug===slug&&u.active);const card=brokerCard(u);if(!card)throw new AccessError('This broker link is unavailable.',404);return card;}
- async function updateUser(actor,id,body){admin(actor);return repository.update(s=>{init(s);const acting=current(s,actor);admin(acting);const u=s.users.find(x=>x.id===id);if(!u)throw new AccessError('User not found.',404);const nextRole=body.role===undefined?u.role:role(body.role),active=body.active===undefined?u.active:body.active;if(typeof active!=='boolean')throw new AccessError('Choose whether the account is active.');ownerGuard(s,u,nextRole,active);u.role=nextRole;u.active=active;s.sessions=s.sessions.filter(x=>x.userId!==u.id);s.invites=s.invites.filter(x=>x.email!==u.email&&x.createdBy!==u.id);recordStaff(s,acting,'user_update',{id:u.id,label:u.name,now:now()});return publicUser(u);});}
+ async function publicBroker(slug,state){const s=state??await repository.read();const u=(s.users||[]).find(u=>u.shareSlug===slug&&u.active);const card=brokerCard(u);if(!card)throw new AccessError('This broker link is unavailable.',404);return card;}
+ async function updateUser(actor,id,body){admin(actor);return repository.update(s=>{init(s);const acting=current(s,actor);admin(acting);const u=s.users.find(x=>x.id===id);if(!u)throw new AccessError('User not found.',404);const nextRole=body.role===undefined?u.role:role(body.role),active=body.active===undefined?u.active:body.active;if(typeof active!=='boolean')throw new AccessError('Choose whether the account is active.');ownerGuard(s,u,nextRole,active);u.role=nextRole;u.active=active;if(active)issueBrokerPassword(s,u);else delete u._buyerPasswordVersion;s.sessions=s.sessions.filter(x=>x.userId!==u.id);s.invites=s.invites.filter(x=>x.email!==u.email&&x.createdBy!==u.id);recordStaff(s,acting,'user_update',{id:u.id,label:u.name,now:now()});return publicUser(u);});}
  function canEdit(actor,d){return ['admin','broker_admin'].includes(actor.role);}
- async function collections(actor){return ((await repository.read()).collections||[]).filter(c=>actor.role==='admin'||c.ownerId===actor.id);}
- async function saveCollection(actor,body,id){if(actor.legacy)throw new AccessError('Create a staff account first.',409);const title=name(body.title);const defaults=body.transportDefaults===undefined?undefined:transportDefaults(body.transportDefaults);if(!Array.isArray(body.developmentIds)||!body.developmentIds.length||body.developmentIds.length>50||!body.developmentIds.every(x=>typeof x==='string'))throw new AccessError('Choose 1–50 developments.');const ids=[...new Set(body.developmentIds)];return repository.update(s=>{init(s);const acting=current(s,actor);if(!acting.whatsapp)throw new AccessError('Add your WhatsApp number in your staff profile before creating buyer links.');if(ids.some(id=>!s.developments.some(d=>d.id===id)))throw new AccessError('One of these developments is no longer listed. Refresh your selection.');let c=id?s.collections.find(x=>x.id===id):null;if(id&&!c)throw new AccessError('Collection not found.',404);if(c&&acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('You can only edit your own collections.',403);if(!c){c={id:randomBytes(12).toString('hex'),slug:randomBytes(12).toString('base64url'),ownerId:actor.id,createdAt:new Date(now()).toISOString()};s.collections.push(c);}c.title=title;c.developmentIds=ids;if(defaults!==undefined)c.transportDefaults=defaults;c.updatedAt=new Date(now()).toISOString();recordStaff(s,acting,id?'collection_update':'collection_create',{id:c.id,label:c.title,now:now()});return structuredClone(c);});}
+ async function collections(actor){
+  const state=await repository.read(),acting=current(state,actor);
+  return (state.collections||[]).filter(c=>acting.role==='admin'||c.ownerId===acting.id).map(c=>privateCollection(state,c));
+ }
+ async function saveCollection(actor,body,id){
+  if(actor.legacy)throw new AccessError('Create a staff account first.',409);
+  const title=name(body?.title),defaults=body.transportDefaults===undefined?undefined:transportDefaults(body.transportDefaults);
+  if(!Array.isArray(body.developmentIds)||!body.developmentIds.length||body.developmentIds.length>50||!body.developmentIds.every(x=>typeof x==='string'))throw new AccessError('Choose 1–50 developments.');
+  const ids=[...new Set(body.developmentIds)];
+  return repository.update(state=>{
+   init(state);
+   const acting=current(state,actor);
+   if(!acting.whatsapp)throw new AccessError('Add your WhatsApp number in your staff profile before creating buyer links.');
+   if(ids.some(id=>!state.developments.some(d=>d.id===id)))throw new AccessError('One of these developments is no longer listed. Refresh your selection.');
+   let collection=id?state.collections.find(x=>x.id===id):null;
+   if(id&&!collection)throw new AccessError('Collection not found.',404);
+   if(collection&&acting.role!=='admin'&&collection.ownerId!==acting.id)throw new AccessError('You can only edit your own collections.',403);
+   if(!collection){
+    collection={id:randomBytes(12).toString('hex'),slug:randomBytes(12).toString('base64url'),ownerId:acting.id,createdAt:new Date(now()).toISOString()};
+    state.collections.push(collection);
+   }
+   collection.title=title;
+   collection.developmentIds=ids;
+   if(defaults!==undefined)collection.transportDefaults=defaults;
+   updateCollectionPassword(state,collection,body.passwordAction);
+   collection.updatedAt=new Date(now()).toISOString();
+   recordStaff(state,acting,id?'collection_update':'collection_create',{id:collection.id,label:collection.title,now:now()});
+   return privateCollection(state,collection);
+  });
+ }
  async function deleteCollection(actor,id){return repository.update(s=>{init(s);const acting=current(s,actor);const c=s.collections.find(x=>x.id===id);if(!c)throw new AccessError('Collection not found.',404);if(acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('You can only remove your own collections.',403);s.collections=s.collections.filter(x=>x.id!==id);recordStaff(s,acting,'collection_delete',{id:c.id,label:c.title,now:now()});return {ok:true};});}
- async function publicCollection(slug){const s=await repository.read();const c=(s.collections||[]).find(x=>x.slug===slug),owner=c&&(s.users||[]).find(u=>u.id===c.ownerId&&u.active);if(!c||!owner)throw new AccessError('This collection is no longer available.',404);return {slug:c.slug,title:c.title,transportDefaults:c.transportDefaults,brokerName:owner.name,broker:brokerCard(owner),developmentIds:c.developmentIds.filter(id=>s.developments.some(d=>d.id===id))};}
- return {status,authenticate,current,csrf,admin,stock,bootstrap,login,logout,users,invite,invites,revokeInvite,accept,updateUser,updateProfile,publicBroker,canEdit,collections,saveCollection,deleteCollection,publicCollection};
+ async function publicCollection(slug,state,visible){
+  const s=state??await repository.read();
+  const c=(s.collections||[]).find(x=>x.slug===slug),owner=c&&(s.users||[]).find(u=>u.id===c.ownerId&&u.active);
+  if(!c||!owner)throw new AccessError('This collection is no longer available.',404);
+  const ids=new Set((visible??s.developments).map(d=>d.id));
+  return {slug:c.slug,title:c.title,transportDefaults:c.transportDefaults,brokerName:owner.name,broker:brokerCard(owner),developmentIds:c.developmentIds.filter(id=>ids.has(id))};
+ }
+ return {status,authenticate,current,staffSession,csrf,admin,stock,bootstrap,login,logout,users,invite,invites,revokeInvite,accept,updateUser,updateProfile,publicBroker,canEdit,collections,saveCollection,deleteCollection,publicCollection};
 }

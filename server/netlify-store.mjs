@@ -1,7 +1,7 @@
 import {mergeSource} from './source-review.mjs';
 import {getStore} from '@netlify/blobs';
 import seed from './data/initial-portfolio.json' with {type:'json'};
-import {convertSource} from './sync.mjs';
+import {convertSource,sourceDevelopmentIds} from './sync.mjs';
 export class ConflictError extends Error {}
 export function portfolioRepository(store=getStore({name:'jll-london-portfolio',consistency:'strong'})) {
  async function read(){return (await store.getWithMetadata('portfolio',{type:'json',consistency:'strong'}))?.data??structuredClone(seed);}
@@ -32,12 +32,13 @@ function mergeStock(state,developments,report){
 export async function applyStockSnapshot(repository,snapshot=seed){
  const isNewer=state=>snapshot.lastSync.syncedAt>(state.lastSync?.syncedAt??'');
  if(!isNewer(await repository.read()))return null;
- return repository.update(state=>isNewer(state)?mergeStock(state,snapshot.developments,snapshot.lastSync):null);
+ const websiteDevelopmentIds=snapshot.developments.filter(d=>d.source==='JLL website').map(d=>d.id);
+ return repository.update(state=>isNewer(state)?mergeStock(state,snapshot.developments,{...snapshot.lastSync,websiteDevelopmentIds}):null);
 }
 export async function refreshPortfolio(repository,records,guard){
  const ready=[],skipped=[];
- for(const raw of records){try{ready.push(convertSource(raw));}catch(e){skipped.push({name:String(raw.title||'Unknown listing'),reason:e.message});}}
+ for(const raw of records){try{ready.push(convertSource(raw));}catch(e){skipped.push({name:String(raw?.title||'Unknown listing'),reason:e.message});}}
  if(!ready.length)throw Error('No valid London developments found; existing stock was kept.');
- const report={imported:ready.length,skipped,syncedAt:new Date().toISOString(),note:'Manual edits are preserved. Review website differences before accepting them. Missing website listings are retained.'};
+ const report={imported:ready.length,skipped,websiteDevelopmentIds:sourceDevelopmentIds(records),syncedAt:new Date().toISOString(),note:'Manual edits are preserved. Review website differences before accepting them. Missing website listings are retained.'};
  return repository.update(state=>{if(guard)guard(state);return mergeStock(state,ready,report);});
 }

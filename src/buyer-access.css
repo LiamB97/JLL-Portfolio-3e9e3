@@ -1,0 +1,66 @@
+.buyer-loading {
+  padding: 38px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.buyer-password-gate {
+  min-height: min(570px, calc(100svh - 86px));
+  padding: clamp(22px, 6vw, 70px) 18px;
+  display: grid;
+  place-items: center;
+  background: var(--page);
+}
+
+.buyer-password-gate form {
+  width: min(100%, 440px);
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 16px 44px color-mix(in srgb, var(--midnight) 9%, transparent);
+}
+
+.buyer-password-gate form > svg { color: var(--accent); margin-bottom: 18px; }
+.buyer-password-gate h1 { font-size: clamp(26px, 5vw, 34px); font-weight: 500; line-height: 1.14; margin-bottom: 12px; }
+.buyer-password-gate p { color: var(--muted); line-height: 1.55; margin-bottom: 20px; }
+.buyer-password-gate label { display: block; font-size: 15px; margin-bottom: 7px; }
+.buyer-password-field { display: flex; gap: 8px; }
+.buyer-password-field input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--surface);
+  font-size: 16px;
+}
+.buyer-password-field button { min-width: 48px; min-height: 48px; }
+.buyer-password-gate p[role='alert'] { margin: 10px 0 0; }
+.buyer-password-gate .primary { width: 100%; min-height: 46px; margin-top: 16px; }
+
+.staff-portal label.buyer-access-choice {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.buyer-access-choice input { margin: 2px 0 0; }
+.buyer-access-choice strong { font-weight: 600; }
+.buyer-access-choice small { display: block; margin-top: 4px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.staff-buyer-access form { margin-block: 18px; }
+.staff-buyer-access form label:first-child { margin-top: 0; }
+.buyer-access-broker { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px 18px; border-top: 1px solid var(--line); padding: 14px 0; }
+.buyer-access-broker code { font-size: 15px; padding: 6px 8px; border-radius: 4px; background: var(--raised); direction: ltr; }
+.buyer-share-password { margin-block: 14px; }
+.buyer-share-password input { letter-spacing: .06em; }
+.collection-password-status { display: flex; align-items: center; gap: 6px; }
+
+@media (max-width: 760px) {
+  .buyer-password-gate { min-height: calc(100svh - 56px); align-items: start; padding-top: clamp(38px, 9vh, 90px); }
+}

@@ -12,6 +12,7 @@ import {postcodeLocation} from './location.mjs';
 import {parsePastedListing} from './pasted-import.mjs';
 import {rejectDuplicate} from './duplicates.mjs';
 import {accessService,AccessError,checkOrigin,sessionCookie,publicDevelopment,publicUser} from './access.mjs';
+import {BuyerAccessError,brokerPortfolioPassword,buyerContext,buyerDevelopments,issueBrokerPassword,portfolioProtectionSettings,requireBuyerAccess,unlockBuyerLink,updateBuyerAccessSettings} from './buyer-access.mjs';
 import {randomBytes} from 'node:crypto';
 import {validateDevelopment} from './model.mjs';
 import {extractListing} from './import.mjs';
@@ -25,32 +26,75 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
  const pending=pendingInputService(repository,pendingOptions);
  visitorRepository||={readDay:async date=>(await repository.read()).buyerActivityDays?.[date]||{people:{}},updateDay:async(date,change)=>repository.update(s=>{s.buyerActivityDays||={};s.buyerActivityDays[date]||={people:{}};change(s.buyerActivityDays[date]);})};
  const engagement=engagementService(visitorRepository);
- return async(request)=>{
+ const buyer=(state,request,target)=>buyerContext(state,request,target,access.staffSession(state,request)?.user);
+ return async(request,{ip}={})=>{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/\.netlify\/functions\/api/,'/api');const method=request.method;
+  const target={collection:url.searchParams.get('collection'),broker:url.searchParams.get('broker')};
   try{
    if(method==='GET'&&route==='/api/analytics-config')return json({...analyticsConfiguration(await repository.read()),teamTracking:true});
    if(method==='POST'&&route==='/api/activity'){checkOrigin(request);if(request.headers.get('origin')!==url.origin)throw new AccessError('Use the portfolio to record activity.',403);if(Number(request.headers.get('content-length')||0)>8000)return json({error:'Activity payload is too large.'},413);const text=await request.text();if(Buffer.byteLength(text)>8000)return json({error:'Activity payload is too large.'},413);let body;try{body=JSON.parse(text);}catch{return json({error:'Invalid activity payload.'},400);}const state=await repository.read(),result=await engagement.collect(state,body);if(result.recorded&&!state.activity)await repository.update(s=>initializeActivity(s,Date.parse(result.recordedAt)));return json({ok:true});}
    if(method==='GET'&&route==='/api/health'){await repository.read();return json({ok:true});}
-   if(method==='GET'&&route==='/api/developments')return json((await repository.read()).developments.map(publicDevelopment));
-   if(method==='GET'&&route.startsWith('/api/brokers/'))return json(await access.publicBroker(decodeURIComponent(route.slice('/api/brokers/'.length))));
-   if(method==='GET'&&route.startsWith('/api/collections/'))return json(await access.publicCollection(decodeURIComponent(route.slice('/api/collections/'.length))));
+   if(method==='GET'&&(route==='/api/developments'||route==='/api/buyer/portfolio')){
+    const state=await repository.read(),context=buyer(state,request,target);
+    const developments=buyerDevelopments(state,context).map(publicDevelopment);
+    if(route==='/api/developments')return json(developments);
+    const collection=context.collection?await access.publicCollection(context.collection.slug,state,developments):null;
+    const broker=collection?collection.broker:context.broker?await access.publicBroker(context.broker.shareSlug,state):null;
+    return json({developments,collection,broker,collectionOnly:context.collectionOnly,linkError:context.linkError});
+   }
+   if(method==='GET'&&route.startsWith('/api/brokers/')){
+    const slug=decodeURIComponent(route.slice('/api/brokers/'.length)),state=await repository.read();
+    const context=buyer(state,request,{broker:slug});
+    if(!context.broker)throw new AccessError('This broker link is unavailable.',404);
+    requireBuyerAccess(context);
+    return json(await access.publicBroker(slug,state));
+   }
+   if(method==='GET'&&route.startsWith('/api/collections/')){
+    const slug=decodeURIComponent(route.slice('/api/collections/'.length)),state=await repository.read();
+    const context=buyer(state,request,{collection:slug});
+    if(!context.collection)throw new AccessError('This collection is no longer available.',404);
+    return json(await access.publicCollection(slug,state,buyerDevelopments(state,context)));
+   }
+   if(method==='POST'&&route==='/api/buyer/unlock'){
+    checkOrigin(request);
+    if(Number(request.headers.get('content-length')||0)>1000)return json({error:'Password request is too large.'},413);
+    const text=await request.text();
+    if(Buffer.byteLength(text)>1000)return json({error:'Password request is too large.'},413);
+    let body;try{body=JSON.parse(text);}catch{return json({error:'Enter the password for this link.'},400);}
+    const cookie=await unlockBuyerLink(repository,{request,target,password:body?.password,ip,staffUser:state=>access.staffSession(state,request)?.user});
+    const response=json({ok:true});
+    if(cookie)response.headers.set('Set-Cookie',cookie);
+    return response;
+   }
    if(method==='GET'&&route==='/api/access/status')return json(await access.status());
    if(method==='GET'&&route==='/api/access/me'){const actor=await access.authenticate(request,{allowLegacy:false});return json({user:publicUser(actor),csrf:actor.csrf});}
    if(method==='POST'&&['/api/access/bootstrap','/api/access/login','/api/access/accept'].includes(route)){checkOrigin(request);if(Number(request.headers.get('content-length')||0)>10000)return json({error:'Request is too large.'},413);const text=await request.text();if(Buffer.byteLength(text)>10000)return json({error:'Request is too large.'},413);let body;try{body=JSON.parse(text);}catch{return json({error:'Request must contain valid JSON.'},400);}const action=route.split('/').pop();const result=await access[action](body);const response=json({user:result.user,csrf:result.csrf});response.headers.set('Set-Cookie',sessionCookie(result.token,request));return response;}
    if(method==='POST'&&route==='/api/access/logout'){const actor=await access.authenticate(request,{allowLegacy:false});access.csrf(request,actor);await access.logout(actor);const response=json({ok:true});response.headers.set('Set-Cookie',sessionCookie('',request,true));return response;}
-   if(method==='GET'&&route.startsWith('/api/translations/')){const id=decodeURIComponent(route.slice('/api/translations/'.length)),language=url.searchParams.get('language');const d=(await repository.read()).developments.find(x=>x.id===id);if(!d)return json({error:'Development not found.'},404);if(!['ar','zh-CN','tr'].includes(language))return json({error:'Unsupported language.'},422);try{return json(await translations(d,language));}catch(e){console.error('Public listing translation failed:',e.code||e.name,e.message);return json({error:'Automatic translation is unavailable. The original English description is shown.',code:/^provider_http_\d+$/.test(e.code||'')?e.code:'translation_unavailable'},503);}}
+   if(method==='GET'&&route.startsWith('/api/translations/')){const id=decodeURIComponent(route.slice('/api/translations/'.length)),language=url.searchParams.get('language');const state=await repository.read(),d=buyerDevelopments(state,buyer(state,request,target)).find(x=>x.id===id);if(!d)return json({error:'Development not found.'},404);if(!['ar','zh-CN','tr'].includes(language))return json({error:'Unsupported language.'},422);try{return json(await translations(d,language));}catch(e){console.error('Public listing translation failed:',e.code||e.name,e.message);return json({error:'Automatic translation is unavailable. The original English description is shown.',code:/^provider_http_\d+$/.test(e.code||'')?e.code:'translation_unavailable'},503);}}
    if(method==='POST'&&route==='/api/commute'){
     checkOrigin(request);const raw=await request.text();if(Buffer.byteLength(raw)>6000)return json({error:'Commute request is too large.'},413);
     let body;try{body=JSON.parse(raw);}catch{return json({error:'Enter a valid commute request.'},400);}
-    try{return json(await commute(body,(await repository.read()).developments));}catch(e){if(e instanceof CommuteError)return json({error:e.message},e.status);return json({error:'Commute planning is temporarily unavailable. Please try again.'},503);}
+    const state=await repository.read(),developments=buyerDevelopments(state,buyer(state,request,target));
+    try{return json(await commute(body,developments));}catch(e){if(e instanceof CommuteError)return json({error:e.message},e.status);return json({error:'Commute planning is temporarily unavailable. Please try again.'},503);}
    }
    if(method==='GET'&&route==='/api/transport'){try{return json(await network());}catch{return json({error:'The TfL network is temporarily unavailable.'},503);}}
    if(method==='GET'&&route==='/api/stations'){try{return json((await network()).stations);}catch{return json({error:'The TfL station directory is temporarily unavailable.'},503);}}
-   if(method==='GET'&&route.startsWith('/api/connections/')){const id=decodeURIComponent(route.slice('/api/connections/'.length));const d=(await repository.read()).developments.find(d=>d.id===id);if(!d)return json({error:'Development not found.'},404);try{return json(await connections(d));}catch{return json({error:'Station routes are temporarily unavailable.'},503);}}
+   if(method==='GET'&&route.startsWith('/api/connections/')){const id=decodeURIComponent(route.slice('/api/connections/'.length));const state=await repository.read(),d=buyerDevelopments(state,buyer(state,request,target)).find(row=>row.id===id);if(!d)return json({error:'Development not found.'},404);try{return json(await connections(d));}catch{return json({error:'Station routes are temporarily unavailable.'},503);}}
    if(!route.startsWith('/api/admin/'))return json({error:'API endpoint not found.'},404);
    if((await access.status()).setupRequired&&(!password||password.length<12))return json({error:'Administrator access is not configured for this deployment.'},503);
    const actor=await access.authenticate(request);
    if(!['GET','HEAD'].includes(method))access.csrf(request,actor);
+   if(method==='GET'&&route==='/api/admin/buyer-access/mine'){
+    if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
+    const state=await repository.read(),user=access.current(state,actor);
+    return json({password:brokerPortfolioPassword(state,state.users.find(row=>row.id===user.id))});
+   }
+   if(method==='GET'&&route==='/api/admin/buyer-access'){
+    if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
+    const state=await repository.read();
+    access.admin(access.current(state,actor));
+    return json(portfolioProtectionSettings(state));
+   }
    if(route==='/api/admin/development-reviews'){
     if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
     if(method==='GET'){
@@ -123,6 +167,25 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    let body;try{body=JSON.parse(text);}catch{return json({error:'Request must contain valid JSON.'},400);}
    if(method==='POST'&&route==='/api/admin/activity'){if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);if(!['personal_link_copy','personal_whatsapp_click','personal_email_click','collection_link_copy','collection_whatsapp_click','collection_email_click'].includes(body?.event))throw new AccessError('Unsupported staff activity.');return json(await repository.update(state=>{const acting=access.current(state,actor);let c;if(body.event.startsWith('collection_')){c=(state.collections||[]).find(c=>c.id===body.collectionId);if(!c)throw new AccessError('Collection not found.',404);if(acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('This collection belongs to another broker.',403);}else if(!acting.whatsapp||!acting.shareSlug)throw new AccessError('Add your WhatsApp number first.');recordStaff(state,acting,body.event,{id:c?.id||'',label:c?.title||''});return {ok:true};}));}
    if(method==='PUT'&&route==='/api/admin/analytics'){access.admin(actor);let settings;try{settings=validateAnalyticsConfiguration(body);}catch(e){throw new AccessError(e.message);}return json(await repository.update(state=>{access.admin(access.current(state,actor));state.analytics=settings;return analyticsConfiguration(state,{privateView:true});}));}
+   if(method==='PUT'&&route==='/api/admin/buyer-access'){
+    if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
+    return json(await repository.update(state=>{
+     access.admin(access.current(state,actor));
+     updateBuyerAccessSettings(state,body);
+     return portfolioProtectionSettings(state);
+    }));
+   }
+   if(method==='POST'&&route==='/api/admin/buyer-access/rotate'){
+    if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
+    return json(await repository.update(state=>{
+     access.admin(access.current(state,actor));
+     if(!state.buyerAccess?.portfolioVersion)throw new AccessError('Enable portfolio password protection first.',409);
+     const broker=state.users.find(user=>user.id===body?.brokerId&&user.active);
+     if(!broker)throw new AccessError('Choose an active broker.',404);
+     issueBrokerPassword(state,broker,true);
+     return portfolioProtectionSettings(state);
+    }));
+   }
    if(method==='POST'&&route==='/api/admin/source-review'){access.stock(actor);return json(await repository.update(state=>{const acting=access.current(state,actor);access.stock(acting);const i=state.developments.findIndex(d=>d.id===body.id);if(i<0)throw new AccessError('Development not found.',404);let next;try{next=resolveSourceField(state.developments[i],body.field,body.choice,body.version);validateDevelopment(next,{allowUnconfirmedPrice:next.source==='JLL website'});}catch(e){throw new AccessError(e.message,409);}state.developments[i]=next;recordStaff(state,acting,'stock_edit',{id:next.id,label:next.name});return {ok:true};}));}
    if(method==='POST'&&route==='/api/admin/profile')return json(await access.updateProfile(actor,body));
    if(method==='POST'&&route==='/api/admin/drafts'){access.stock(actor);if(!body||typeof body.data!=='object'||!body.data)throw new AccessError('A draft needs development data.');return json(await repository.update(s=>{const acting=access.current(s,actor);access.stock(acting);s.drafts||=[];let d=body.id?s.drafts.find(d=>d.id===body.id):null;if(body.id&&!d)throw new AccessError('Draft no longer exists. Save a new draft.',404);if(d&&acting.role!=='admin'&&d.ownerId!==actor.id)throw new AccessError('You can only edit your own drafts.',403);if(!d){if(s.drafts.length>=200)throw new AccessError('Remove an old draft before adding another.');d={id:randomBytes(12).toString('hex'),ownerId:actor.id};s.drafts.push(d);}d.data=structuredClone(body.data);d.editingId=typeof body.editingId==='string'?body.editingId:null;d.name=String(body.name||'Untitled development').slice(0,100);d.updatedAt=new Date().toISOString();recordStaff(s,acting,'draft_save',{id:d.id,label:d.name});return structuredClone(d);}),201);}
@@ -154,6 +217,6 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
     });return json(found?{ok:true}:{error:'Development not found.'},found?200:404);
    }
    return json({error:'API endpoint not found.'},404);
-  }catch(e){if(e.duplicateId)return json({error:e.message,duplicateId:e.duplicateId},409);if(e instanceof AccessError)return json({error:e.message},e.status);if(e instanceof ConflictError)return json({error:e.message},409);console.error('Portfolio API request failed:',e.message);return json({error:'Unable to complete the request. Check your data or retry shortly; saved stock has been preserved.'},422);}
+  }catch(e){if(e.duplicateId)return json({error:e.message,duplicateId:e.duplicateId},409);if(e instanceof BuyerAccessError)return json({error:e.message,...(e.scope?{passwordRequired:e.scope}:{})},e.status);if(e instanceof AccessError)return json({error:e.message},e.status);if(e instanceof ConflictError)return json({error:e.message},409);console.error('Portfolio API request failed:',e.message);return json({error:'Unable to complete the request. Check your data or retry shortly; saved stock has been preserved.'},422);}
  };
 }

@@ -2,7 +2,15 @@ import test from 'node:test';import assert from 'node:assert/strict';import {ran
 import {createNetlifyApi} from './netlify-api.mjs';import {accessService,digest} from './access.mjs';import {samples} from './model.mjs';
 import {applyRegionalReviewPlan,regionalReviewPlanCoverage} from './regional-review-plan.mjs';
 function environment(config={}){let state={developments:structuredClone(samples),lastSync:null};const secret=randomBytes(24).toString('hex');const repository={read:async()=>structuredClone(state),update:async fn=>{const next=structuredClone(state);const result=fn(next);state=next;return result;}};const api=createNetlifyApi({repository,password:secret,...config});
- async function call(path,{body,method='GET',actor,origin='https://portfolio.example',csrf=true}={}){const r=await api(new Request('https://portfolio.example/api/'+path,{method,headers:{'Content-Type':'application/json',Origin:origin,...(actor?{Cookie:actor.cookie,...(csrf?{'X-CSRF-Token':actor.csrf}:{})}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})}));const data=await r.json();return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],headers:r.headers};}
+ async function call(path,{body,method='GET',actor,buyerCookie,ip,origin='https://portfolio.example',csrf=true}={}){
+  const headers={'Content-Type':'application/json',Origin:origin};
+  const cookie=[actor?.cookie,buyerCookie].filter(Boolean).join('; ');
+  if(cookie)headers.Cookie=cookie;
+  if(actor&&csrf)headers['X-CSRF-Token']=actor.csrf;
+  const r=await api(new Request('https://portfolio.example/api/'+path,{method,headers,...(body!==undefined?{body:JSON.stringify(body)}:{})}),{ip});
+  const data=await r.json();
+  return {status:r.status,data,cookie:r.headers.get('set-cookie')?.split(';')[0],headers:r.headers};
+ }
  async function owner(){const r=await call('access/bootstrap',{method:'POST',body:{setupSecret:secret,name:'Owner',email:'owner@example.test',whatsapp:'+447900000001',password:randomBytes(18).toString('hex')}});assert.equal(r.status,200);return {cookie:r.cookie,csrf:r.data.csrf,user:r.data.user};}
  async function broker(admin,email='broker@example.test',role='broker'){const invited=await call('admin/users/invite',{method:'POST',actor:admin,body:{name:'Broker',email,role}});assert.equal(invited.status,201);const password=randomBytes(18).toString('hex');const accepted=await call('access/accept',{method:'POST',body:{token:invited.data.token,email,whatsapp:'+447900000002',password,role:'admin'}});assert.equal(accepted.status,200);return {cookie:accepted.cookie,csrf:accepted.data.csrf,user:accepted.data.user,password,email,invited};}
  return {call,owner,broker,repository,secret};}
@@ -183,6 +191,165 @@ test('duplicate names are rejected atomically and reviewed updates keep stable d
 });
 test('only admins can configure analytics and public configuration exposes no private state',async()=>{const e=environment(),admin=await e.owner(),broker=await e.broker(admin),manager=await e.broker(admin,'analytics-manager@example.test','broker_admin');assert.deepEqual((await e.call('analytics-config')).data,{enabled:false,measurementId:'',teamTracking:true});for(const actor of [broker,manager]){assert.equal((await e.call('admin/analytics',{actor})).status,403);assert.equal((await e.call('admin/analytics',{method:'PUT',actor,body:{enabled:true,measurementId:'G-TEST123456',manualTrackingConfirmed:true}})).status,403);}assert.equal((await e.call('admin/analytics',{method:'PUT',actor:admin,body:{enabled:true,measurementId:'G-TEST123456',teamTracking:true}})).status,422);const saved=await e.call('admin/analytics',{method:'PUT',actor:admin,body:{enabled:true,measurementId:'G-TEST123456',manualTrackingConfirmed:true}});assert.equal(saved.status,200);assert.deepEqual((await e.call('analytics-config')).data,{enabled:true,measurementId:'G-TEST123456',teamTracking:true});const cold=createNetlifyApi({repository:e.repository,password:e.secret});const read=await cold(new Request('https://portfolio.example/api/analytics-config'));assert.deepEqual(await read.json(),{enabled:true,measurementId:'G-TEST123456',teamTracking:true});await e.call('admin/analytics',{method:'PUT',actor:admin,body:{enabled:false,measurementId:'G-TEST123456',manualTrackingConfirmed:true}});assert.deepEqual((await e.call('analytics-config')).data,{enabled:false,measurementId:'',teamTracking:true});});
 test('staff instructions require authentication and respect stock and analytics roles',async()=>{const e=environment();assert.equal((await e.call('admin/guide')).status,401);const admin=await e.owner(),broker=await e.broker(admin),manager=await e.broker(admin,'guide-manager@example.test','broker_admin');const a=(await e.call('admin/guide',{actor:admin})).data,b=(await e.call('admin/guide',{actor:broker})).data,m=(await e.call('admin/guide',{actor:manager})).data;assert.ok(a.chapters.some(x=>x.id==='analytics'));assert.ok(a.chapters.some(x=>x.id==='activity'));assert.ok(a.chapters.some(x=>x.id==='stock'));assert.ok(m.chapters.some(x=>x.id==='stock'));assert.ok(!m.chapters.some(x=>x.id==='analytics'));assert.ok(!m.chapters.some(x=>x.id==='activity'));assert.ok(!b.chapters.some(x=>x.id==='stock'));assert.ok(!b.chapters.some(x=>x.id==='analytics'));assert.ok(!b.chapters.some(x=>x.id==='activity'));assert.ok(b.chapters.some(x=>x.id==='collections'));assert.ok(!JSON.stringify(a).includes(e.secret));});
+
+test('collection passwords gate buyer details, expire on rotation and leave other public links usable',async()=>{
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin),peer=await e.broker(admin,'peer@example.test');
+ const selection={title:'Private selection',developmentIds:[samples[0].id]};
+ const created=await e.call('admin/collections',{actor:broker,method:'POST',body:{...selection,passwordAction:'protect'}});
+ assert.equal(created.status,201);
+ const {slug,id,password}=created.data;
+ assert.match(password,/^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+ assert.equal(created.data.passwordProtected,true);
+ assert.equal((await e.call('admin/collections',{actor:broker})).data[0].password,password);
+ assert.deepEqual((await e.call('admin/collections',{actor:peer})).data,[]);
+ const locked='buyer/portfolio?collection='+slug,open=options=>e.call(locked,options);
+ const oldRoute='collections/'+slug;
+ const denied=await open();
+ assert.equal(denied.status,423);
+ assert.equal(denied.data.passwordRequired,'collection');
+ assert.equal(denied.headers.get('cache-control'),'no-store');
+ assert.equal('collection' in denied.data,false);
+ assert.equal('developments' in denied.data,false);
+ assert.equal((await e.call(oldRoute)).status,423);
+ assert.equal((await open({actor:peer})).status,423);
+ assert.equal((await open({actor:broker})).status,200);
+ assert.equal((await open({actor:admin})).status,200);
+ assert.equal((await e.call('buyer/portfolio')).data.developments.length,samples.length);
+
+ const unlock=(password,options)=>e.call('buyer/unlock?collection='+slug,{method:'POST',body:{password},...options});
+ assert.equal((await unlock(password,{origin:'https://other.example'})).status,403);
+ for(let i=0;i<6;i++)assert.equal((await unlock('bad password',{ip:'192.0.2.1'})).status,401);
+ assert.equal((await unlock(password,{ip:'192.0.2.1'})).status,429);
+ const granted=await unlock(password.toLowerCase().replace('-', ' '),{ip:'192.0.2.2'});
+ assert.equal(granted.status,200);
+ assert.match(granted.headers.get('set-cookie'),/Path=\/api; HttpOnly; SameSite=Lax; Max-Age=86400; Secure/);
+ const buyer={buyerCookie:granted.cookie};
+ const opened=await open(buyer);
+ assert.equal(opened.status,200);
+ assert.equal(opened.data.collection.title,selection.title);
+ assert.deepEqual(opened.data.collection.developmentIds,selection.developmentIds);
+ assert.equal(opened.data.collectionOnly,false);
+ assert.equal((await e.call(oldRoute,buyer)).data.password,undefined);
+
+ const another=await e.call('admin/collections',{actor:broker,method:'POST',body:{...selection,passwordAction:'protect'}});
+ assert.equal((await e.call('collections/'+another.data.slug,buyer)).status,423);
+ const edit=passwordAction=>e.call('admin/collections/'+id,{actor:broker,method:'PUT',body:{...selection,passwordAction}});
+ assert.equal((await edit()).data.password,password);
+ const rotated=await edit('rotate');
+ assert.equal(rotated.data.slug,slug);
+ assert.notEqual(rotated.data.password,password);
+ assert.equal((await open(buyer)).status,423);
+ assert.equal((await unlock(password)).status,401);
+ const replacement=await unlock(rotated.data.password);
+ assert.equal((await open({buyerCookie:replacement.cookie})).status,200);
+ assert.equal((await edit('remove')).data.password,null);
+ assert.equal((await open()).status,200);
+});
+
+test('full portfolio protection issues attributed broker passwords and limits independently unlocked collections',async()=>{
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin),peer=await e.broker(admin,'peer@example.test');
+ const selected=samples[0].id, other=samples[1].id;
+ const create=(title,passwordAction)=>e.call('admin/collections',{actor:broker,method:'POST',body:{title,developmentIds:[selected],passwordAction}});
+ const privateLink=(await create('Private selection','protect')).data;
+ const oldLink=(await create('Public selection')).data;
+ const settings='admin/buyer-access';
+ const change=(body,actor=admin)=>e.call(settings,{actor,method:'PUT',body});
+ assert.deepEqual((await e.call(settings,{actor:admin})).data,{enabled:false,instructedOnly:false,brokers:[]});
+ assert.equal((await change({enabled:true},broker)).status,403);
+ assert.equal((await e.call(settings,{actor:peer})).status,403);
+ assert.equal((await e.call(settings,{actor:admin,method:'PUT',body:{enabled:true},csrf:false})).status,403);
+ const turnedOn=await change({enabled:true});
+ assert.equal(turnedOn.status,200);
+ const passwords=new Map(turnedOn.data.brokers.map(row=>[row.id,row.password]));
+ assert.equal(passwords.size,3);
+ assert.equal(new Set(passwords.values()).size,3);
+ const brokerPassword=passwords.get(broker.user.id),peerPassword=passwords.get(peer.user.id);
+ const mine=actor=>e.call(settings+'/mine',{actor});
+ assert.deepEqual((await mine(broker)).data,{password:brokerPassword});
+ assert.equal((await mine()).status,401);
+ assert.equal((await e.call('admin/collections',{actor:broker})).data.find(c=>c.id===oldLink.id).password,brokerPassword);
+
+ const portfolio='buyer/portfolio', personal=portfolio+'?broker='+broker.user.shareSlug;
+ const chosen=portfolio+'?collection='+privateLink.slug, older=portfolio+'?collection='+oldLink.slug;
+ for(const route of [portfolio,personal,older,'developments','connections/'+selected,'translations/'+selected+'?language=ar','brokers/'+broker.user.shareSlug]){
+  const r=await e.call(route);
+  assert.equal(r.status,423,route);
+  assert.equal(r.data.passwordRequired,'portfolio');
+ }
+ assert.equal((await e.call('commute',{method:'POST',body:{}})).status,423);
+ assert.equal((await e.call('access/status')).status,200);
+ assert.equal((await e.call('admin/developments',{actor:broker})).data.length,samples.length);
+ const unlock=(scope,password)=>e.call('buyer/unlock'+scope,{method:'POST',body:{password}});
+ assert.equal((await unlock('?broker='+broker.user.shareSlug,peerPassword)).status,401);
+ const buyer={buyerCookie:(await unlock('',brokerPassword)).cookie};
+ assert.equal((await e.call(portfolio,buyer)).data.developments.length,samples.length);
+ assert.equal((await e.call(personal,buyer)).data.broker.slug,broker.user.shareSlug);
+ assert.equal((await e.call(older,buyer)).data.collection.title,oldLink.title);
+ assert.equal((await e.call(portfolio+'?broker='+peer.user.shareSlug,buyer)).status,423);
+ assert.equal((await e.call(chosen,buyer)).data.passwordRequired,'collection');
+
+ const collectionBuyer={buyerCookie:(await unlock('?collection='+privateLink.slug,privateLink.password)).cookie};
+ const opened=await e.call(chosen,collectionBuyer);
+ assert.equal(opened.data.collectionOnly,true);
+ assert.deepEqual(opened.data.developments.map(d=>d.id),[selected]);
+ assert.equal((await e.call(portfolio,collectionBuyer)).status,423);
+ assert.equal((await e.call(older,collectionBuyer)).status,423);
+ assert.equal((await e.call('connections/'+other+'?collection='+privateLink.slug,collectionBuyer)).status,404);
+ assert.equal((await e.call('translations/'+other+'?collection='+privateLink.slug+'&language=ar',collectionBuyer)).status,404);
+ const both={buyerCookie:[buyer.buyerCookie,collectionBuyer.buyerCookie].join('; ')};
+ assert.equal((await e.call(chosen,both)).data.collectionOnly,false);
+
+ const late=await e.broker(admin,'joined-later@example.test');
+ assert.match((await mine(late)).data.password,/^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+ const rotated=await e.call(settings+'/rotate',{actor:admin,method:'POST',body:{brokerId:broker.user.id}});
+ const next=rotated.data.brokers.find(row=>row.id===broker.user.id).password;
+ assert.notEqual(next,brokerPassword);
+ assert.equal((await mine(peer)).data.password,peerPassword);
+ assert.equal((await e.call(portfolio,buyer)).status,423);
+ assert.equal((await unlock('',brokerPassword)).status,401);
+ const renewed={buyerCookie:(await unlock('',next)).cookie};
+ assert.equal((await e.call(personal,renewed)).status,200);
+ await e.call('admin/users/'+broker.user.id,{actor:admin,method:'PATCH',body:{active:false}});
+ assert.equal((await e.call(portfolio,renewed)).status,423);
+ assert.equal((await unlock('',next)).status,401);
+ await change({enabled:false});
+ assert.equal((await e.call(portfolio)).status,200);
+ await change({enabled:true});
+ assert.equal((await unlock('',peerPassword)).status,401);
+});
+
+test('instructed-only view follows verified website refreshes without removing workspace stock or collection selections',async()=>{
+ const listing=(id,title)=>({id,title,city:'London',tenureType:['sale'],isNewDevelopment:true,developmentHeadline:title+', Angel',
+  postcode:'N1 7AA',lat:51.53,lng:-.1,price:{minAmount:600000,currencyCode:'GBP'},rooms:{bedrooms:['1 Bed']},description:'London homes.',
+  images:['https://example.test/photo.jpg'],pageUrl:'/sale-development/'+id});
+ const current=listing('current','Current instructed home'),retired=listing('retired','Previous instructed home');
+ let feed=[current,retired];
+ const e=environment({fetchListings:async()=>feed}),admin=await e.owner(),broker=await e.broker(admin);
+ const sync=()=>e.call('admin/sync',{actor:admin,method:'POST',body:{}});
+ const options='admin/buyer-access';
+ const visibility=instructedOnly=>e.call(options,{actor:admin,method:'PUT',body:{instructedOnly}});
+ const manual={...samples[0],name:'Manual home',sample:false};
+ await e.repository.update(state=>{state.developments.push({...manual,id:'manual'});});
+ assert.deepEqual((await sync()).data.websiteDevelopmentIds,['jll-current','jll-retired']);
+ const ids=['jll-current','jll-retired','manual'];
+ const c=await e.call('admin/collections',{actor:broker,method:'POST',body:{title:'Three homes',developmentIds:ids}});
+ const route='buyer/portfolio?collection='+c.data.slug;
+ assert.deepEqual((await e.call(route)).data.collection.developmentIds,ids);
+ assert.equal((await visibility(true)).data.instructedOnly,true);
+ const before=await e.call(route);
+ assert.deepEqual(before.data.collection.developmentIds,['jll-current','jll-retired']);
+ assert.equal(before.data.collectionOnly,false);
+ feed=[current];
+ assert.deepEqual((await sync()).data.websiteDevelopmentIds,['jll-current']);
+ const after=await e.call(route);
+ assert.deepEqual(after.data.developments.map(d=>d.id),['jll-current']);
+ assert.deepEqual(after.data.collection.developmentIds,['jll-current']);
+ assert.deepEqual((await e.call('admin/collections',{actor:broker})).data[0].developmentIds,ids);
+ assert.deepEqual((await e.call('admin/developments',{actor:broker})).data.map(d=>d.id).sort(),ids.toSorted());
+ assert.equal((await e.call('translations/jll-retired?language=ar')).status,404);
+ assert.equal((await visibility(false)).data.instructedOnly,false);
+ assert.deepEqual((await e.call(route)).data.collection.developmentIds,ids);
+});
 
 test('transport defaults belong only to collections, never personal links',async()=>{
  const e=environment(),admin=await e.owner(),a=await e.broker(admin),b=await e.broker(admin,'second@example.test');

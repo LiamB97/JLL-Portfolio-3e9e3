@@ -1,3 +1,4 @@
+import {buyerApiPath} from './buyer-access';
 import Modal from './Modal';
 import {useEffect,useRef,useState} from 'react';
 import {ChevronDown,Clock3,TrainFront,X} from 'lucide-react';
@@ -15,7 +16,7 @@ export default function CommuteSearch({items,onChange,resetKey}:{items:Developme
   controller.current?.abort();const abort=new AbortController();controller.current=abort;const id=++run.current;setBusy(true);setMessage('');setReport(null);onChange(null);setChecked(0);
   let cursor=0,finished=0,last:Omit<CommuteReport,'maxMinutes'>|null=null;const results:CommuteResult[]=[];const batches=Array.from({length:Math.ceil(items.length/5)},(_,n)=>items.slice(n*5,n*5+5));
   try{
-   async function worker(){while(cursor<batches.length&&!abort.signal.aborted){const homes=batches[cursor++];const response=await fetch('/api/commute',{method:'POST',signal:abort.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({postcode,date,time,mode,developmentIds:homes.map(d=>d.id)})});const data=await response.json();if(!response.ok)throw Error(data.error||'Commute search is unavailable.');if(abort.signal.aborted||run.current!==id)return;last=data;results.push(...data.results);finished+=homes.length;setChecked(finished);}}
+   async function worker(){while(cursor<batches.length&&!abort.signal.aborted){const homes=batches[cursor++];const response=await fetch(buyerApiPath('/api/commute'),{method:'POST',signal:abort.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({postcode,date,time,mode,developmentIds:homes.map(d=>d.id)})});const data=await response.json();if(!response.ok)throw Error(data.error||'Commute search is unavailable.');if(abort.signal.aborted||run.current!==id)return;last=data;results.push(...data.results);finished+=homes.length;setChecked(finished);}}
    await Promise.all(Array.from({length:Math.min(2,batches.length)},worker));
    if(run.current!==id||abort.signal.aborted||!last)return;
    const complete={...(last as Omit<CommuteReport,'maxMinutes'>),results,maxMinutes:minutes};setReport(complete);onChange(complete);
