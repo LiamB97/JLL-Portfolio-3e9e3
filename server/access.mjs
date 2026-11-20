@@ -1,4 +1,6 @@
 import {profilePhoto} from './profile-photo.mjs';
+import {isYourFirstHomeSlug} from '../shared/your-first-home.ts';
+import {publicYourFirstHome} from './your-first-home.mjs';
 import transportNetwork from './data/tfl-network.json' with {type:'json'};
 import {recordStaff} from './activity.mjs';
 import {newDevelopmentReview} from './development-review-record.mjs';
@@ -99,7 +101,7 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
  function canEdit(actor,d){return ['admin','broker_admin'].includes(actor.role);}
  async function collections(actor){
   const state=await repository.read(),acting=current(state,actor);
-  return (state.collections||[]).filter(c=>acting.role==='admin'||c.ownerId===acting.id).map(c=>privateCollection(state,c));
+  return (state.collections||[]).filter(c=>!isYourFirstHomeSlug(c.slug)&&(acting.role==='admin'||c.ownerId===acting.id)).map(c=>privateCollection(state,c));
  }
  async function saveCollection(actor,body,id){
   if(actor.legacy)throw new AccessError('Create a staff account first.',409);
@@ -112,6 +114,7 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
    if(!acting.whatsapp)throw new AccessError('Add your WhatsApp number in your staff profile before creating buyer links.');
    if(ids.some(id=>!state.developments.some(d=>d.id===id)))throw new AccessError('One of these developments is no longer listed. Refresh your selection.');
    let collection=id?state.collections.find(x=>x.id===id):null;
+   if(collection&&isYourFirstHomeSlug(collection.slug))throw new AccessError('Manage this shared collection in Your First Home.',409);
    if(id&&!collection)throw new AccessError('Collection not found.',404);
    if(collection&&acting.role!=='admin'&&collection.ownerId!==acting.id)throw new AccessError('You can only edit your own collections.',403);
    if(!collection){
@@ -127,9 +130,10 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
    return privateCollection(state,collection);
   });
  }
- async function deleteCollection(actor,id){return repository.update(s=>{init(s);const acting=current(s,actor);const c=s.collections.find(x=>x.id===id);if(!c)throw new AccessError('Collection not found.',404);if(acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('You can only remove your own collections.',403);s.collections=s.collections.filter(x=>x.id!==id);recordStaff(s,acting,'collection_delete',{id:c.id,label:c.title,now:now()});return {ok:true};});}
+ async function deleteCollection(actor,id){return repository.update(s=>{init(s);const acting=current(s,actor);const c=s.collections.find(x=>x.id===id);if(!c)throw new AccessError('Collection not found.',404);if(isYourFirstHomeSlug(c.slug))throw new AccessError('Manage this shared collection in Your First Home.',409);if(acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('You can only remove your own collections.',403);s.collections=s.collections.filter(x=>x.id!==id);recordStaff(s,acting,'collection_delete',{id:c.id,label:c.title,now:now()});return {ok:true};});}
  async function publicCollection(slug,state,visible){
   const s=state??await repository.read();
+  if(isYourFirstHomeSlug(slug))return publicYourFirstHome(s,visible??s.developments);
   const c=(s.collections||[]).find(x=>x.slug===slug),owner=c&&(s.users||[]).find(u=>u.id===c.ownerId&&u.active);
   if(!c||!owner)throw new AccessError('This collection is no longer available.',404);
   const ids=new Set((visible??s.developments).map(d=>d.id));

@@ -63,7 +63,7 @@ function stationPopup(station:TransportNetwork['stations'][number], network:Tran
   if(action){const button=document.createElement('button');button.type='button';button.className='station-highlight-action';button.textContent=action.label;button.addEventListener('click',action.run);popup.append(button);}
   return popup;
 }
-export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void}) {
+export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset,clusterFeatured=false}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void;clusterFeatured?:boolean}) {
   const {t,dark}=useLocale();
   const lastView=useRef<{centre:L.LatLngExpression;zoom:number}>({centre:CENTRAL_LONDON.centre,zoom:CENTRAL_LONDON.zoom});
   const el=useRef<HTMLDivElement>(null), map=useRef<L.Map|null>(null);
@@ -137,9 +137,9 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
       const icon=L.divIcon({className:'development-pin-wrap',html:`<span class="development-pin ${d.id===selected?'active':''} ${highlighted?'featured-pin':''} ${saved?'favourite-pin':''}">${highlighted?'<svg class="pin-feature-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>':saved?'<svg class="pin-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>':'<span class="pin-centre"></span>'}${highlighted&&saved?'<b class="pin-saved-badge">♥</b>':''}</span>`,iconSize:highlighted?[46,54]:[34,40],iconAnchor:highlighted?[23,50]:[17,38]});
       const marker=L.marker([d.lat,d.lng],{icon,keyboard:true,title:d.name+(highlighted?' · '+t('FEATURED'):'')+(saved?' · '+t('Saved to favourites'):''),opacity:dimOthers&&featuredIds.length&&!highlighted&&!saved&&d.id!==selected ? 0.32 : 1,zIndexOffset:d.id===selected?3000:highlighted?2000:saved?1000:0});
       if(commuteTimes[d.id]!==undefined){const label=document.createElement('span');label.textContent=d.name+' · '+commuteTimes[d.id]+' min commute';marker.bindTooltip(label);}
-      marker.on('add',()=>marker.getElement()?.setAttribute('aria-label',`${d.name}${highlighted?', '+t('FEATURED'):''}${saved?', '+t('Saved to favourites'):''}`)).on('click',()=>onSelect(d.id)).addTo(highlighted||saved?featured:group);
+      marker.on('add',()=>marker.getElement()?.setAttribute('aria-label',`${d.name}${highlighted?', '+t('FEATURED'):''}${saved?', '+t('Saved to favourites'):''}`)).on('click',()=>onSelect(d.id)).addTo((highlighted&&(!clusterFeatured||d.id===selected))||saved?featured:group);
     }
-  },[items,selected,onSelect,featuredIds,favouriteIds,commuteTimes,dimOthers,dark,t]);
+  },[items,selected,onSelect,featuredIds,favouriteIds,commuteTimes,dimOthers,dark,t,clusterFeatured]);
   useEffect(()=>{
     const m=map.current,group=landmarkLayer.current;if(!m||!group)return;
     function render(){

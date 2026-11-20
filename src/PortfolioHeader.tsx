@@ -6,17 +6,19 @@ import ShareWithFriend from './ShareWithFriend';
 import {useLocale} from './i18n';
 import WhatsAppIcon from './WhatsAppIcon';
 import {buyerShareLink} from './sharing';
+import {yourFirstHomeContact} from './YourFirstHome';
 import type {BrokerCard,BuyerCollection} from './types';
 export type PortfolioView='map'|'split'|'list';
 const views=([{value:'map',label:'Map',Icon:MapIcon},{value:'split',label:'Split',Icon:Columns2},{value:'list',label:'List',Icon:LayoutGrid}] as const);
 export default function PortfolioHeader({exploring,staff,view,setView,saved,openFavourites,onNavigate,broker=null,collection=null,onContact,onResetMap}:{exploring:boolean;staff:boolean;view:PortfolioView;setView:(view:PortfolioView)=>void;saved:number;openFavourites:()=>void;onNavigate:()=>void;broker?:BrokerCard|null;collection?:BuyerCollection|null;onContact?:()=>void;onResetMap?:()=>void}){
  const {t,dark}=useLocale(),[menu,setMenu]=useState(false);
+ const campaign=collection?.campaign==='your-first-home';
  const homeHref=buyerShareLink(location.href);
- const contactHref=broker?'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments.")+'\n'+buyerShareLink(location.href)):'';
+ const contactHref=broker?campaign?yourFirstHomeContact(broker):'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments.")+'\n'+buyerShareLink(location.href)):'';
  function navigate(){setMenu(false);onNavigate();}
  return <header className={'portfolio-header'+(exploring?' with-views':'')} dir="ltr">
   <a className="portfolio-header-brand" href={homeHref} aria-label={t('JLL Residential home')} onClick={onNavigate}><img src={dark?'/images/jll-residential-dark.svg?v=2026-01':'/images/jll-residential-light.svg?v=2026-01'} alt="JLL Residential"/></a>
-  {exploring&&<h1 className="portfolio-header-title"><a href={homeHref} onClick={onNavigate}>London New Homes Portfolio</a></h1>}
+  {exploring&&<h1 className="portfolio-header-title"><a href={homeHref} onClick={onNavigate}>{campaign?'Your First Home':'London New Homes Portfolio'}</a></h1>}
   <div className="portfolio-header-buttons">{exploring&&broker&&<a className="portfolio-mobile-broker" href={contactHref} target="_blank" rel="noopener noreferrer" aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={22}/></a>}{exploring&&<button className="portfolio-saved" aria-label={t('Favourites, {count} saved',{count:saved})} title={t('Favourites')} onClick={openFavourites}><Heart size={20}/>{saved>0&&<b>{saved}</b>}</button>}<button aria-label={t('Open menu')} aria-haspopup="dialog" aria-expanded={menu} onClick={()=>setMenu(true)}><Menu size={22}/></button></div>
   {exploring&&<div className="portfolio-views" role="group" aria-label={t('Portfolio view')}>{views.map(({value,label,Icon})=><button key={value} aria-label={t(label)} aria-pressed={view===value} onClick={()=>setView(value)}><Icon size={17}/><span>{t(label)}</span></button>)}</div>}
   {menu&&<Modal title={t('Portfolio menu')} close={()=>setMenu(false)} className="portfolio-menu">

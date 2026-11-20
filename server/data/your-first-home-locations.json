@@ -1,0 +1,371 @@
+{
+  "source": "https://api.postcodes.io/postcodes",
+  "checkedAt": "2026-11-20",
+  "developments": {
+    "jll-a0OVb00000EfneDMAR": {
+      "name": "25 Cuba",
+      "postcode": "E14 8LD",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0OVb000009HfkjMAC": {
+      "name": "The Waterside",
+      "postcode": "E3 3ZA",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0OVb000003LBA1MAO": {
+      "name": "Southmere",
+      "postcode": "SE2 9TR",
+      "borough": "Bexley"
+    },
+    "jll-a0OVb000003IrAbMAK": {
+      "name": "Regent's View",
+      "postcode": "E2 9AP",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0OVb0000036AkXMAU": {
+      "name": "BelRise",
+      "postcode": "NW6 4DP",
+      "borough": "Camden"
+    },
+    "jll-a0OVb000002yi53MAA": {
+      "name": "Arden",
+      "postcode": "SE10 8GE",
+      "borough": "Lewisham"
+    },
+    "jll-a0OVb000002ygHlMAI": {
+      "name": "Lumen",
+      "postcode": "E3 2NS",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0OVb000002CarNMAS": {
+      "name": "Printmakers Yard",
+      "postcode": "TW8 0AA",
+      "borough": "Hounslow",
+      "boroughSource": "https://engaged-emea.jll.com/yourfirsthome"
+    },
+    "jll-a0OVb000001fSuDMAU": {
+      "name": "Peninsula Riverfront",
+      "postcode": "SE10 0BE",
+      "borough": "Greenwich"
+    },
+    "jll-a0OVb000001dP2nMAE": {
+      "name": "Trillium",
+      "postcode": "W2 1XJ",
+      "borough": null
+    },
+    "jll-a0OVb000001NKa9MAG": {
+      "name": "Bermondsey Place",
+      "postcode": "SE1 5AY",
+      "borough": "Southwark"
+    },
+    "jll-a0OVb000001JHJ7MAO": {
+      "name": "The Oria at 100 Kensington",
+      "postcode": "W14 8PB",
+      "borough": "Kensington and Chelsea"
+    },
+    "jll-a0OVb000001HJ0rMAG": {
+      "name": "The Wilderly, Elephant Park",
+      "postcode": "SE17 1AZ",
+      "borough": "Southwark",
+      "boroughSource": "https://www.southwark.gov.uk/sites/default/files/2025-03/old_kent_road_aap_viability_report_final_4mar25.pdf"
+    },
+    "jll-a0OVb000000b7ybMAA": {
+      "name": "Wimbledon Place",
+      "postcode": "SW19 1RY",
+      "borough": "Merton"
+    },
+    "jll-a0OVb000000Zs3xMAC": {
+      "name": "Wandsworth Mills",
+      "postcode": "SW18 1TH",
+      "borough": "Wandsworth"
+    },
+    "jll-a0OVb000000W1YrMAK": {
+      "name": "Beam",
+      "postcode": "SW9 6HP",
+      "borough": "Lambeth"
+    },
+    "jll-a0OVb000000RI7JMAW": {
+      "name": "Brent Cross Town",
+      "postcode": "NW2 1FE",
+      "borough": "Barnet"
+    },
+    "jll-a0O8W00000LTPYpUAP": {
+      "name": "The HiLight",
+      "postcode": "SW11 3RD",
+      "borough": "Wandsworth"
+    },
+    "jll-a0O8W00000LTMFgUAP": {
+      "name": "Opus - Bankside Yards",
+      "postcode": "SE1 9AX",
+      "borough": "Southwark"
+    },
+    "jll-a0O8W00000LTIWVUA5": {
+      "name": "Upper East",
+      "postcode": "E3 3EW",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O8W00000LT5ktUAD": {
+      "name": "Royal Gateway",
+      "postcode": "W3 0PU",
+      "borough": "Ealing"
+    },
+    "jll-a0O8W00000LT1gFUAT": {
+      "name": "King George's Gate",
+      "postcode": "SW18 4UQ",
+      "borough": "Wandsworth",
+      "boroughSource": "https://residential.jll.co.uk/sale-development/king-georges-gate/london-a0o8w00000lt1gfuat"
+    },
+    "jll-a0O8W00000LSqwfUAD": {
+      "name": "Trinity Park",
+      "postcode": "SE18 5HX",
+      "borough": "Greenwich",
+      "boroughSource": "https://engaged-emea.jll.com/yourfirsthome"
+    },
+    "jll-a0O8W00000LSqviUAD": {
+      "name": "Prime Point",
+      "postcode": "SE10 0BE",
+      "borough": "Greenwich"
+    },
+    "jll-a0O8W00000LSL9aUAH": {
+      "name": "Marylebone Mansions",
+      "postcode": "W1H 5HY",
+      "borough": "Westminster"
+    },
+    "jll-a0O8W00000LSAl8UAH": {
+      "name": "100 George Street",
+      "postcode": "W1U 8AF",
+      "borough": "Westminster"
+    },
+    "jll-a0O8W00000JDNPYUA5": {
+      "name": "Eeko",
+      "postcode": "NW1 9SS",
+      "borough": "Camden"
+    },
+    "jll-a0O8W00000JDFKtUAP": {
+      "name": "Camden Goods Yard",
+      "postcode": "NW1 8EH",
+      "borough": "Camden"
+    },
+    "jll-a0O8W00000JCXzrUAH": {
+      "name": "River Park Tower",
+      "postcode": "SW8 5HD",
+      "borough": "Wandsworth"
+    },
+    "jll-a0O8W00000JBljHUAT": {
+      "name": "Sterling Place",
+      "postcode": "KT3 4NE",
+      "borough": "Merton"
+    },
+    "jll-a0O8W00000JBjArUAL": {
+      "name": "One Clapham",
+      "postcode": "SW11 1UN",
+      "borough": "Wandsworth"
+    },
+    "jll-a0O8W00000ISC8jUAH": {
+      "name": "Woodberry Down",
+      "postcode": "N4 2BA",
+      "borough": "Hackney"
+    },
+    "jll-a0O8W00000IIDxtUAH": {
+      "name": "The Claves",
+      "postcode": "NW7 1TP",
+      "borough": "Barnet"
+    },
+    "jll-a0O8W00000J3q0IUAR": {
+      "name": "Park Hyatt Residences",
+      "postcode": "SW8 5PH",
+      "borough": "Wandsworth"
+    },
+    "jll-a0O8W00000J3cxGUAR": {
+      "name": "One Thames Quay",
+      "postcode": "E14 9FW",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O8W00000J3C1rUAF": {
+      "name": "Wembley Park Gardens",
+      "postcode": "HA9 8PH",
+      "borough": "Brent"
+    },
+    "jll-a0O8W00000GJ7rwUAD": {
+      "name": "The Exchange, Watford",
+      "postcode": "WD24 4AD",
+      "borough": "Watford"
+    },
+    "jll-a0O8W00000GHW4mUAH": {
+      "name": "Frankham Walk",
+      "postcode": "SE8 4RN",
+      "borough": "Lewisham"
+    },
+    "jll-a0O8W00000GGoXsUAL": {
+      "name": "Kings Road Park",
+      "postcode": "SW6 2FP",
+      "borough": "Hammersmith and Fulham"
+    },
+    "jll-a0O8W00000GFq7gUAD": {
+      "name": "Bermondsey Heights",
+      "postcode": "SE15 1NS",
+      "borough": "Southwark"
+    },
+    "jll-a0O8W00000GFobLUAT": {
+      "name": "The Residences on Paddington Green",
+      "postcode": "W2 1EQ",
+      "borough": "Westminster"
+    },
+    "jll-a0O8W00000FQ0xqUAD": {
+      "name": "The Founding",
+      "postcode": "SE16 2XU",
+      "borough": "Southwark"
+    },
+    "jll-a0O8W00000FNHj7UAH": {
+      "name": "Chelsea Riverview",
+      "postcode": "SW6 2UG",
+      "borough": "Hammersmith and Fulham"
+    },
+    "jll-a0O8W00000EjUjDUAV": {
+      "name": "19 Bolsover Street",
+      "postcode": "W1W 5NA",
+      "borough": "Westminster"
+    },
+    "jll-a0O8W00000EiMbNUAV": {
+      "name": "Triptych Bankside",
+      "postcode": "SE1 9BL",
+      "borough": null
+    },
+    "jll-a0O8W00000EOILIUA5": {
+      "name": "Ebury SW1",
+      "postcode": "SW1W 8DY",
+      "borough": "Westminster"
+    },
+    "jll-a0O8W00000E38sbUAB": {
+      "name": "Hendon Waterside",
+      "postcode": "NW9 7QA",
+      "borough": "Barnet",
+      "boroughSource": "https://www.london.gov.uk/sites/default/files/ad_103_london_tall_buildings_publication.pdf"
+    },
+    "jll-a0O8W00000E38sRUAR": {
+      "name": "Eastman Village",
+      "postcode": "HA1 4BF",
+      "borough": "Harrow"
+    },
+    "jll-a0O8W00000E1I6jUAF": {
+      "name": "Elephant Park - Park & Sayer",
+      "postcode": "SE17 1LF",
+      "borough": "Southwark"
+    },
+    "jll-a0O8W00000E0v2UUAR": {
+      "name": "Hayes Village",
+      "postcode": "UB3 4QF",
+      "borough": "Hillingdon"
+    },
+    "jll-a0O1I00000DAJUFUA5": {
+      "name": "Riverscape",
+      "postcode": "E16 2JX",
+      "borough": "Newham"
+    },
+    "jll-a0O1I00000CTuxzUAD": {
+      "name": "Heron Wharf",
+      "postcode": "E14 0LL",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O1I00000BimLTUAZ": {
+      "name": "Harcourt Gardens, South Quay Plaza",
+      "postcode": "E14 9SH",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O1I00000ApZVzUAN": {
+      "name": "Chiswick Green",
+      "postcode": "W4 5TF",
+      "borough": "Hounslow"
+    },
+    "jll-a0O1I00000A8c4OUAR": {
+      "name": "Paddington Gardens",
+      "postcode": "W2 1LF",
+      "borough": "Westminster"
+    },
+    "jll-a0O1I0000086aZCUAY": {
+      "name": "10 Park Drive",
+      "postcode": "E14 9SG",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O1I000005od8zUAA": {
+      "name": "London Dock",
+      "postcode": "E1W 2AA",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O1I000005oCSRUA2": {
+      "name": "The Green Quarter",
+      "postcode": "UB1 1BL",
+      "borough": "Ealing"
+    },
+    "jll-a0O1I0000069Vg5UAE": {
+      "name": "Battersea Power Station",
+      "postcode": "SW11 8EN",
+      "borough": "Wandsworth"
+    },
+    "jll-a0O1I000004lvdBUAQ": {
+      "name": "White City Living",
+      "postcode": "W12 7RQ",
+      "borough": "Hammersmith and Fulham"
+    },
+    "jll-a0O1I000002iFNqUAM": {
+      "name": "Trent Park",
+      "postcode": "EN4 0PS",
+      "borough": "Enfield"
+    },
+    "jll-a0O1I000002AfUaUAK": {
+      "name": "Centre Point Residences",
+      "postcode": "WC1A 1DB",
+      "borough": "Camden"
+    },
+    "jll-a0O1I000001JvgnUAC": {
+      "name": "Landmark Pinnacle",
+      "postcode": "E14 9AB",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O1I000001Jvg4UAC": {
+      "name": "The Broadway, St James's Park",
+      "postcode": "SW1H 0BG",
+      "borough": null
+    },
+    "jll-a0O1I000001JvfOUAS": {
+      "name": "One Park Drive",
+      "postcode": "E14 9AT",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O1I000001JvduUAC": {
+      "name": "Goodluck Hope",
+      "postcode": "E14 0JU",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0O1I000001JvdxUAC": {
+      "name": "SEVEN, Southbank Place",
+      "postcode": "SE1 7GZ",
+      "borough": "Lambeth"
+    },
+    "jll-a0O1I000001Jvd9UAC": {
+      "name": "The Residences at Mandarin Oriental, Mayfair",
+      "postcode": "W1S 1JA",
+      "borough": null
+    },
+    "jll-a0O1I000001JvcXUAS": {
+      "name": "Prince of Wales Drive",
+      "postcode": "SW11 4FA",
+      "borough": "Wandsworth"
+    },
+    "jll-a0OVb00000LS1zZMAT": {
+      "name": "The Penthouses at Landmark Pinnacle",
+      "postcode": "E14 9AB",
+      "borough": "Tower Hamlets"
+    },
+    "jll-a0OVb00000L5nVSMAZ": {
+      "name": "The Albion Nord Penthouse at SEVEN",
+      "postcode": "SE1 7GZ",
+      "borough": "Lambeth"
+    },
+    "jll-a0OVb000002Az97MAC": {
+      "name": "The Lanes",
+      "postcode": "SW17 0YH",
+      "borough": "Wandsworth"
+    }
+  }
+}

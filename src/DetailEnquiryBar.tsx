@@ -15,6 +15,7 @@ export default function DetailEnquiryBar({broker, development, collection, close
   closeButton: ReactNode;
 }) {
   const {t} = useLocale();
+  const campaign=broker?.campaign==='your-first-home';
   const [unavailablePhoto, setUnavailablePhoto] = useState<string>();
   const name = broker?.name ?? 'JLL Residential';
   const photo = broker?.photo;
@@ -22,21 +23,21 @@ export default function DetailEnquiryBar({broker, development, collection, close
   const initials = (words.length > 1 ? [words[0], words[words.length - 1]] : words)
     .map(word => Array.from(word)[0]).join('').toLocaleUpperCase();
   const number = broker?.whatsapp.replace(/\D/g, '') ?? JLL_WHATSAPP;
-  const message = t(broker
+  const message = campaign?`Hi Your First Home team, I’m interested in ${development.name}. Could you confirm current availability, prices and potential scheme participation?`:t(broker
     ? 'Hi, I’m interested in {name}. Could you share current availability, pricing and viewing options?'
     : 'Hi, I’d like to enquire about {name}. Could you share more information?', {name: development.name});
   const link = developmentLink(location.origin, development.id, broker ? collection : undefined, broker?.slug);
   const href = `https://wa.me/${number}?text=${encodeURIComponent(`${message}\n${link}`)}`;
 
-  return <div className="detail-viewing-bar">
+  return <div className={'detail-viewing-bar'+(campaign?' yfh-detail-contact':'')}>
     <div className="detail-broker-contact">
       <span className={broker ? 'detail-broker-avatar' : 'detail-broker-avatar detail-jll-avatar'} aria-hidden="true">
-        {!broker ? <img src="/images/jll-logo.svg" alt="" width={38} height={17}/> : photo && photo !== unavailablePhoto
+        {campaign?<img src="/images/your-first-home-logo.png" alt="" width={32} height={40}/>:!broker ? <img src="/images/jll-logo.svg" alt="" width={38} height={17}/> : photo && photo !== unavailablePhoto
           ? <img src={photo} alt="" width={48} height={48} onError={() => setUnavailablePhoto(photo)}/>
           : initials}
       </span>
       <div className="detail-broker-identity">
-        {broker && <span className="detail-broker-role">{t('Your JLL broker')}</span>}
+        {broker && <span className="detail-broker-role">{campaign?'JLL Residential':t('Your JLL broker')}</span>}
         <strong><bdi>{name}</bdi></strong>
         <span className="detail-broker-help">{t(broker
           ? 'Ask about availability, pricing or viewings.'
