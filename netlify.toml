@@ -1,3 +1,5 @@
+"$schema" = "https://open-api.netlify.com/netlify.schema.json"
+
 [build]
   command = "npm run build && node scripts/check-source-imports.mjs"
   publish = "dist"
@@ -25,7 +27,7 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    X-Frame-Options = "DENY"
+    Content-Security-Policy = "frame-ancestors 'self' https://engaged-emea.jll.com https://residential.jll.co.uk"
 
 [[headers]]
   for = "/release.json"
