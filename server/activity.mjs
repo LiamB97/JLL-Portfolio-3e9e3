@@ -1,5 +1,6 @@
 import {randomBytes} from 'node:crypto';
 import {AccessError,publicUser} from './access.mjs';
+import {isYourFirstHomeSlug} from '../shared/your-first-home.ts';
 export const STAFF_EVENTS=['login','logout','personal_link_created','personal_link_copy','personal_whatsapp_click','personal_email_click','collection_create','collection_update','collection_delete','collection_link_copy','collection_whatsapp_click','collection_email_click','stock_add','stock_edit','stock_remove','stock_sync','invite_create','invite_revoke','user_update','profile_update','draft_save','draft_remove','pending_save','pending_extract','pending_publish','pending_archive'];
 export const BUYER_EVENTS=['page_view','development_view','favourite_add','favourite_remove','whatsapp_click','shortlist_copy'];
 const DAY=86400000;
@@ -29,7 +30,7 @@ export function engagementService(repository,{now=Date.now}={}){
   for(const item of body.events){
    if(!item||!BUYER_EVENTS.includes(item.event))throw new AccessError('Unsupported activity count.');
    let owner=null,c=null;
-   if(item.collection){c=(state.collections||[]).find(c=>c.slug===item.collection);owner=c&&(state.users||[]).find(u=>u.id===c.ownerId&&u.active);if(!owner)continue;}
+   if(item.collection){c=(state.collections||[]).find(c=>c.slug===item.collection);owner=c&&(state.users||[]).find(u=>u.id===c.ownerId&&u.active);if(!owner&&!isYourFirstHomeSlug(item.collection))continue;}
    else if(item.broker){owner=(state.users||[]).find(u=>u.shareSlug===item.broker&&u.active);if(!owner)continue;}
    if(['development_view','favourite_add','favourite_remove'].includes(item.event)&&!state.developments.some(d=>d.id===item.development))continue;
    resolved.push({ownerId:owner?.id||'unattributed',event:item.event});

@@ -1,5 +1,7 @@
 import {createHash, createHmac, randomBytes, timingSafeEqual} from 'node:crypto';
 import snapshot from './data/initial-portfolio.json' with {type:'json'};
+import {isYourFirstHomeSlug} from '../shared/your-first-home.ts';
+import {yourFirstHomeCollection} from './your-first-home.mjs';
 
 const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 const sessionSeconds = 24 * 60 * 60;
@@ -146,16 +148,17 @@ function hasPortfolioGrant(state, request, owner, now) {
 
 export function buyerContext(state, request, target, staff = null, now = Date.now()) {
   const users = state.users ?? [];
-  const collection = target.collection ? (state.collections ?? []).find(row => row.slug === target.collection) : null;
+  const campaign = isYourFirstHomeSlug(target.collection);
+  const collection = campaign ? yourFirstHomeCollection(state) : target.collection ? (state.collections ?? []).find(row => row.slug === target.collection) : null;
   const owner = collection ? users.find(user => user.active && user.id === collection.ownerId) : null;
-  const selectedCollection = owner ? collection : null;
-  const broker = target.collection ? owner : target.broker
+  const selectedCollection = campaign || owner ? collection : null;
+  const broker = campaign ? null : target.collection ? owner : target.broker
     ? users.find(user => user.active && user.whatsapp && user.shareSlug === target.broker) : null;
   const linkError = target.collection && !selectedCollection ? 'This collection is no longer available.'
     : !target.collection && target.broker && !broker ? 'This broker link is unavailable.' : '';
-  const view = {collection: selectedCollection, broker: broker ?? null, linkError, collectionOnly: false, required: null};
+  const view = {collection: selectedCollection, broker: broker ?? null, linkError, collectionOnly: campaign, required: null};
 
-  if (selectedCollection?._buyerPasswordVersion && staff?.role !== 'admin' && staff?.id !== owner.id) {
+  if (selectedCollection?._buyerPasswordVersion && staff?.role !== 'admin' && !(campaign && staff?.role === 'broker_admin') && (!owner || staff?.id !== owner.id)) {
     const token = readCookie(request, grantCookieName('collection', selectedCollection.id));
     if (!grantMatches(state, 'collection', token, selectedCollection.id, selectedCollection._buyerPasswordVersion, now)) {
       return {...view, required: 'collection'};

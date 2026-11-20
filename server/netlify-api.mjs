@@ -12,7 +12,8 @@ import {postcodeLocation} from './location.mjs';
 import {parsePastedListing} from './pasted-import.mjs';
 import {rejectDuplicate} from './duplicates.mjs';
 import {accessService,AccessError,checkOrigin,sessionCookie,publicDevelopment,publicUser} from './access.mjs';
-import {BuyerAccessError,brokerPortfolioPassword,buyerContext,buyerDevelopments,issueBrokerPassword,portfolioProtectionSettings,requireBuyerAccess,unlockBuyerLink,updateBuyerAccessSettings} from './buyer-access.mjs';
+import {BuyerAccessError,brokerPortfolioPassword,buyerContext,buyerDevelopments,collectionPassword,issueBrokerPassword,portfolioProtectionSettings,requireBuyerAccess,unlockBuyerLink,updateBuyerAccessSettings,updateCollectionPassword} from './buyer-access.mjs';
+import {YourFirstHomeError,yourFirstHomeCollection,yourFirstHomeWorkspace,updateYourFirstHome,campaignDevelopment} from './your-first-home.mjs';
 import {randomBytes} from 'node:crypto';
 import {validateDevelopment} from './model.mjs';
 import {extractListing} from './import.mjs';
@@ -27,6 +28,12 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
  visitorRepository||={readDay:async date=>(await repository.read()).buyerActivityDays?.[date]||{people:{}},updateDay:async(date,change)=>repository.update(s=>{s.buyerActivityDays||={};s.buyerActivityDays[date]||={people:{}};change(s.buyerActivityDays[date]);})};
  const engagement=engagementService(visitorRepository);
  const buyer=(state,request,target)=>buyerContext(state,request,target,access.staffSession(state,request)?.user);
+ const campaignWorkspace=(state,actor)=>{
+  const user=access.current(state,actor),collection=yourFirstHomeCollection(state);
+  return {...yourFirstHomeWorkspace(state),canManage:['admin','broker_admin'].includes(user.role),
+   passwordProtected:Boolean(collection._buyerPasswordVersion),
+   password:collectionPassword(state,collection)??brokerPortfolioPassword(state,state.users.find(row=>row.id===user.id))};
+ };
  return async(request,{ip}={})=>{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/\.netlify\/functions\/api/,'/api');const method=request.method;
   const target={collection:url.searchParams.get('collection'),broker:url.searchParams.get('broker')};
@@ -36,7 +43,7 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    if(method==='GET'&&route==='/api/health'){await repository.read();return json({ok:true});}
    if(method==='GET'&&(route==='/api/developments'||route==='/api/buyer/portfolio')){
     const state=await repository.read(),context=buyer(state,request,target);
-    const developments=buyerDevelopments(state,context).map(publicDevelopment);
+    const developments=buyerDevelopments(state,context).map(d=>context.collection?.campaign==='your-first-home'?campaignDevelopment(state,publicDevelopment(d)):publicDevelopment(d));
     if(route==='/api/developments')return json(developments);
     const collection=context.collection?await access.publicCollection(context.collection.slug,state,developments):null;
     const broker=collection?collection.broker:context.broker?await access.publicBroker(context.broker.shareSlug,state):null;
@@ -84,6 +91,14 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    if((await access.status()).setupRequired&&(!password||password.length<12))return json({error:'Administrator access is not configured for this deployment.'},503);
    const actor=await access.authenticate(request);
    if(!['GET','HEAD'].includes(method))access.csrf(request,actor);
+   if(method==='GET'&&route==='/api/admin/your-first-home'){
+    if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
+    return json(campaignWorkspace(await repository.read(),actor));
+   }
+   if(method==='POST'&&route==='/api/admin/your-first-home/share'){
+    if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
+    return json(await repository.update(state=>{const user=access.current(state,actor),collection=yourFirstHomeCollection(state);recordStaff(state,user,'collection_link_copy',{id:collection.id,label:collection.title});return {ok:true};}));
+   }
    if(method==='GET'&&route==='/api/admin/buyer-access/mine'){
     if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
     const state=await repository.read(),user=access.current(state,actor);
@@ -165,6 +180,16 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    if(Number(request.headers.get('content-length')||0)>2_000_000)return json({error:'Import exceeds the 2MB limit.'},413);
    const text=await request.text();if(Buffer.byteLength(text)>2_000_000)return json({error:'Import exceeds the 2MB limit.'},413);
    let body;try{body=JSON.parse(text);}catch{return json({error:'Request must contain valid JSON.'},400);}
+   if(method==='PUT'&&route==='/api/admin/your-first-home'){
+    if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
+    return json(await repository.update(state=>{
+     const user=access.current(state,actor);access.stock(user);
+     const settings=updateYourFirstHome(state,body);
+     updateCollectionPassword(state,settings,body.passwordAction);
+     recordStaff(state,user,'collection_update',{id:settings.id,label:'Your First Home'});
+     return campaignWorkspace(state,user);
+    }));
+   }
    if(method==='POST'&&route==='/api/admin/activity'){if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);if(!['personal_link_copy','personal_whatsapp_click','personal_email_click','collection_link_copy','collection_whatsapp_click','collection_email_click'].includes(body?.event))throw new AccessError('Unsupported staff activity.');return json(await repository.update(state=>{const acting=access.current(state,actor);let c;if(body.event.startsWith('collection_')){c=(state.collections||[]).find(c=>c.id===body.collectionId);if(!c)throw new AccessError('Collection not found.',404);if(acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('This collection belongs to another broker.',403);}else if(!acting.whatsapp||!acting.shareSlug)throw new AccessError('Add your WhatsApp number first.');recordStaff(state,acting,body.event,{id:c?.id||'',label:c?.title||''});return {ok:true};}));}
    if(method==='PUT'&&route==='/api/admin/analytics'){access.admin(actor);let settings;try{settings=validateAnalyticsConfiguration(body);}catch(e){throw new AccessError(e.message);}return json(await repository.update(state=>{access.admin(access.current(state,actor));state.analytics=settings;return analyticsConfiguration(state,{privateView:true});}));}
    if(method==='PUT'&&route==='/api/admin/buyer-access'){
@@ -217,6 +242,6 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
     });return json(found?{ok:true}:{error:'Development not found.'},found?200:404);
    }
    return json({error:'API endpoint not found.'},404);
-  }catch(e){if(e.duplicateId)return json({error:e.message,duplicateId:e.duplicateId},409);if(e instanceof BuyerAccessError)return json({error:e.message,...(e.scope?{passwordRequired:e.scope}:{})},e.status);if(e instanceof AccessError)return json({error:e.message},e.status);if(e instanceof ConflictError)return json({error:e.message},409);console.error('Portfolio API request failed:',e.message);return json({error:'Unable to complete the request. Check your data or retry shortly; saved stock has been preserved.'},422);}
+  }catch(e){if(e.duplicateId)return json({error:e.message,duplicateId:e.duplicateId},409);if(e instanceof BuyerAccessError)return json({error:e.message,...(e.scope?{passwordRequired:e.scope}:{})},e.status);if(e instanceof AccessError||e instanceof YourFirstHomeError)return json({error:e.message},e.status);if(e instanceof ConflictError)return json({error:e.message},409);console.error('Portfolio API request failed:',e.message);return json({error:'Unable to complete the request. Check your data or retry shortly; saved stock has been preserved.'},422);}
  };
 }
