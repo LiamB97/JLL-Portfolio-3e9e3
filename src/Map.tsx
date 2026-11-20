@@ -63,7 +63,7 @@ function stationPopup(station:TransportNetwork['stations'][number], network:Tran
   if(action){const button=document.createElement('button');button.type='button';button.className='station-highlight-action';button.textContent=action.label;button.addEventListener('click',action.run);popup.append(button);}
   return popup;
 }
-export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset,clusterFeatured=false}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void;clusterFeatured?:boolean}) {
+export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset,clusterFeatured=false,embedded=false}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void;clusterFeatured?:boolean;embedded?:boolean}) {
   const {t,dark}=useLocale();
   const lastView=useRef<{centre:L.LatLngExpression;zoom:number}>({centre:CENTRAL_LONDON.centre,zoom:CENTRAL_LONDON.zoom});
   const el=useRef<HTMLDivElement>(null), map=useRef<L.Map|null>(null);
@@ -92,7 +92,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   },[network,stationFilter]);
   useEffect(()=>{
     if(!el.current)return;setBaseReady(false);setFailed(false);
-    const m=L.map(el.current,{zoomControl:false,scrollWheelZoom:true,minZoom:8,maxZoom:19}).setView(lastView.current.centre,lastView.current.zoom);map.current=m;const reportZoom=()=>m.getContainer().setAttribute('data-zoom',String(m.getZoom()));reportZoom();m.on('zoomend',reportZoom);
+    const m=L.map(el.current,{zoomControl:false,scrollWheelZoom:!embedded,minZoom:8,maxZoom:19}).setView(lastView.current.centre,lastView.current.zoom);map.current=m;const reportZoom=()=>m.getContainer().setAttribute('data-zoom',String(m.getZoom()));reportZoom();m.on('zoomend',reportZoom);
     L.control.zoom({position:'bottomright'}).addTo(m);
     m.attributionControl.setPrefix(false);
     m.attributionControl.addAttribution(osmAttribution);
@@ -129,7 +129,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
       // End that animation before removing the pane so a theme/view switch is safe.
       (m as L.Map & {_animatingZoom?:boolean})._animatingZoom=false;
       lastView.current={centre:m.getCenter(),zoom:m.getZoom()};m.remove();map.current=null;};
-  },[dark]);
+  },[dark,embedded]);
   useEffect(()=>{
     const group=markers.current,featured=featuredLayer.current;if(!group||!featured)return;group.clearLayers();featured.clearLayers();
     for(const d of items){
@@ -296,9 +296,9 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     setToolsOpen(true);
   };
   return <div className="map-shell" data-map-ready={baseReady}>{!baseReady&&<div className="map-loading-indicator" role="status">{t("Loading London map…")}</div>}<div ref={el} className="map" aria-label={t("Map of London developments")}/>
-    <div className="map-utilities"><button className="map-layer-button" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={openMapLayers}>{!layersOpened&&<span className="map-layer-cue" aria-hidden="true"><span className="map-layer-trace"/></span>}<SlidersHorizontal size={16}/>{t('Map layers')}{activeLayerCount>0&&<span className="layer-count">{activeLayerCount}</span>}</button>
+    <div className="map-utilities">{!embedded&&<button className="map-layer-button" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={openMapLayers}>{!layersOpened&&<span className="map-layer-cue" aria-hidden="true"><span className="map-layer-trace"/></span>}<SlidersHorizontal size={16}/>{t('Map layers')}{activeLayerCount>0&&<span className="layer-count">{activeLayerCount}</span>}</button>}
     <button className="map-fit-button" aria-label={t('Show matching homes')} title={t('Show matching homes')} disabled={!items.length} onClick={()=>{const m=map.current;if(!m||!items.length)return;m.fitBounds(L.latLngBounds([...items,...(commuteDestination?[commuteDestination]:[])].map(d=>[d.lat,d.lng] as [number,number])),frameOptions(m));}}><LocateFixed size={19}/><span>{t('Show matching homes')}</span></button>
-    {onReset&&<button className="map-reset-button" aria-label={t('Reset map')} title={t('Reset map')} onClick={onReset}><RotateCcw size={18}/><span>{t('Reset map')}</span></button>}
+    {onReset&&!embedded&&<button className="map-reset-button" aria-label={t('Reset map')} title={t('Reset map')} onClick={onReset}><RotateCcw size={18}/><span>{t('Reset map')}</span></button>}
     </div>
     {toolsOpen&&<Modal title={t('Map layers')} close={()=>setToolsOpen(false)} className="map-layers-dialog" footer={<button onClick={()=>{setShowLines(false);setShowStations(false);setShowLandmarks(false);setShowUniversities(false);setLineFilter([]);setStationFilter([]);}}>{t('Hide all layers')}</button>}>
       <p className="muted">{t('Keep the focus on homes, or add local context to your map.')}</p>

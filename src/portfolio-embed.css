@@ -1,0 +1,47 @@
+/* The landing page supplies the identity, scheme explanation and calculator. */
+.portfolio-app.portfolio-embed{height:100vh;height:100dvh;min-height:0;background:var(--surface)}
+.portfolio-app.portfolio-embed .discovery-page{position:relative;inset:auto;display:flex;flex-direction:column;height:100%;min-height:0;padding:0;overflow:hidden;background:var(--surface)}
+.portfolio-app.portfolio-embed .discovery-page>.discovery-toolbar{position:relative;inset:auto;display:block;width:auto;padding:0;border:0;background:var(--surface);pointer-events:auto;flex-shrink:0}
+.embed-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:16px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.embed-search{display:flex;align-items:center;gap:9px;min-width:0;height:44px;border:1px solid var(--line);border-radius:5px;padding-inline:12px 3px;color:var(--muted);background:var(--surface)}
+.embed-search>svg{flex-shrink:0}
+.embed-search input{min-width:0;width:100%;height:100%;padding:0;border:0;background:transparent;color:var(--ink);font-size:16px;outline-offset:2px}
+.embed-search input::-webkit-search-cancel-button{display:none}
+.embed-search button{width:40px;height:40px;min-width:40px;padding:8px;border:0;background:transparent}
+.embed-count{font-size:14px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.embed-views{display:flex;gap:3px;padding:3px;border-radius:5px;background:#f6f1ed}
+.embed-views button{min-height:44px;min-width:86px;padding:9px 13px;border:0;background:transparent;color:#131e29;font-size:14px;border-radius:3px}
+.embed-views button[aria-pressed=true]{background:var(--surface);color:var(--yfh-action);box-shadow:0 1px 4px #131e2914}
+.embed-toolbar button{touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:transform 120ms cubic-bezier(.23,1,.32,1)}
+.embed-toolbar button:active{transform:scale(.98)}
+.portfolio-app.portfolio-embed .discovery-workspace{position:relative;inset:auto;display:block;flex:1;height:auto;min-height:0;overflow:hidden}
+.portfolio-app.portfolio-embed .discovery-page .map-shell{position:relative;inset:auto;width:100%;height:100%;min-height:0;border:0}
+.portfolio-app.portfolio-embed .discovery-page .explorer-list{height:100%;max-width:none;padding:16px;overflow:auto;overscroll-behavior:contain;background:var(--surface)}
+.portfolio-embed .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:16px}
+.portfolio-embed .property-card{display:block;width:100%;height:100%;text-align:start}
+.portfolio-embed .card-image{width:100%;height:170px;aspect-ratio:auto}
+.portfolio-embed .card-body{padding:16px}
+.portfolio-embed .card-body h2{font-size:22px;line-height:1.3}
+.portfolio-embed .card-bottom{gap:12px;flex-wrap:wrap}
+.portfolio-embed .map-utilities{bottom:30px;inset-inline-start:12px}
+.portfolio-embed .map-fit-button{width:44px;height:44px;padding:10px}
+.portfolio-embed .map-fit-button span{display:none}
+.portfolio-app.portfolio-embed .discovery-disclaimer{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;font-size:14px;line-height:1.4;text-align:start;background:var(--surface);border-top:1px solid var(--line)}
+.portfolio-embed .discovery-disclaimer svg{flex-shrink:0;color:var(--yfh-action)}
+.portfolio-embed .explorer-message{margin:8px 12px!important}
+.yfh-embed-sharing{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.yfh-embed-sharing summary{cursor:pointer;font-size:16px;min-height:44px;align-content:center}
+.yfh-embed-sharing p{font-size:14px;line-height:1.6;margin:8px 0 16px}
+.yfh-embed-sharing textarea{width:100%;min-height:110px;resize:vertical;font-size:14px;line-height:1.5;margin-bottom:12px}
+@media(hover:hover) and (pointer:fine){.embed-views button:hover{background:#fff9}.embed-views button[aria-pressed=true]:hover{background:#fff}}
+@media(max-width:600px){
+ .embed-toolbar{grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:10px 12px}
+ .embed-search{grid-column:1/-1}
+ .embed-count{grid-column:1;grid-row:2}
+ .embed-views{grid-column:2;grid-row:2}
+ .embed-views button{min-width:84px}
+ .portfolio-app.portfolio-embed .discovery-page .explorer-list{padding:12px}
+ .portfolio-embed .cards{grid-template-columns:minmax(0,1fr);gap:14px}
+ .yfh-embed-sharing textarea{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){.embed-toolbar button{transition:none}.embed-toolbar button:active{transform:none}}

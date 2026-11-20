@@ -1,6 +1,7 @@
 import CollectionBar from './CollectionBar';
 import {YourFirstHomeBar,YourFirstHomeInformation} from './YourFirstHome';
 import {isYourFirstHomeSlug} from '../shared/your-first-home';
+import {isYourFirstHomeEmbed,PortfolioEmbedToolbar,PortfolioEmbedNotice} from './PortfolioEmbed';
 import BuyerPasswordGate from './BuyerPasswordGate';
 import {buyerApiPath,type BuyerLock,type BuyerPortfolio} from './buyer-access';
 import {startingPrice} from '../shared/pricing';
@@ -30,6 +31,7 @@ import './review-updates.css';
 import './collection-updates.css';
 import './buyer-access.css';
 import './your-first-home.css';
+import './portfolio-embed.css';
 import {PreferencesProvider,useLocale} from './i18n';
 import Detail from './Detail';
 import DevelopmentPhoto from './DevelopmentPhoto';
@@ -37,6 +39,7 @@ import AnalyticsConsent from './AnalyticsConsent';
 import {track,setAnalyticsContext,setCurrentDevelopment} from './analytics';
 
 const narrowViewport = '(max-width: 760px)';
+const embedRequested=isYourFirstHomeEmbed();
 
 function App() {
   const {t,language}=useLocale();
@@ -54,7 +57,7 @@ function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [chosenView, setView] = useState<View | null>(null);
   const [narrow, setNarrow] = useState(() => window.matchMedia(narrowViewport).matches);
-  const view = chosenView ?? (narrow ? 'map' : 'split');
+  const view = chosenView ?? (embedRequested||narrow ? 'map' : 'split');
   useEffect(() => {
     const viewport = window.matchMedia(narrowViewport);
     const update = () => setNarrow(viewport.matches);
@@ -72,6 +75,7 @@ function App() {
   const isStaff=()=>location.hash==='#admin'||location.hash.startsWith('#invite=');
   const [admin, setAdmin] = useState(isStaff);
   const [howItWorks,setHowItWorks]=useState(()=>location.hash==='#how-it-works');
+  const embedded=embedRequested&&!admin&&!howItWorks;
   const favourites=useFavourites();
   const [showFavourites,setShowFavourites]=useState(false),[favouritesOnly,setFavouritesOnly]=useState(false);
   const [buyerLock,setBuyerLock]=useState<BuyerLock|null>(null);
@@ -142,7 +146,7 @@ function App() {
   const visibleFavourites = collectionOnly ? favourites.ids.filter(id => items.some(item => item.id === id)) : favourites.ids;
   const filtered = searchDevelopments(items,{query,region,area,beds,budget,featuredOnly:featuredOnly&&!collectionOnly,featuredIds,favouritesOnly,favouriteIds:favourites.ids,commute,sort:listingSort});
   const active = items.find(d => d.id === selected);
-  useEffect(()=>{setAnalyticsContext({language,link_kind:collection?'collection':broker?'broker':'general',...(broker?{broker_link_id:broker.slug}:{}),...(collection?{collection_id:collection.slug}:{})},!loading&&!buyerLock&&!admin);},[language,broker,collection,loading,buyerLock,admin]);
+  useEffect(()=>{setAnalyticsContext({language,link_kind:collection?'collection':broker?'broker':'general',...(broker?{broker_link_id:broker.slug}:{}),...(collection?{collection_id:collection.slug}:{})},!loading&&!buyerLock&&!admin&&!embedded);},[language,broker,collection,loading,buyerLock,admin,embedded]);
   useEffect(()=>{setCurrentDevelopment(!admin&&!howItWorks&&active?active.id:null);},[selected,active?.id,admin,howItWorks]);
   useEffect(()=>{if(!query.trim()||admin)return;const timer=setTimeout(()=>track('search_used',{result_count:filtered.length}),700);return()=>clearTimeout(timer);},[query,admin]);
   const filterCount = [beds,budget,region,area,favouritesOnly,featuredOnly&&!collectionOnly].filter(Boolean).length;
@@ -150,10 +154,11 @@ function App() {
 
   const toggleFavourite=(id:string)=>{setShowFavouriteHighlights(true);favourites.toggle(id);};
   const resetMap=()=>{reset();setHighlightsEnabled(false);setShowFavouriteHighlights(false);setDimOthers(false);setCollectionFrameKey(0);setSelected(null);setShowFavourites(false);setFilters(false);setView('map');setSort(yourFirstHome?'price':'price-desc');setMapResetKey(n=>n+1);};
-  return <div className={`portfolio-app ${admin ? 'admin-active' : 'explorer-active'}${yourFirstHome&&!admin?' your-first-home':''}`}>
-    <PortfolioHeader onResetMap={resetMap} broker={broker} collection={collection} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})} exploring={!admin&&!howItWorks&&!buyerLock&&!loading} staff={admin} view={view} setView={next=>{setView(next);track('view_change',{view_mode:next});}} saved={visibleFavourites.length} openFavourites={()=>{setSelected(null);setShowFavourites(true);track('shortlist_open',{saved_count:visibleFavourites.length});}} onNavigate={()=>{setSelected(null);setShowFavourites(false);setFilters(false);}}/>
+  return <div className={`portfolio-app ${admin ? 'admin-active' : 'explorer-active'}${yourFirstHome&&!admin?' your-first-home':''}${embedded?' portfolio-embed':''}`}>
+    {!embedded&&<PortfolioHeader onResetMap={resetMap} broker={broker} collection={collection} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})} exploring={!admin&&!howItWorks&&!buyerLock&&!loading} staff={admin} view={view} setView={next=>{setView(next);track('view_change',{view_mode:next});}} saved={visibleFavourites.length} openFavourites={()=>{setSelected(null);setShowFavourites(true);track('shortlist_open',{saved_count:visibleFavourites.length});}} onNavigate={()=>{setSelected(null);setShowFavourites(false);setFilters(false);}}/>}
     {admin ? <Suspense fallback={<p className="staff-portal">{t("Loading staff workspace…")}</p>}><div dir="ltr" lang="en"><StaffPortal/></div></Suspense> : loading?<main className="buyer-loading" role="status">{t('Loading London homes…')}</main> : buyerLock?<BuyerPasswordGate key={buyerLock} scope={buyerLock} unlock={unlock}/> : howItWorks?<Suspense fallback={<p className="staff-portal">{t('Loading guide…')}</p>}><BuyerGuide/></Suspense> : <main className={`discovery-page view-${view}`} aria-label={t("London development explorer")}>
       <div className="discovery-toolbar">
+        {embedded?<PortfolioEmbedToolbar query={query} setQuery={setQuery} count={filtered.length} view={view} setView={setView}/>:<>
         <form className="discovery-search" onSubmit={e=>e.preventDefault()}>
           <Search size={18}/>
           <input aria-label={t("Search by area, development or postcode")} placeholder={t("Search an area, development or postcode")} value={query} onChange={e => setQuery(e.target.value)}/>
@@ -174,13 +179,14 @@ function App() {
 
         {broker&&!collection&&<section className="discovery-broker"><span className="broker-label">{t('Your JLL broker')}</span><a aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={()=>track('whatsapp_click',{surface:'broker_banner'})} href={'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments."))} target="_blank" rel="noopener noreferrer">{broker.photo?<img className="broker-avatar" src={broker.photo} alt=""/>:<WhatsAppIcon size={18}/>}<strong>{broker.name}</strong></a></section>}
         {collectionError&&<div className="explorer-message" role="status">{collectionError} {t("You can still explore the full portfolio.")}</div>}
+        </>}
         {error && <div className="explorer-message" role="alert">{error}<button onClick={() => { setError(''); void refresh().catch(e => setError(e.message)); }}>{t("Retry")}</button></div>}
         {!loading && !filtered.length && !error && view === 'map' && <div className="explorer-message"><Building2 size={20}/><div><strong>{t(favouritesOnly?"No favourites match this view":"No homes found")}</strong><p>{t(favouritesOnly?"Save developments with the heart button, or clear your filters to see more favourites.":"Try a different area or broaden your filters.")}</p></div><button onClick={reset}>{t("Reset")}</button></div>}
       </div>
       <div className="discovery-workspace">
-        {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap clusterFeatured={yourFirstHome} resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers&&!collectionOnly} onDimOthers={collectionOnly?undefined:()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={showHighlights?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
+        {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap embedded={embedded} clusterFeatured={yourFirstHome} resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers&&!collectionOnly} onDimOthers={collectionOnly?undefined:()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={showHighlights?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
         {view !== 'map' && <section className="explorer-list" aria-label={t("Development listings")}>
-          <div className="listing-heading">
+          {!embedded&&<div className="listing-heading">
             {narrow && view === 'split'
               ? <h2>{t('Developments')} <ChevronDown size={18} aria-hidden="true"/></h2>
               : <h2>{yourFirstHome?'Find your first home':t('London New Homes')}</h2>}
@@ -195,7 +201,7 @@ function App() {
                 <option value="area">{t('Area: A–Z')}</option>
               </select>
             </label>
-          </div>
+          </div>}
           {loading ? <p className="empty-state">{t("Loading London New Homes…")}</p> : !filtered.length ? <div className="empty-state"><Building2 size={30}/><h2>{t(favouritesOnly?"No favourites match this view":"No homes found")}</h2><p>{t(favouritesOnly?"Save developments with the heart button, or clear your filters to see more favourites.":"Try a different area or broaden your filters.")}</p><button onClick={reset}>{t("Reset filters")}</button></div> : <div className="cards">
             {filtered.map(d => {
               const featured = featuredIds.includes(d.id);
@@ -207,13 +213,14 @@ function App() {
           </div>}
         </section>}
       </div>
-      <div className="discovery-disclaimer">{beds&&budget?'Only homes with a confirmed starting price for the selected bedroom count are shown. ':''}{items.some(d => d.sample) ? 'Preview collection · Illustrative stock and prices' : 'Prices & availability subject to broker confirmation'}</div>
+      <div className="discovery-disclaimer">{embedded?<PortfolioEmbedNotice/>:<>{beds&&budget?'Only homes with a confirmed starting price for the selected bedroom count are shown. ':''}{items.some(d => d.sample) ? 'Preview collection · Illustrative stock and prices' : 'Prices & availability subject to broker confirmation'}</>}</div>
     </main>}
-    <AnalyticsConsent/>
+    {/* The lean embed has no analytics collection or second consent prompt. */}
+    {!embedded&&<AnalyticsConsent/>}
     {showFirstHomeInformation&&yourFirstHome&&!admin&&!buyerLock&&<YourFirstHomeInformation items={items} broker={broker} close={()=>setShowFirstHomeInformation(false)}/>}
     {showFavourites&&!admin&&!howItWorks&&!buyerLock&&<Favourites items={items} ids={visibleFavourites} toggle={toggleFavourite} persistent={favourites.persistent} broker={broker} collection={collection?.slug} close={()=>setShowFavourites(false)} open={id=>{setShowFavourites(false);setSelected(id);}}/>}
     {active && !admin && !howItWorks && !buyerLock && <Detail selectedBedrooms={beds} key={active.id} broker={broker} collection={collection?.slug} d={active} stations={stations} network={network} saved={favourites.ids.includes(active.id)} toggleFavourite={()=>toggleFavourite(active.id)} close={() => setSelected(null)}/>}
   </div>;
 }
 
-createRoot(document.getElementById('root')!).render(<React.StrictMode><PreferencesProvider><App/></PreferencesProvider></React.StrictMode>);
+createRoot(document.getElementById('root')!).render(<React.StrictMode><PreferencesProvider themeOverride={embedRequested?'light':undefined}><App/></PreferencesProvider></React.StrictMode>);
