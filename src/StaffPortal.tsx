@@ -6,6 +6,7 @@ import {ArrowLeft,LockKeyhole,LogOut} from 'lucide-react';
 import PendingInput from './PendingInput';
 import DevelopmentManager from './Admin';
 import StaffCollections from './StaffCollections';
+import StaffYourFirstHome from './StaffYourFirstHome';
 import StaffGuide from './StaffGuide';
 import StaffAnalytics from './StaffAnalytics';
 import StaffActivity from './StaffActivity';
@@ -40,7 +41,8 @@ export default function StaffPortal(){
  {tab==='analytics'&&user.role==='admin'&&<StaffAnalytics request={request}/>}
  {tab==='buyer-access'&&user.role==='admin'&&<StaffBuyerAccess request={request}/>}
  {visited.includes('brochures')&&<div hidden={tab!=='brochures'}><StaffBrochures onProfile={()=>navigate('profile')} active={tab==='brochures'} items={privateItems} user={user} request={request}/></div>}
- {visited.includes('collections')&&<div hidden={tab!=='collections'}><StaffCollections active={tab==='collections'} items={privateItems} request={request}/></div>}
+ {visited.includes('collections')&&<div hidden={tab!=='collections'}><StaffCollections onCampaign={()=>navigate('your-first-home')} active={tab==='collections'} items={privateItems} request={request}/></div>}
+ {tab==='your-first-home'&&<StaffYourFirstHome request={request}/>}
  {visited.includes('developments')&&user.role!=='broker'&&<div hidden={tab!=='developments'}><DevelopmentManager items={privateItems} user={user} request={request} onChange={refreshPrivate}/></div>}
  {visited.includes('pending')&&user.role!=='broker'&&<div hidden={tab!=='pending'}><PendingInput items={privateItems} user={user} request={request} onChange={refreshPrivate}/></div>}
  {tab==='users'&&<StaffUsers request={request} current={user}/>}
