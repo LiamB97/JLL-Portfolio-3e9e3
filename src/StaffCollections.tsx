@@ -5,10 +5,10 @@ import WhatsAppIcon from './WhatsAppIcon';
 import {useEffect, useState} from 'react';
 import {Copy, ExternalLink, LockKeyhole, Plus, Star, Trash2} from 'lucide-react';
 import type {Development} from './types';
-import type {StaffCollection, StaffRequest} from './staff-types';
+import type {StaffCollection, StaffRequest, StaffUser} from './staff-types';
 import {YourFirstHomeShortcut} from './StaffYourFirstHome';
 
-export default function StaffCollections({items, request, active = true,onCampaign}: {items: Development[]; request: StaffRequest; active?: boolean;onCampaign:()=>void}) {
+export default function StaffCollections({items, request, user, active = true,onCampaign}: {items: Development[]; request: StaffRequest; user: StaffUser; active?: boolean;onCampaign:()=>void}) {
   const [transport, setTransport] = useState(emptyTransportDefaults);
   const [collections, setCollections] = useState<StaffCollection[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -110,7 +110,7 @@ export default function StaffCollections({items, request, active = true,onCampai
   }
 
   return <section className="staff-section">
-    {!editorOpen&&<YourFirstHomeShortcut request={request} onOpen={onCampaign} active={active}/>}
+    {!editorOpen&&<YourFirstHomeShortcut user={user} request={request} onOpen={onCampaign} active={active}/>}
     <div className="staff-section-title">
       <div><h1>Collections for your buyers</h1><p>Choose developments to feature on the buyer’s map.</p></div>
       <div className="action-row">

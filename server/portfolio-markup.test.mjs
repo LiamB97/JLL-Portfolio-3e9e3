@@ -6,6 +6,7 @@ import {createElement} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {load} from 'cheerio';
 import seed from './data/initial-portfolio.json' with {type:'json'};
+import {YOUR_FIRST_HOME_SLUG} from '../shared/your-first-home.ts';
 // Render-only checks: no browser, network requests, layout or device claims.
 test('rendered buyer enquiries preserve attribution and broker screens start with the relevant task',async()=>{
  const previous={location:globalThis.location,window:globalThis.window,document:globalThis.document};
@@ -61,6 +62,24 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
   assert.equal(publicDetail('.detail-broker-help').text(),'Speak to us about availability, pricing or booking a viewing.');
   assert.equal(publicDetail('.detail-broker-avatar img').attr('src'),'/images/jll-logo.svg');
   assert.equal(publicDetail('.viewing-copy').length,0);
+  const campaign=await server.ssrLoadModule('/src/YourFirstHome.tsx');
+  globalThis.location=new URL('https://portfolio.example/?collection='+YOUR_FIRST_HOME_SLUG+'&broker='+broker.slug);
+  const campaignBroker={...broker,campaign:'your-first-home'};
+  const campaignBar=load(renderToStaticMarkup(createElement(campaign.YourFirstHomeBar,{broker:campaignBroker,count:2,onExplore(){},onInformation(){},onContact(){}})));
+  const calculator=load(renderToStaticMarkup(createElement(campaign.YourFirstHomeInformation,{items:seed.developments.slice(0,2),broker:campaignBroker,close(){}})));
+  const campaignDetail=load(renderToStaticMarkup(createElement(Detail,{...base,broker:campaignBroker,collection:YOUR_FIRST_HOME_SLUG})));
+  for(const href of [campaignBar('a.yfh-whatsapp').attr('href'),calculator('a.yfh-team-cta').attr('href'),campaignDetail('.detail-enquiry-action').attr('href')]){
+   const chat=new URL(href);assert.equal(chat.pathname,'/447900000001');
+   assert.match(chat.searchParams.get('text'),/Hi Test Broker/);
+   assert.match(chat.searchParams.get('text'),/broker=owner-link/);
+   assert.ok(chat.searchParams.get('text').includes('collection='+YOUR_FIRST_HOME_SLUG));
+  }
+  assert.equal(campaignBar('a.yfh-whatsapp').attr('aria-label'),'WhatsApp Test Broker');
+  assert.ok(new URL(campaignDetail('.detail-enquiry-action').attr('href')).searchParams.get('text').includes('development='+base.d.id));
+  const publicCampaign={name:'Your First Home team',slug:'your-first-home',whatsapp:'447354821292',campaign:'your-first-home'};
+  globalThis.location=new URL('https://portfolio.example/?collection='+YOUR_FIRST_HOME_SLUG);
+  const publicCampaignChat=new URL(campaign.yourFirstHomeContact(publicCampaign));
+  assert.equal(publicCampaignChat.pathname,'/447354821292');assert.ok(!publicCampaignChat.searchParams.get('text').includes('broker='));
   for(const props of [{preview:true},{preview:true,broker},{brokerLoading:true}]){
    const unavailable=load(renderToStaticMarkup(createElement(Detail,{...base,...props})));
    assert.equal(unavailable('.detail-enquiry-action').length,0);
@@ -76,7 +95,10 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
   assert.ok(pendingEditor('.admin-page').html().indexOf('pending-assignment-panel')<pendingEditor('.admin-page').html().indexOf('pending-review-panel'));
   assert.ok(pendingEditor('.draft-actions button').first().text().includes('Save development draft'));
   const Collections=(await server.ssrLoadModule('/src/StaffCollections.tsx')).default;
-  const collections=load(renderToStaticMarkup(createElement(Collections,{items:seed.developments,request})));assert.notEqual(collections('.collection-form-panel').attr('hidden'),undefined);assert.equal(collections('.collection-saved-panel').attr('hidden'),undefined);
+  const collections=load(renderToStaticMarkup(createElement(Collections,{items:seed.developments,request,user:staff})));assert.notEqual(collections('.collection-form-panel').attr('hidden'),undefined);assert.equal(collections('.collection-saved-panel').attr('hidden'),undefined);
+  const Shortcut=(await server.ssrLoadModule('/src/StaffYourFirstHome.tsx')).YourFirstHomeShortcut;
+  const missingPhone=load(renderToStaticMarkup(createElement(Shortcut,{request,user:{...staff,whatsapp:''},onOpen(){}})));
+  assert.equal(missingPhone('.yfh-shortcut-actions button[disabled]').length,1);
   const Home=(await server.ssrLoadModule('/src/StaffHome.tsx')).default;
   const home=load(renderToStaticMarkup(createElement(Home,{user:staff,navigate(){}})));assert.equal(home('.workspace-task').length,3);
  }finally{await server.close();for(const [key,value] of Object.entries(previous)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}

@@ -152,7 +152,10 @@ export function buyerContext(state, request, target, staff = null, now = Date.no
   const collection = campaign ? yourFirstHomeCollection(state) : target.collection ? (state.collections ?? []).find(row => row.slug === target.collection) : null;
   const owner = collection ? users.find(user => user.active && user.id === collection.ownerId) : null;
   const selectedCollection = campaign || owner ? collection : null;
-  const broker = campaign ? null : target.collection ? owner : target.broker
+  const campaignBroker = campaign && target.broker
+    ? users.find(user => user.active && user.whatsapp && user.shareSlug === target.broker) : null;
+  if (campaign && target.broker && !campaignBroker) throw new BuyerAccessError('This broker link is unavailable.', 404);
+  const broker = campaign ? campaignBroker : target.collection ? owner : target.broker
     ? users.find(user => user.active && user.whatsapp && user.shareSlug === target.broker) : null;
   const linkError = target.collection && !selectedCollection ? 'This collection is no longer available.'
     : !target.collection && target.broker && !broker ? 'This broker link is unavailable.' : '';

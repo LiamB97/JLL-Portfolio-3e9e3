@@ -8,15 +8,17 @@ import {YOUR_FIRST_HOME_NOTICE,YOUR_FIRST_HOME_GUIDANCE,YOUR_FIRST_HOME_CAPS,you
 import {money,type BrokerCard,type Development} from './types';
 
 export function yourFirstHomeContact(broker:BrokerCard,development?:string) {
- const message=development?`Hi Your First Home team, I’m interested in ${development}. Could you confirm availability, prices and whether any homes may qualify for Your First Home?`:'Hi Your First Home team, I’d like to find out about potential homes, scheme participation and arranging a viewing.';
+ const greeting=broker.slug==='your-first-home'?'Your First Home team':broker.name;
+ const message=development?`Hi ${greeting}, I’m interested in ${development}. Could you confirm availability, prices and whether any homes may qualify for Your First Home?`:`Hi ${greeting}, I’d like to find out about potential homes, scheme participation and arranging a viewing.`;
  return 'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(message+'\n'+buyerShareLink(location.href));
 }
 
 export function YourFirstHomeBar({broker,onExplore,onInformation,onContact,count}:{broker:BrokerCard|null;onExplore:()=>void;onInformation:()=>void;onContact:()=>void;count:number}) {
+ const personal=broker&&broker.slug!=='your-first-home';
  return <section className="yfh-collection-bar" aria-label="Your First Home collection">
   <div className="yfh-collection-identity"><img src="/images/your-first-home-logo.png" alt="Your First Home" width={44} height={55}/><div><p className="yfh-eyebrow">Your first step, your new home</p><strong>Your First Home</strong><span>{count} potential developments</span></div></div>
   <p className="yfh-participation-note"><Info size={16} aria-hidden="true"/><span>Scheme participation is unconfirmed.<span className="yfh-notice-extra"> Individual homes must meet the local price cap and all scheme requirements.</span></span></p>
-  <div className="yfh-collection-actions"><button onClick={onExplore} aria-label="View candidate homes"><LocateFixed size={17}/><span>View homes</span></button><button onClick={onInformation}><Calculator size={17}/><span>Calculator & FAQs</span></button>{broker&&<a className="yfh-whatsapp" href={yourFirstHomeContact(broker)} target="_blank" rel="noopener noreferrer" onClick={onContact} aria-label="Speak to our Your First Home team on WhatsApp"><WhatsAppIcon size={18}/><span>WhatsApp</span></a>}</div>
+  <div className="yfh-collection-actions"><button onClick={onExplore} aria-label="View candidate homes"><LocateFixed size={17}/><span>View homes</span></button><button onClick={onInformation}><Calculator size={17}/><span>Calculator & FAQs</span></button>{broker&&<a className="yfh-whatsapp" href={yourFirstHomeContact(broker)} target="_blank" rel="noopener noreferrer" onClick={onContact} aria-label={personal?`WhatsApp ${broker.name}`:'Speak to our Your First Home team on WhatsApp'}><WhatsAppIcon size={18}/><span>{personal?`WhatsApp ${broker.name.split(' ')[0]}`:'WhatsApp'}</span></a>}</div>
  </section>;
 }
 
@@ -49,6 +51,6 @@ export function YourFirstHomeInformation({items,broker,close}:{items:Development
   </section>
   <section className="yfh-faqs" aria-labelledby="yfh-faq-title"><h3 id="yfh-faq-title">Your questions, answered</h3>{faq.map(([question,answer])=><details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</section>
   <p className="yfh-guidance">Based on guidance updated 3 November 2026. Terms may change. <a href={YOUR_FIRST_HOME_GUIDANCE} target="_blank" rel="noopener noreferrer">Read government guidance <ArrowUpRight size={13}/></a><a href={YOUR_FIRST_HOME_CAPS} target="_blank" rel="noopener noreferrer">Check local price caps <ArrowUpRight size={13}/></a></p>
-  {broker&&<a className="yfh-whatsapp yfh-team-cta" href={yourFirstHomeContact(broker)} target="_blank" rel="noopener noreferrer"><WhatsAppIcon size={19}/>Speak to our Your First Home team</a>}
+  {broker&&<a className="yfh-whatsapp yfh-team-cta" href={yourFirstHomeContact(broker)} target="_blank" rel="noopener noreferrer"><WhatsAppIcon size={19}/>{broker.slug==='your-first-home'?'Speak to our Your First Home team':`Speak to ${broker.name} on WhatsApp`}</a>}
  </Modal>;
 }

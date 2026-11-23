@@ -104,6 +104,74 @@ test('shared collection passwords, rotation and the portfolio gate remain enforc
  assert.equal((await e.call(buyerPath,{cookie:fullUnlock.cookie})).data.collectionOnly,true);
 });
 
+test('personal campaign links use each active broker while public and embedded links keep the team contact',async()=>{
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin),manager=await e.broker(admin,'broker_admin');
+ await e.call('admin/profile',{actor:broker,method:'POST',body:{whatsapp:'+447900000009'}});
+ await e.call('admin/profile',{actor:manager,method:'POST',body:{whatsapp:'+447900000008'}});
+ const shared=(await e.call(buyerPath)).data;
+ for(const [actor,number]of [[broker,'+447900000009'],[manager,'+447900000008']]){
+  for(const slug of [YOUR_FIRST_HOME_SLUG,'your-first-home']){
+   const query='?collection='+slug+'&broker='+actor.user.shareSlug;
+   const result=await e.call('buyer/portfolio'+query);
+   assert.equal(result.status,200);assert.equal(result.data.collectionOnly,true);
+   assert.equal(result.data.broker.whatsapp,number);assert.equal(result.data.broker.name,actor.user.name);
+   assert.equal(result.data.broker.campaign,'your-first-home');assert.equal(result.data.collection.brokerName,actor.user.name);
+   assert.deepEqual(result.data.developments,shared.developments);
+   assert.deepEqual((await e.call('collections/'+slug+'?broker='+actor.user.shareSlug)).data.broker,result.data.broker);
+   assert.equal('email' in result.data.broker,false);assert.equal('id' in result.data.broker,false);
+  }
+ }
+ assert.equal((await e.call(buyerPath+'&embed=1')).data.broker.whatsapp,'447354821292');
+ await e.call('admin/profile',{actor:broker,method:'POST',body:{whatsapp:'+447900000007'}});
+ assert.equal((await e.call(buyerPath+'&broker='+broker.user.shareSlug)).data.broker.whatsapp,'+447900000007');
+ for(const slug of ['missing','your-first-home'])assert.equal((await e.call(buyerPath+'&broker='+slug)).status,404);
+ await e.call('admin/users/'+broker.user.id,{actor:admin,method:'PATCH',body:{active:false}});
+ assert.equal((await e.call(buyerPath+'&broker='+broker.user.shareSlug)).status,404);
+ assert.equal((await e.call(buyerPath)).data.broker.whatsapp,'447354821292');
+ await e.repository.update(s=>{s.users.find(u=>u.id===manager.user.id).whatsapp='';});
+ assert.equal((await e.call(buyerPath+'&broker='+manager.user.shareSlug)).status,404);
+});
+
+test('personal campaign attribution does not bypass portfolio, collection or instructed-only protections',async()=>{
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin),peer=await e.broker(admin,'broker_admin');
+ const query='?collection='+YOUR_FIRST_HOME_SLUG+'&broker='+broker.user.shareSlug;
+ await e.call('admin/buyer-access',{actor:admin,method:'PUT',body:{enabled:true}});
+ assert.equal((await e.call('buyer/portfolio'+query)).status,423);
+ const mine=(await e.call('admin/buyer-access/mine',{actor:broker})).data.password;
+ const other=(await e.call('admin/buyer-access/mine',{actor:peer})).data.password;
+ assert.equal((await e.call('buyer/unlock'+query,{method:'POST',body:{password:other}})).status,401);
+ const grant=await e.call('buyer/unlock'+query,{method:'POST',body:{password:mine}});assert.equal(grant.status,200);
+ const result=await e.call('buyer/portfolio'+query,{cookie:grant.cookie});assert.equal(result.status,200);
+ assert.equal(result.data.broker.slug,broker.user.shareSlug);
+ assert.equal((await e.call(buyerPath+'&broker='+peer.user.shareSlug,{cookie:grant.cookie})).status,423);
+ const settings=(await e.call(settingsPath,{actor:admin})).data;
+ const protectedResult=await e.call(settingsPath,{actor:admin,method:'PUT',body:{...settingsBody(settings),passwordAction:'protect'}});
+ assert.equal(protectedResult.status,200);
+ assert.equal((await e.call('buyer/portfolio'+query,{cookie:grant.cookie})).status,423);
+ const collectionGrant=await e.call('buyer/unlock'+query,{method:'POST',body:{password:protectedResult.data.password}});
+ assert.equal(collectionGrant.status,200);
+ assert.equal((await e.call('buyer/portfolio'+query,{cookie:collectionGrant.cookie})).data.broker.slug,broker.user.shareSlug);
+ const selected=result.data.developments[0].id;
+ await e.repository.update(s=>{s.lastSync={...s.lastSync,websiteDevelopmentIds:[selected]};});
+ await e.call('admin/buyer-access',{actor:admin,method:'PUT',body:{instructedOnly:true}});
+ assert.deepEqual((await e.call('buyer/portfolio'+query,{cookie:collectionGrant.cookie})).data.developments.map(d=>d.id),[selected]);
+ assert.equal((await e.call('buyer/portfolio'+query,{cookie:collectionGrant.cookie})).data.collectionOnly,true);
+});
+
+test('consented personal campaign counts follow the sharing broker and ordinary collections retain their owner',async()=>{
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin);
+ assert.equal((await e.call('activity',{method:'POST',body:{consent:'accepted',events:[{event:'page_view',collection:YOUR_FIRST_HOME_SLUG,broker:broker.user.shareSlug}]}})).status,200);
+ let state=await e.repository.read(),days=Object.values(state.buyerActivityDays);
+ assert.equal(days[0].people[broker.user.id].page_view,1);
+ const id=state.developments[0].id;
+ const ordinary=await e.call('admin/collections',{actor:admin,method:'POST',body:{title:'Owner selection',developmentIds:[id]}});
+ const contact=await e.call('buyer/portfolio?collection='+ordinary.data.slug+'&broker='+broker.user.shareSlug);
+ assert.equal(contact.data.broker.slug,admin.user.shareSlug);
+ await e.call('activity',{method:'POST',body:{consent:'accepted',events:[{event:'page_view',collection:ordinary.data.slug,broker:broker.user.shareSlug}]}});
+ state=await e.repository.read();days=Object.values(state.buyerActivityDays);
+ assert.equal(days[0].people[admin.user.id].page_view,1);assert.equal(days[0].people[broker.user.id].page_view,1);
+});
+
 test('calculator matches the government illustration and rejects invalid inputs',()=>{
  const n=yourFirstHomeIllustration(300000);assert.equal(n.deposit,7500);assert.equal(n.equityLoan,60000);assert.equal(n.mortgage,232500);
  assert.equal(Math.round(n.monthlyMortgage),1248);assert.equal(Math.round(n.yearSix),1323);assert.equal(Math.round(n.yearSeven),1398);
