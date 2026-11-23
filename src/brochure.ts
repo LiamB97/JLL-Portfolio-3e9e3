@@ -1,4 +1,3 @@
-import {encode} from 'fast-png';
 import {jsPDF} from 'jspdf';
 import {BROCHURE_MAX_CLIENT_NAME, BROCHURE_MAX_DEVELOPMENTS, BROCHURE_MAX_INTRO, BROCHURE_MAX_NOTE} from '../shared/brochure-settings.ts';
 import {startingPrice} from '../shared/pricing.ts';
@@ -83,28 +82,6 @@ function brochureFeatures(development: Development) {
     .slice(0, 6);
 }
 
-function heroFadePng(photoHeight: number, bottomFadeStart: number) {
-  const samplesPerPoint = 4;
-  const height = (photoHeight + 1) * samplesPerPoint;
-  const data = new Uint8Array(height * 4);
-  const midnight = Number.parseInt(colour.midnight.slice(1), 16);
-  const red = (midnight >> 16) & 255;
-  const green = (midnight >> 8) & 255;
-  const blue = midnight & 255;
-  for (let row = 0; row < height; row++) {
-    const y = (row + .5) / samplesPerPoint;
-    const topOpacity = .55 * Math.max(0, 1 - y / 110);
-    const progress = Math.min(1, Math.max(0, (y - bottomFadeStart) / (photoHeight - bottomFadeStart)));
-    const bottomOpacity = progress <= .5 ? progress * 1.6 : .8 + (progress - .5) * .4;
-    const offset = row * 4;
-    data[offset] = red;
-    data[offset + 1] = green;
-    data[offset + 2] = blue;
-    data[offset + 3] = Math.round((topOpacity + bottomOpacity) * 255);
-  }
-  return encode({data, width: 1, height, channels: 4});
-}
-
 export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
   const total = input.items.length;
   if (!input.title.trim() || total < 1 || total > BROCHURE_MAX_DEVELOPMENTS) throw Error('Choose 1–20 developments and add a title.');
@@ -125,7 +102,6 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     doc.addFont('SourceSerif-Italic.ttf', 'SourceSerif', 'italic');
   }
   const warnings = new Set<string>();
-  const heroFades = new Map<string, Uint8Array>();
   const brokerName = clean(input.broker.name);
   const firstName = brokerName.split(' ')[0];
   const brokerTitle = clean(input.broker.title || '');
@@ -237,17 +213,24 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     doc.restoreGraphicsState();
   }
 
+  function fade(top: number, bottom: number, opacityAt: (progress: number) => number) {
+    const steps = 24;
+    const height = (bottom - top) / steps;
+    for (let index = 0; index < steps; index++) {
+      doc.saveGraphicsState();
+      doc.setGState(doc.GState({opacity: opacityAt(index / (steps - 1))}));
+      rect(0, top + index * height, A4_WIDTH, height, colour.midnight);
+      doc.restoreGraphicsState();
+    }
+  }
+
   function hero(image: string | undefined, bottom: number, bottomFadeStart = bottom - 195) {
     if (!image) return;
     photo(image, 0, 0, A4_WIDTH, bottom);
-    const alias = `brochure-fade-${bottom}-${bottomFadeStart}`;
-    let fade = heroFades.get(alias);
-    if (!fade) {
-      fade = heroFadePng(bottom, bottomFadeStart);
-      heroFades.set(alias, fade);
-    }
-    // A single alpha image avoids the seams PDF viewers draw between translucent fills.
-    doc.addImage(fade, 'PNG', 0, 0, A4_WIDTH, bottom + 1, alias, 'FAST');
+    fade(0, 110, progress => .55 * (1 - progress));
+    fade(bottomFadeStart, bottom, progress => progress <= .5 ? progress * 1.6 : .8 + (progress - .5) * .4);
+    // Cover the anti-aliased image edge where the fade meets the page.
+    rect(0, bottom - 1, A4_WIDTH, 2, colour.midnight);
   }
 
   function portrait(x: number, y: number, diameter: number) {
