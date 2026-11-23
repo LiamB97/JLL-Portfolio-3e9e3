@@ -1,0 +1,5 @@
+export const BROCHURE_MAX_DEVELOPMENTS = 20;
+export const BROCHURE_MAX_CLIENT_NAME = 100;
+export const BROCHURE_MAX_INTRO = 600;
+export const BROCHURE_MAX_NOTE = 280;
+export const BROCHURE_MAX_SAVED_BYTES = 3_500_000;
