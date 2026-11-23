@@ -7,7 +7,7 @@ const day = 86400000;
 const dueAt = Date.UTC(2026, 10, 11, 9);
 function environment() {
   const developments = ['a', 'b', 'c'].map(id => ({id, name: `Development ${id}`, area: 'East London', postcode: 'E1'}));
-  const consultant = {id: 'consultant', name: 'Consultant', active: true, email: 'consultant@example.test'};
+  const consultant = {id: 'consultant', name: 'Consultant', active: true, role:'development_consultant', email: 'consultant@example.test'};
   let state = {
     developments,
     users: [consultant, {...consultant, id: 'inactive', active: false}],
@@ -52,18 +52,20 @@ test('due developments are emailed together and retries reuse the same delivery'
   assert.equal(requests.length, 2);
 });
 
-test('a queued reminder stops when its consultant becomes inactive', async () => {
-  const repository = environment();
-  let attempts = 0;
-  const run = () => sendDevelopmentReviewReminders(repository, {
-    send: async () => {attempts++;throw Error('Temporary mail error');},
-    from: 'portfolio@example.test', siteUrl: 'https://portfolio.example', now: () => dueAt,
-  });
-  await run();
-  await repository.update(state => {state.users[0].active = false;});
-  await run();
-  assert.equal(attempts, 1);
-  assert.equal((await repository.read()).developmentReviewMail.length, 0);
+test('a queued reminder stops when its reviewer loses access', async () => {
+  for (const change of [{active:false}, {role:'broker'}]) {
+    const repository = environment();
+    let attempts = 0;
+    const run = () => sendDevelopmentReviewReminders(repository, {
+      send: async () => {attempts++;throw Error('Temporary mail error');},
+      from: 'portfolio@example.test', siteUrl: 'https://portfolio.example', now: () => dueAt,
+    });
+    await run();
+    await repository.update(state => {Object.assign(state.users[0],change);});
+    await run();
+    assert.equal(attempts, 1);
+    assert.equal((await repository.read()).developmentReviewMail.length, 0);
+  }
 });
 
 test('a deployment review plan groups stock and assigns both managers once', async () => {

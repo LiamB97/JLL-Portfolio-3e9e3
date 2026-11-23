@@ -100,6 +100,19 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
   const missingPhone=load(renderToStaticMarkup(createElement(Shortcut,{request,user:{...staff,whatsapp:''},onOpen(){}})));
   assert.equal(missingPhone('.yfh-shortcut-actions button[disabled]').length,1);
   const Home=(await server.ssrLoadModule('/src/StaffHome.tsx')).default;
-  const home=load(renderToStaticMarkup(createElement(Home,{user:staff,navigate(){}})));assert.equal(home('.workspace-task').length,3);
+  const home=load(renderToStaticMarkup(createElement(Home,{user:staff,request,navigate(){}})));
+  assert.deepEqual(home('.workspace-task strong').map((_,node)=>home(node).text()).get(),['Buyer collections','PDF brochures']);
+  assert.equal(home('.workspace-link-actions a').attr('href'),'https://portfolio.example/?broker=qa');
+  assert.match(home('.workspace-link-actions button').text(),/Copy portfolio link/);
+  const missingWhatsApp=load(renderToStaticMarkup(createElement(Home,{user:{...staff,role:'broker',whatsapp:''},request,navigate(){}})));
+  assert.equal(missingWhatsApp('.workspace-link-actions a').length,0);
+  assert.equal(missingWhatsApp('.workspace-review-summary').length,0);
+  assert.match(missingWhatsApp('.workspace-link-actions button').text(),/Set up my profile/);
+  assert.doesNotMatch(missingWhatsApp('.workspace-aside-card').text(),/Manage buyer access/);
+  const managerHome=load(renderToStaticMarkup(createElement(Home,{user:{...staff,role:'broker_admin'},request,navigate(){}})));
+  assert.deepEqual(managerHome('.workspace-work > section > header > h2').map((_,node)=>managerHome(node).text()).get(),['Buyer materials','Development reviews']);
+  const consultantHome=load(renderToStaticMarkup(createElement(Home,{user:{...staff,role:'development_consultant'},request,navigate(){}})));
+  assert.deepEqual(consultantHome('.workspace-work > section > header > h2').map((_,node)=>consultantHome(node).text()).get(),['Development reviews']);
+  assert.equal(consultantHome('.workspace-home-aside, .workspace-task').length,0);
  }finally{await server.close();for(const [key,value] of Object.entries(previous)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}
 });

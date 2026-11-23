@@ -12,7 +12,8 @@ import {postcodeLocation} from './location.mjs';
 import {parsePastedListing} from './pasted-import.mjs';
 import {rejectDuplicate} from './duplicates.mjs';
 import {accessService,AccessError,checkOrigin,sessionCookie,publicDevelopment,publicUser} from './access.mjs';
-import {BuyerAccessError,brokerPortfolioPassword,buyerContext,buyerDevelopments,collectionPassword,issueBrokerPassword,portfolioProtectionSettings,requireBuyerAccess,unlockBuyerLink,updateBuyerAccessSettings,updateCollectionPassword} from './buyer-access.mjs';
+import {BuyerAccessError,brokerPortfolioPassword,buyerContext,buyerDevelopments,collectionPassword,eligibleForBrokerPassword,issueBrokerPassword,portfolioProtectionSettings,requireBuyerAccess,unlockBuyerLink,updateBuyerAccessSettings,updateCollectionPassword} from './buyer-access.mjs';
+import {canManagePortfolioStock} from '../shared/staff-roles.ts';
 import {YourFirstHomeError,yourFirstHomeCollection,yourFirstHomeWorkspace,updateYourFirstHome,campaignDevelopment} from './your-first-home.mjs';
 import {randomBytes} from 'node:crypto';
 import {validateDevelopment} from './model.mjs';
@@ -21,6 +22,7 @@ import {fetchSource} from './sync.mjs';
 import {ConflictError,refreshPortfolio} from './netlify-store.mjs';
 const reviewedDevelopment=(raw,options)=>{try{return validateDevelopment(raw,options);}catch(e){throw new AccessError(e.message);}};
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+const consultantRoutes = new Set(['/api/admin/development-reviews','/api/admin/guide','/api/admin/heartbeat']);
 export function createNetlifyApi({repository,password,fetchListings=fetchSource,extract=extractListing,network,connections,translations=defaultTranslations,visitorRepository,pendingOptions,brochureFiles,commute=defaultCommute,reviewEmailConfigured=false}){
  const access=accessService(repository,password);
  const brochures=brochureService(repository,brochureFiles||memoryBrochureFiles());
@@ -30,7 +32,7 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
  const buyer=(state,request,target)=>buyerContext(state,request,target,access.staffSession(state,request)?.user);
  const campaignWorkspace=(state,actor)=>{
   const user=access.current(state,actor),collection=yourFirstHomeCollection(state);
-  return {...yourFirstHomeWorkspace(state),canManage:['admin','broker_admin'].includes(user.role),
+  return {...yourFirstHomeWorkspace(state),canManage:canManagePortfolioStock(user.role),
    passwordProtected:Boolean(collection._buyerPasswordVersion),
    password:collectionPassword(state,collection)??brokerPortfolioPassword(state,state.users.find(row=>row.id===user.id))};
  };
@@ -90,6 +92,9 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    if(!route.startsWith('/api/admin/'))return json({error:'API endpoint not found.'},404);
    if((await access.status()).setupRequired&&(!password||password.length<12))return json({error:'Administrator access is not configured for this deployment.'},503);
    const actor=await access.authenticate(request);
+   if(actor.role==='development_consultant'&&!consultantRoutes.has(route)){
+    throw new AccessError('This workspace section is unavailable to Development consultants.',403);
+   }
    if(!['GET','HEAD'].includes(method))access.csrf(request,actor);
    if(method==='GET'&&route==='/api/admin/your-first-home'){
     if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
@@ -123,10 +128,7 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
      return json(await repository.update(state=>{
       const acting=access.current(state,actor);
       if(method==='POST')return confirmDevelopmentReview(state,acting,body);
-      if(method==='PATCH'){
-       access.stock(acting);
-       return saveDevelopmentReviewPrices(state,acting,body);
-      }
+      if(method==='PATCH')return saveDevelopmentReviewPrices(state,acting,body);
       access.admin(acting);
       return assignDevelopmentReview(state,body);
      }));
@@ -205,7 +207,7 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
     return json(await repository.update(state=>{
      access.admin(access.current(state,actor));
      if(!state.buyerAccess?.portfolioVersion)throw new AccessError('Enable portfolio password protection first.',409);
-     const broker=state.users.find(user=>user.id===body?.brokerId&&user.active);
+     const broker=state.users.find(user=>user.id===body?.brokerId&&eligibleForBrokerPassword(user));
      if(!broker)throw new AccessError('Choose an active broker.',404);
      issueBrokerPassword(state,broker,true);
      return portfolioProtectionSettings(state);

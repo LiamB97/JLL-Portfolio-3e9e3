@@ -14,21 +14,42 @@ function environment(config={}){let state={developments:structuredClone(samples)
  async function owner(){const r=await call('access/bootstrap',{method:'POST',body:{setupSecret:secret,name:'Owner',email:'owner@example.test',whatsapp:'+447900000001',password:randomBytes(18).toString('hex')}});assert.equal(r.status,200);return {cookie:r.cookie,csrf:r.data.csrf,user:r.data.user};}
  async function broker(admin,email='broker@example.test',role='broker'){const invited=await call('admin/users/invite',{method:'POST',actor:admin,body:{name:'Broker',email,role}});assert.equal(invited.status,201);const password=randomBytes(18).toString('hex');const accepted=await call('access/accept',{method:'POST',body:{token:invited.data.token,email,whatsapp:'+447900000002',password,role:'admin'}});assert.equal(accepted.status,200);return {cookie:accepted.cookie,csrf:accepted.data.csrf,user:accepted.data.user,password,email,invited};}
  return {call,owner,broker,repository,secret};}
-test('development reviews are private, assigned by admins, and confirmed by the assigned consultant',async()=>{
- const e=environment(),admin=await e.owner(),consultant=await e.broker(admin),other=await e.broker(admin,'other@example.test');
+test('designated reviewers can confirm their own assignments and admins manage assignment access',async()=>{
+ const e=environment(),admin=await e.owner(),consultant=await e.broker(admin,'consultant@example.test','development_consultant');
+ const other=await e.broker(admin,'other@example.test','development_consultant'),broker=await e.broker(admin);
  const path='admin/development-reviews',developmentId=samples[0].id;
- await e.repository.update(state=>{state.developments[0].sample=false;});
+ await e.repository.update(state=>{
+  state.developments[0].sample=false;
+  state.developments[1].sample=false;
+  state.developmentReviews=[{developmentId:samples[1].id,assigneeId:broker.user.id,version:'legacy',nextReminderAt:Date.now()}];
+ });
  const body={developmentId,assigneeId:consultant.user.id,version:null};
  assert.equal((await e.call(path)).status,401);
  assert.equal((await e.call(path,{actor:consultant,method:'PUT',body})).status,403);
  assert.equal((await e.call(path,{actor:admin,method:'PUT',body,csrf:false})).status,403);
+ assert.equal((await e.call(path,{actor:admin,method:'PUT',body:{...body,assigneeId:broker.user.id}})).status,422);
+ const assignmentOverview=(await e.call(path,{actor:admin})).data;
+ assert.equal(assignmentOverview.reviews[0].assigneeActive,false);
+ assert.ok(assignmentOverview.consultants.some(row=>row.id===consultant.user.id));
+ assert.ok(!assignmentOverview.consultants.some(row=>row.id===broker.user.id||row.id===admin.user.id));
+ assert.equal((await e.call(path,{actor:broker})).status,403);
+ for(const method of ['POST','PATCH']){
+  assert.equal((await e.call(path,{actor:broker,method,body:{developmentId:samples[1].id,version:'legacy'}})).status,403);
+ }
  assert.equal((await e.call(path,{actor:admin,method:'PUT',body})).status,200);
  const assigned=(await e.call(path,{actor:consultant})).data;
  assert.equal(assigned.reviews.length,1);
  assert.equal(assigned.consultants.length,0);
  assert.equal((await e.call(path,{actor:other})).data.reviews.length,0);
  assert.ok(!(await e.call('developments')).data[0].assigneeId);
- const confirmation={developmentId,version:assigned.reviews[0].version};
+ const [firstReview]=assigned.reviews;
+ const prices={developmentId,version:firstReview.version,unitPrices:{1:550000},expectedBedrooms:firstReview.development.bedrooms,expectedUnitPrices:{}};
+ assert.equal((await e.call(path,{actor:other,method:'PATCH',body:prices})).status,403);
+ assert.equal((await e.call(path,{actor:admin,method:'PATCH',body:prices})).status,403);
+ assert.equal((await e.call(path,{actor:consultant,method:'PATCH',body:prices})).status,200);
+ const [updated]=(await e.call(path,{actor:consultant})).data.reviews;
+ assert.deepEqual(updated.development.unitPrices,{1:550000});
+ const confirmation={developmentId,version:updated.version};
  assert.equal((await e.call(path,{actor:admin,method:'POST',body:confirmation})).status,403);
  assert.equal((await e.call(path,{actor:consultant,method:'POST',body:confirmation})).status,200);
  const [confirmed]=(await e.call(path,{actor:consultant})).data.reviews;
@@ -36,6 +57,33 @@ test('development reviews are private, assigned by admins, and confirmed by the 
  assert.equal((await e.call(path,{actor:consultant,method:'POST',body:confirmation})).status,409);
  assert.equal((await e.call(path,{actor:admin,method:'PUT',body:{...body,assigneeId:null,version:confirmed.version}})).status,200);
  assert.equal((await e.call(path,{actor:consultant})).data.reviews.length,0);
+});
+test('Development consultants can activate without a buyer profile and have review-only staff access',async()=>{
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin);
+ const email='consultant@example.test',name='Development reviewer',role='development_consultant';
+ assert.equal((await e.call('admin/users/invite',{method:'POST',actor:broker,body:{name,email,role}})).status,403);
+ const invitation=await e.call('admin/users/invite',{method:'POST',actor:admin,body:{name,email,role}});
+ assert.equal(invitation.status,201);
+ const password=randomBytes(18).toString('hex');
+ const activation=await e.call('access/accept',{method:'POST',body:{email,password,token:invitation.data.token}});
+ assert.equal(activation.status,200);
+ const actor={cookie:activation.cookie,csrf:activation.data.csrf};
+ assert.equal(activation.data.user.role,role);
+ assert.equal(activation.data.user.whatsapp,'');
+ assert.equal(activation.data.user.shareSlug,'');
+ assert.equal((await e.call('admin/development-reviews',{actor})).status,200);
+ const guide=(await e.call('admin/guide',{actor})).data;
+ assert.deepEqual(guide.chapters.map(chapter=>chapter.id),['reviews','profile']);
+ for(const path of ['admin/collections','admin/brochures','admin/developments','admin/your-first-home','admin/buyer-access/mine','admin/invites']){
+  assert.equal((await e.call(path,{actor})).status,403,path);
+ }
+ const protectedPortfolio=await e.call('admin/buyer-access',{actor:admin,method:'PUT',body:{enabled:true}});
+ assert.equal(protectedPortfolio.status,200);
+ assert.ok(!protectedPortfolio.data.brokers.some(row=>row.id===activation.data.user.id));
+ const change=await e.call('admin/users/'+broker.user.id,{method:'PATCH',actor:admin,body:{role}});
+ assert.equal(change.status,200);
+ assert.equal(change.data.role,role);
+ assert.equal((await e.call('access/me',{actor:broker})).status,401);
 });
 test('regional reviews keep grouping private and let only the assigned stock manager save valid bedroom prices',async()=>{
  const e=environment(),admin=await e.owner();

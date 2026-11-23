@@ -1,6 +1,7 @@
 import {createHash, createHmac, randomBytes, timingSafeEqual} from 'node:crypto';
 import snapshot from './data/initial-portfolio.json' with {type:'json'};
 import {isYourFirstHomeSlug} from '../shared/your-first-home.ts';
+import {canUseBuyerTools} from '../shared/staff-roles.ts';
 import {yourFirstHomeCollection} from './your-first-home.mjs';
 
 const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -44,8 +45,12 @@ export function brokerPortfolioPassword(state, user) {
   return user?.active ? sharePassword(state, 'portfolio', user.id, brokerVersion(state, user)) : null;
 }
 
+export function eligibleForBrokerPassword(user) {
+  return user.active && (canUseBuyerTools(user.role) || Boolean(user.shareSlug));
+}
+
 export function issueBrokerPassword(state, user, rotate = false) {
-  if (!state.buyerAccess?.portfolioVersion || !user.active || (!rotate && user._buyerPasswordVersion)) return;
+  if (!state.buyerAccess?.portfolioVersion || !eligibleForBrokerPassword(user) || (!rotate && user._buyerPasswordVersion)) return;
   const used = new Set((state.users ?? []).map(broker => brokerPortfolioPassword(state, broker)).filter(Boolean));
   do {
     user._buyerPasswordVersion = revision();
@@ -80,7 +85,7 @@ export function portfolioProtectionSettings(state) {
   return {
     enabled,
     instructedOnly: state.buyerAccess?.instructedOnly === true,
-    brokers: enabled ? (state.users ?? []).filter(user => user.active).map(user => ({
+    brokers: enabled ? (state.users ?? []).filter(eligibleForBrokerPassword).map(user => ({
       id: user.id, name: user.name, password: brokerPortfolioPassword(state, user),
     })) : [],
   };

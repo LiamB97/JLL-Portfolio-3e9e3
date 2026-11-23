@@ -1,4 +1,5 @@
 import {reviewRegions} from '../shared/development-review.ts';
+import {canReviewDevelopments} from '../shared/staff-roles.ts';
 import {assignDevelopmentReview} from './development-reviews.mjs';
 
 function validConsultant(value) {
@@ -48,13 +49,13 @@ function matchesConsultant(person, name) {
 function resolveConsultant(users, name) {
   const matches = users.filter(user => user.active && matchesConsultant(user, name));
   const [user] = matches;
-  return matches.length === 1 && ['admin', 'broker_admin'].includes(user.role) ? user.id : null;
+  return matches.length === 1 && canReviewDevelopments(user.role) ? user.id : null;
 }
 
 function resolveInvitation(state, name, now) {
   const matches = (state.invites ?? []).filter(invite => invite.expiresAt > now && matchesConsultant(invite, name));
   const [invite] = matches;
-  return matches.length === 1 && ['admin', 'broker_admin'].includes(invite.role) ? invite : null;
+  return matches.length === 1 && canReviewDevelopments(invite.role) ? invite : null;
 }
 
 export async function applyRegionalReviewPlan(repository, raw, now = Date.now()) {

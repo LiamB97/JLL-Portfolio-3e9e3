@@ -1,6 +1,7 @@
 import {randomBytes} from 'node:crypto';
 import {AccessError,publicUser} from './access.mjs';
 import {isYourFirstHomeSlug} from '../shared/your-first-home.ts';
+import {isStaffRole} from '../shared/staff-roles.ts';
 export const STAFF_EVENTS=['login','logout','personal_link_created','personal_link_copy','personal_whatsapp_click','personal_email_click','collection_create','collection_update','collection_delete','collection_link_copy','collection_whatsapp_click','collection_email_click','stock_add','stock_edit','stock_remove','stock_sync','invite_create','invite_revoke','user_update','profile_update','draft_save','draft_remove','pending_save','pending_extract','pending_publish','pending_archive'];
 export const BUYER_EVENTS=['page_view','development_view','favourite_add','favourite_remove','whatsapp_click','shortlist_copy'];
 const DAY=86400000;
@@ -46,7 +47,7 @@ export function reportRange(params,now=Date.now()){
  if(!valid(from)||!valid(to)||from>to||to>isoDay(now)||from<isoDay(now-365*DAY)||(Date.parse(to)-Date.parse(from))/DAY>=180)throw new AccessError('Choose a date range of up to 180 days within the past year, ending today or earlier.');
  const days=(Date.parse(to)-Date.parse(from))/DAY+1,previousTo=isoDay(Date.parse(from)-DAY),previousFrom=isoDay(Date.parse(from)-days*DAY);
  const role=params.get('role')||'',userId=params.get('user')||'',page=Number(params.get('page')||0),inactiveDays=Number(params.get('inactive')||30);
- if(role&&!['admin','broker_admin','broker'].includes(role)||!Number.isInteger(page)||page<0||page>100||![7,14,30,60,90].includes(inactiveDays))throw new AccessError('Invalid report filters.');
+ if(role&&!isStaffRole(role)||!Number.isInteger(page)||page<0||page>100||![7,14,30,60,90].includes(inactiveDays))throw new AccessError('Invalid report filters.');
  return {from,to,previousFrom,previousTo,role,userId,page,inactiveDays};
 }
 export async function activityReport(state,visitorRepository,params,{now=Date.now()}={}){

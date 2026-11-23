@@ -48,13 +48,21 @@ test('broker navigation exposes buyer tasks while stock and account administrati
  assert.ok(ids('admin').includes('buyer-access'));
  assert.ok(!ids('broker').includes('buyer-access'));
  assert.ok(!ids('broker_admin').includes('buyer-access'));
+ assert.ok(!ids('broker').includes('reviews'));
+ assert.ok(ids('broker_admin').includes('reviews'));
+ assert.deepEqual(ids('development_consultant'),['home','reviews','profile','guide']);
+ assert.ok(workspaceGroups('admin').some(group=>group.label==='Portfolio stock'&&group.items.some(item=>item.id==='reviews'&&item.label==='Review assignments')));
 });
 test('workspace deep links open permitted sections for the signed-in staff role',()=>{
  assert.equal(workspaceStartTab('?staff=buyer-access','admin'),'buyer-access');
  for(const role of ['broker','broker_admin']){
   assert.equal(workspaceStartTab('?staff=buyer-access',role),'home');
-  assert.equal(workspaceStartTab('?staff=reviews',role),'reviews');
  }
+ assert.equal(workspaceStartTab('?staff=reviews','broker'),'home');
+ assert.equal(workspaceStartTab('?staff=reviews','broker_admin'),'reviews');
+ assert.equal(workspaceStartTab('?staff=reviews','development_consultant'),'reviews');
+ assert.equal(workspaceStartTab('?staff=reviews','admin'),'reviews');
+ assert.equal(workspaceStartTab('?staff=collections','development_consultant'),'home');
  assert.equal(workspaceStartTab('?staff=buyer-access'),'home');
  assert.equal(workspaceStartTab('?staff=not-a-section','admin'),'home');
  assert.equal(workspaceStartTab('','admin'),'home');
