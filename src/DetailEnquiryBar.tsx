@@ -23,7 +23,7 @@ export default function DetailEnquiryBar({broker, development, collection, close
   const initials = (words.length > 1 ? [words[0], words[words.length - 1]] : words)
     .map(word => Array.from(word)[0]).join('').toLocaleUpperCase();
   const number = broker?.whatsapp.replace(/\D/g, '') ?? JLL_WHATSAPP;
-  const message = campaign?`Hi Your First Home team, I’m interested in ${development.name}. Could you confirm current availability, prices and potential scheme participation?`:t(broker
+  const message = campaign?`Hi ${broker?.slug==='your-first-home'?'Your First Home team':name}, I’m interested in ${development.name}. Could you confirm current availability, prices and potential scheme participation?`:t(broker
     ? 'Hi, I’m interested in {name}. Could you share current availability, pricing and viewing options?'
     : 'Hi, I’d like to enquire about {name}. Could you share more information?', {name: development.name});
   const link = developmentLink(location.origin, development.id, broker ? collection : undefined, broker?.slug);
