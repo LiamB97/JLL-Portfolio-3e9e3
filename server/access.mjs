@@ -40,7 +40,13 @@ function activateInvitedReviews(state, invitation, user, now){
 }
 function cookies(request){return Object.fromEntries((request.headers.get('cookie')||'').split(';').map(x=>x.trim().split('=')).filter(x=>x.length===2));}
 export function sessionCookie(token,request,clear=false){return `jll_session=${clear?'':token}; Path=/api; HttpOnly; SameSite=Strict; Max-Age=${clear?0:SESSION_MS/1000}${new URL(request.url).protocol==='https:'?'; Secure':''}`;}
-export function checkOrigin(request){const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin)throw new AccessError('This request must come from the portfolio.',403);}
+export function checkOrigin(request){
+ const origin=request.headers.get('origin'),backendOrigin=new URL(request.url).origin;
+ // The JLL reverse proxy preserves the browser's Origin while forwarding to
+ // this production backend. Trust this exact pair, never client-supplied hosts.
+ const publicPortfolio=origin==='https://digitalportfolio.live.jll.com'&&backendOrigin==='https://jll-residential-digital-portfolio.netlify.app';
+ if(origin&&origin!==backendOrigin&&!publicPortfolio)throw new AccessError('This request must come from the portfolio.',403);
+}
 export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
  function addSession(s,user){recordStaff(s,user,'login',{now:now()});const token=randomBytes(32).toString('base64url');s.sessions=s.sessions.filter(x=>x.expiresAt>now());s.sessions.push({tokenHash:digest(token),userId:user.id,createdAt:new Date(now()).toISOString(),expiresAt:now()+SESSION_MS});return {user:publicUser(user),token,csrf:digest('csrf:'+token)};}
  async function status(){const s=await repository.read();return {setupRequired:!(s.users||[]).length,setupConfigured:typeof bootstrapSecret==='string'&&bootstrapSecret.length>=12};}
