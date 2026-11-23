@@ -13,7 +13,7 @@ import {commuteMatches,type CommuteReport} from './commute';
 import WhatsAppIcon from './WhatsAppIcon';
 import React, {useCallback, useEffect, useState, useRef, useMemo, lazy, Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ArrowUpRight,ArrowRight,MapPin,Search,SlidersHorizontal,X,TrainFront,Building2,Heart,Star,ChevronDown} from 'lucide-react';
+import {ArrowUpRight,ArrowRight,BedDouble,MapPin,Search,SlidersHorizontal,X,TrainFront,Building2,Heart,Star,ChevronDown} from 'lucide-react';
 const PortfolioMap=lazy(()=>import('./Map'));
 const BuyerGuide=lazy(()=>import('./BuyerGuide'));
 const StaffPortal=lazy(()=>import('./StaffPortal'));
@@ -149,7 +149,16 @@ function App() {
   useEffect(()=>{setAnalyticsContext({language,link_kind:collection?'collection':broker?'broker':'general',...(broker?{broker_link_id:broker.slug}:{}),...(collection?{collection_id:collection.slug}:{})},!loading&&!buyerLock&&!admin&&!embedded);},[language,broker,collection,loading,buyerLock,admin,embedded]);
   useEffect(()=>{setCurrentDevelopment(!admin&&!howItWorks&&active?active.id:null);},[selected,active?.id,admin,howItWorks]);
   useEffect(()=>{if(!query.trim()||admin)return;const timer=setTimeout(()=>track('search_used',{result_count:filtered.length}),700);return()=>clearTimeout(timer);},[query,admin]);
-  const filterCount = [beds,budget,region,area,favouritesOnly,featuredOnly&&!collectionOnly].filter(Boolean).length;
+  const activeFilters = [
+    {id:'region', label:region && t(region), clear:()=>setRegion('')},
+    {id:'area', label:area, clear:()=>setArea('')},
+    {id:'beds', label:beds && (beds==='0'?t('Studio'):t('{count} bedrooms',{count:Number(beds)})), clear:()=>setBeds('')},
+    {id:'budget', label:budget && t('Up to {price}',{price:money(Number(budget))}), clear:()=>setBudget('')},
+    {id:'favourites', label:favouritesOnly && t('Show favourites only'), clear:()=>setFavouritesOnly(false)},
+    {id:'featured', label:featuredOnly&&!collectionOnly && t('Show featured only'), clear:()=>setFeaturedOnly(false)},
+  ].filter(filter=>filter.label);
+  const filterCount = activeFilters.length;
+  const resultCount = filtered.length===1 ? t('1 development') : t('{count} developments',{count:filtered.length});
   const reset = () => {changeCommute(null);setCommuteResetKey(n=>n+1); setQuery(''); setBeds('');setBudget(''); setFeaturedOnly(false);setFavouritesOnly(false);setRegion('');setArea(''); };
 
   const toggleFavourite=(id:string)=>{setShowFavouriteHighlights(true);favourites.toggle(id);};
@@ -159,12 +168,14 @@ function App() {
     {admin ? <Suspense fallback={<p className="staff-portal">{t("Loading staff workspace…")}</p>}><div dir="ltr" lang="en"><StaffPortal/></div></Suspense> : loading?<main className="buyer-loading" role="status">{t('Loading London homes…')}</main> : buyerLock?<BuyerPasswordGate key={buyerLock} scope={buyerLock} unlock={unlock}/> : howItWorks?<Suspense fallback={<p className="staff-portal">{t('Loading guide…')}</p>}><BuyerGuide/></Suspense> : <main className={`discovery-page view-${view}`} aria-label={t("London development explorer")}>
       <div className="discovery-toolbar">
         {embedded?<PortfolioEmbedToolbar query={query} setQuery={setQuery} count={filtered.length} view={view} setView={setView}/>:<>
-        <form className="discovery-search" onSubmit={e=>e.preventDefault()}>
-          <Search size={18}/>
-          <input aria-label={t("Search by area, development or postcode")} placeholder={t("Search an area, development or postcode")} value={query} onChange={e => setQuery(e.target.value)}/>
+        <form className="discovery-search" role="search" onSubmit={e=>e.preventDefault()}>
+          <Search size={19} aria-hidden="true"/>
+          <input autoComplete="off" aria-label={t("Search by area, development or postcode")} placeholder={t(narrow?"Area, name or postcode":"Search an area, development or postcode")} value={query} onChange={e => setQuery(e.target.value)}/>
           {query && <button type="button" className="clear-search" aria-label={t("Clear search")} onClick={() => setQuery('')}><X size={15}/></button>}
-          <button type="button" aria-label={t("Filters")} className={`discovery-filter-trigger ${filterCount ? 'filtered' : ''}`} aria-expanded={filters} aria-haspopup="dialog" onClick={() => {setFilters(!filters);}}><SlidersHorizontal size={16}/><span>{t("Filters")}</span>{filterCount > 0 && <b>{filterCount}</b>}</button>
         </form>
+        <button type="button" className={`discovery-filter-trigger ${filterCount ? 'filtered' : ''}`} aria-expanded={filters} aria-haspopup="dialog" onClick={() => setFilters(true)}>
+          <SlidersHorizontal size={17}/><span>{t("Filters")}</span>{filterCount > 0 && <b aria-hidden="true">{filterCount}</b>}
+        </button>
         {filters && <Modal title={t("Find your London home")} close={()=>setFilters(false)} className="buyer-filter-dialog" doneLabel={t('Show {count} developments',{count:filtered.length})} footer={<button onClick={reset}>{t("Reset filters")}</button>}>
 
           {collection&&<section className="filter-collection-context"><strong><Star size={16}/>{collection.title}</strong><p>{featuredIds.length} {t('featured developments · Picked by')} {collection.brokerName}</p></section>}<div className="explorer-filter-fields"><label>{t("London region")}<select aria-label={t("London region")} value={region} onChange={e=>{setRegion(e.target.value);track('filter_apply',{filter_kind:'region'});}}><option value="">{t("All London")}</option>{['Prime central',...regions].map(r=><option key={r} value={r}>{t(r)}</option>)}</select></label><label>{t("Near an area")}<select aria-label={t("Near an area")} value={area} onChange={e=>{setArea(e.target.value);track('filter_apply',{filter_kind:'area'});}}><option value="">{t("All areas")}</option>{areas.map(a=><option key={a.name}>{a.name}</option>)}</select></label>
@@ -174,7 +185,13 @@ function App() {
           <p className="area-filter-note">{t("Areas show developments within 2 km of the named centre. Regions are approximate geographic sectors.")}</p>
         </Modal>}
         <CommuteSearch items={items} onChange={changeCommute} resetKey={commuteResetKey}/>
-        <div className="discovery-count" role="status" aria-live="polite">{loading?t('Loading London homes…'):<><strong>{t('{count} developments',{count:filtered.length})}</strong>{(query||filterCount>0||commute)&&<button onClick={reset}>{t('Clear all')}</button>}</>}</div>
+        {view==='map'&&<div className="discovery-count" role="status">{resultCount}</div>}
+        {(filterCount>0||commute)&&<div className="discovery-active-filters">
+          {activeFilters.map(({id,label,clear})=><button key={id} onClick={clear} aria-label={t('Remove filter {filter}',{filter:label||''})}>
+            <span>{label}</span><X size={14} aria-hidden="true"/>
+          </button>)}
+          <button className="clear-filters" onClick={reset}>{t('Clear all')}</button>
+        </div>}
         {yourFirstHome?<YourFirstHomeBar broker={broker} count={items.length} onExplore={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onInformation={()=>setShowFirstHomeInformation(true)} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})}/>:collection&&<CollectionBar collection={collection} broker={broker} active={showHighlights} dimOthers={dimOthers} onlyPicked={featuredOnly} collectionOnly={collectionOnly} onView={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onDim={()=>setDimOthers(v=>!v)} onOnly={()=>setFeaturedOnly(v=>!v)} onRestore={()=>{setHighlightsEnabled(true);setDimOthers(true);setView('map');}} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})}/>}
 
         {broker&&!collection&&<section className="discovery-broker"><span className="broker-label">{t('Your JLL broker')}</span><a aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={()=>track('whatsapp_click',{surface:'broker_banner'})} href={'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments."))} target="_blank" rel="noopener noreferrer">{broker.photo?<img className="broker-avatar" src={broker.photo} alt=""/>:<WhatsAppIcon size={18}/>}<strong>{broker.name}</strong></a></section>}
@@ -187,9 +204,7 @@ function App() {
         {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap embedded={embedded} clusterFeatured={yourFirstHome} resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers&&!collectionOnly} onDimOthers={collectionOnly?undefined:()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={showHighlights?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
         {view !== 'map' && <section className="explorer-list" aria-label={t("Development listings")}>
           {!embedded&&<div className="listing-heading">
-            {narrow && view === 'split'
-              ? <h2>{t('Developments')} <ChevronDown size={18} aria-hidden="true"/></h2>
-              : <h2>{yourFirstHome?'Find your first home':t('London New Homes')}</h2>}
+            <h2><span role="status">{resultCount}</span>{narrow&&view==='split'&&<ChevronDown size={17} aria-hidden="true"/>}</h2>
             <label className="listing-sort">
               <span className="listing-sort-caption">{t('Sort by')}</span>
               <select value={listingSort} onChange={e => (commute ? setCommuteSort : setSort)(e.target.value)}>
@@ -205,10 +220,26 @@ function App() {
           {loading ? <p className="empty-state">{t("Loading London New Homes…")}</p> : !filtered.length ? <div className="empty-state"><Building2 size={30}/><h2>{t(favouritesOnly?"No favourites match this view":"No homes found")}</h2><p>{t(favouritesOnly?"Save developments with the heart button, or clear your filters to see more favourites.":"Try a different area or broaden your filters.")}</p><button onClick={reset}>{t("Reset filters")}</button></div> : <div className="cards">
             {filtered.map(d => {
               const featured = featuredIds.includes(d.id);
+              const price = startingPrice(d,beds);
+              const propertyTypes = specificPropertyTypes(d.propertyTypes);
+              const bedroomText = d.bedrooms.length===1&&d.bedrooms[0]===0
+                ? t('Studio')
+                : d.bedrooms.length ? `${bedroomLabel(d.bedrooms).replace('Studio',t('Studio'))} ${t("bedrooms")}` : t('To be confirmed');
               return <article className={`property-card-wrap${featured ? ' featured-card' : ''}`} key={d.id}><button className={`property-card ${selected === d.id ? 'selected' : ''}`} onClick={() => setSelected(d.id)}>
-              <div className="card-image"><DevelopmentPhoto development={d} loading="lazy"/><span className={featured?"card-tag featured-tag":"card-tag"}>{yourFirstHome?'Potential scheme home':featured?<><Star size={15} fill="currentColor" aria-hidden="true"/>{t('Featured')}</>:d.sample ? t('Sample collection') : t(d.status)}</span><span className="card-arrow"><ArrowUpRight size={18}/></span></div>
-              <div className="card-body"><p className="card-area"><MapPin size={12}/>{d.area}<span>· {d.postcode}</span></p><h2>{d.name}</h2>{commute&&commuteTimes[d.id]!==undefined&&<span className="commute-duration"><TrainFront size={13}/>{commuteTimes[d.id]} min commute</span>}<p className="card-beds">{bedroomLabel(d.bedrooms).replace('Studio',t('Studio'))} {t("bedrooms")} {specificPropertyTypes(d.propertyTypes).length>0&&<><span>·</span> {specificPropertyTypes(d.propertyTypes).map(ptype=>t(ptype)).join(' & ')}</>}</p><div className="card-bottom"><span>{beds?(Number(beds)===0?t('Studio'):t('{count} bedrooms',{count:Number(beds)}))+' '+t('Prices from'):t('Prices from')} <strong>{startingPrice(d,beds)!==null?money(startingPrice(d,beds)!):t('To be confirmed')}</strong></span><span className="explore">{t("View development")} <ArrowRight size={14}/></span></div></div>
-            </button><button className={favourites.ids.includes(d.id)?"save-card saved":"save-card"} aria-pressed={favourites.ids.includes(d.id)} aria-label={favourites.ids.includes(d.id)?`Remove ${d.name} from favourites`:`Save ${d.name} to favourites`} onClick={()=>toggleFavourite(d.id)}><Heart size={17} fill={favourites.ids.includes(d.id)?"currentColor":"none"}/></button></article>;
+                <div className="card-image"><DevelopmentPhoto development={d} loading="lazy"/>
+                  <span className={featured?"card-tag featured-tag":"card-tag"}>{yourFirstHome?'Potential scheme home':featured?<><Star size={14} fill="currentColor" aria-hidden="true"/>{t('Featured')}</>:d.sample ? t('Sample collection') : t(d.status)}</span>
+                  {embedded&&<span className="card-arrow"><ArrowUpRight size={18}/></span>}
+                </div>
+                <div className="card-body">
+                  <p className="card-area"><MapPin size={13} aria-hidden="true"/>{d.area}<span>· {d.postcode}</span></p>
+                  <h2>{d.name}</h2>
+                  {commute&&commuteTimes[d.id]!==undefined&&<span className="commute-duration"><TrainFront size={13}/>{commuteTimes[d.id]} min commute</span>}
+                  <p className="card-beds">{!embedded&&<BedDouble size={15} aria-hidden="true"/>}{bedroomText}{propertyTypes.length>0&&<><span>·</span>{propertyTypes.map(ptype=>t(ptype)).join(' & ')}</>}</p>
+                  <div className="card-bottom"><span>{beds?(beds==='0'?t('Studio'):t('{count} bedrooms',{count:Number(beds)}))+' '+t('Prices from'):t('Prices from')}
+                    <strong>{price!==null?money(price):t('To be confirmed')}</strong>
+                  </span><span className="explore">{t("View development")} <ArrowRight size={14}/></span></div>
+                </div>
+              </button><button className={favourites.ids.includes(d.id)?"save-card saved":"save-card"} aria-pressed={favourites.ids.includes(d.id)} aria-label={favourites.ids.includes(d.id)?`Remove ${d.name} from favourites`:`Save ${d.name} to favourites`} onClick={()=>toggleFavourite(d.id)}><Heart size={17} fill={favourites.ids.includes(d.id)?"currentColor":"none"}/></button></article>;
             })}
           </div>}
         </section>}

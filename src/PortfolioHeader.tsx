@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {Columns2,Heart,LayoutGrid,Map as MapIcon,Menu,Settings,CircleHelp,RotateCcw} from 'lucide-react';
+import {ArrowUpRight,Columns2,Heart,LayoutGrid,Map as MapIcon,Menu,Settings,CircleHelp,RotateCcw} from 'lucide-react';
 import Modal from './Modal';
 import Preferences from './Preferences';
 import ShareWithFriend from './ShareWithFriend';
@@ -18,9 +18,18 @@ export default function PortfolioHeader({exploring,staff,view,setView,saved,open
  function navigate(){setMenu(false);onNavigate();}
  return <header className={'portfolio-header'+(exploring?' with-views':'')} dir="ltr">
   <a className="portfolio-header-brand" href={homeHref} aria-label={t('JLL Residential home')} onClick={onNavigate}><img src={dark?'/images/jll-residential-dark.svg?v=2026-01':'/images/jll-residential-light.svg?v=2026-01'} alt="JLL Residential"/></a>
+  {staff&&<span className="portfolio-workspace-label">{t('Broker workspace')}</span>}
   {exploring&&<h1 className="portfolio-header-title"><a href={homeHref} onClick={onNavigate}>{campaign?'Your First Home':'London New Homes Portfolio'}</a></h1>}
-  <div className="portfolio-header-buttons">{exploring&&broker&&<a className="portfolio-mobile-broker" href={contactHref} target="_blank" rel="noopener noreferrer" aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={22}/></a>}{exploring&&<button className="portfolio-saved" aria-label={t('Favourites, {count} saved',{count:saved})} title={t('Favourites')} onClick={openFavourites}><Heart size={20}/>{saved>0&&<b>{saved}</b>}</button>}<button aria-label={t('Open menu')} aria-haspopup="dialog" aria-expanded={menu} onClick={()=>setMenu(true)}><Menu size={22}/></button></div>
   {exploring&&<div className="portfolio-views" role="group" aria-label={t('Portfolio view')}>{views.map(({value,label,Icon})=><button key={value} aria-label={t(label)} aria-pressed={view===value} onClick={()=>setView(value)}><Icon size={17}/><span>{t(label)}</span></button>)}</div>}
+  <div className="portfolio-header-buttons">
+   {staff&&<a className="portfolio-workspace-exit" href="/" target="_blank" rel="noopener noreferrer">{t('View portfolio')} <ArrowUpRight size={16} aria-hidden="true"/></a>}
+   {exploring&&broker&&<a className="portfolio-mobile-broker" href={contactHref} target="_blank" rel="noopener noreferrer" aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={22}/></a>}
+   {exploring&&<a className="portfolio-guide-link" href="#how-it-works" onClick={onNavigate}><CircleHelp size={17}/><span>{t('How it works')}</span></a>}
+   {exploring&&<button className="portfolio-saved" aria-label={t('Favourites, {count} saved',{count:saved})} title={t('Favourites')} onClick={openFavourites}>
+    <Heart size={19}/><span>{t('Favourites')}</span>{saved>0&&<b>{saved}</b>}
+   </button>}
+   <button aria-label={t('Open menu')} aria-haspopup="dialog" aria-expanded={menu} onClick={()=>setMenu(true)}><Menu size={22}/></button>
+  </div>
   {menu&&<Modal title={t('Portfolio menu')} close={()=>setMenu(false)} className="portfolio-menu">
    {exploring&&(broker||collection)&&<section className="portfolio-menu-section portfolio-mobile-context">{collection&&<><h3>{collection.title}</h3><p>{collection.developmentIds.length} {t('featured developments · Picked by')} {collection.brokerName}</p><small className="collection-map-key">★ {t('Broker’s selection')} · ♡ {t('Your favourites')}</small></>}{broker&&<><h3>{t('Your JLL broker')}</h3><a className="whatsapp-action" href={contactHref} target="_blank" rel="noopener noreferrer" onClick={onContact}><WhatsAppIcon size={18}/>{broker.name}</a></>}</section>}
    {!staff&&<section className="portfolio-menu-section"><h3>{t('Share with a friend')}</h3><ShareWithFriend inline/></section>}

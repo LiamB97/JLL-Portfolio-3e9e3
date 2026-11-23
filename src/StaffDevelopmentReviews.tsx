@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {ExternalLink, Pencil} from 'lucide-react';
 import {reviewRegions, type ReviewRegion} from '../shared/development-review';
+import {canReviewDevelopments} from '../shared/staff-roles';
 import type {StaffRequest, StaffUser} from './staff-types';
 
 type DevelopmentSummary = {id: string; name: string; area: string; postcode: string; region: ReviewRegion | null};
@@ -66,7 +67,7 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
     assignments.some(review => !assigneeIds.includes(review.assigneeId));
   const consultants = [
     ...(data?.consultants ?? []),
-    ...assignments.filter(review => !review.assigneeActive).map(review => ({id: review.assigneeId, name: review.assigneeName + ' (inactive)'})),
+    ...assignments.filter(review => !review.assigneeActive).map(review => ({id: review.assigneeId, name: review.assigneeName + ' (reviews paused)'})),
   ].sort((a, b) => a.name.localeCompare(b.name));
   const developments = [...(data?.developments ?? [])].sort((a, b) => a.name.localeCompare(b.name));
   const reviews = [...(data?.reviews ?? [])].sort((a, b) => a.nextReminderAt - b.nextReminderAt || a.development.name.localeCompare(b.development.name));
@@ -85,8 +86,10 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
   }
 
   return <section className="staff-section development-reviews">
-    <h1>Development reviews</h1>
-    <p>Check the published description, pricing and availability, then confirm the details. Each confirmation starts a new 14-day review period.</p>
+    <h1>{user.role === 'admin' ? 'Review assignments' : 'Development reviews'}</h1>
+    <p>{user.role === 'admin'
+      ? 'Assign Broker admins and Development consultants to check published details and bedroom prices.'
+      : 'Check the published description, pricing and availability, then confirm the details. Each confirmation starts a new 14-day review period.'}</p>
     {error && <p role="alert" className="admin-message">{error} <button type="button" onClick={() => {
       setError('');setPriceEditor(null);void refresh().catch(e => setError(e.message));
     }}>Refresh list</button></p>}
@@ -116,7 +119,7 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
         {reviewRegions.map(group => <option key={group}>{group}</option>)}
       </select></label>
       <fieldset className="review-consultants" disabled={busy || !developmentId}>
-        <legend>Consultants</legend>
+        <legend>Reviewers</legend>
         {consultants.map(consultant => <label key={consultant.id}>
           <input type="checkbox" checked={assigneeIds.includes(consultant.id)} onChange={event => {
             setAssigneeIds(ids => event.target.checked ? [...ids, consultant.id] : ids.filter(id => id !== consultant.id));
@@ -144,8 +147,7 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
           {[...assigned].map(([id, developmentReviews]) => {
             const ownAssignment = developmentReviews.find(row => row.assigneeId === user.id);
             const review = ownAssignment ?? developmentReviews[0];
-            const ownReview = Boolean(ownAssignment);
-            const canEditPrices = ownReview && user.role !== 'broker';
+            const ownReview = Boolean(ownAssignment && canReviewDevelopments(user.role));
             const priced = review.development.bedrooms.filter(beds => review.development.unitPrices[beds]).length;
             const editingPrices = priceEditor?.review.development.id === id ? priceEditor : null;
             return <article className="development-review-row" key={id}>
@@ -153,15 +155,15 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
                 <h4>{review.development.name}</h4>
                 <p>{review.development.area} · {review.development.postcode}</p>
                 {developmentReviews.map(row => <p key={row.assigneeId}>
-                  {data.canAssign && <>{row.assigneeName}{row.assigneeActive ? '' : ' (inactive)'} · </>}
+                  {data.canAssign && <>{row.assigneeName} · </>}
                   {row.lastConfirmedAt ? `Last confirmed ${formatDate(row.lastConfirmedAt)}` : 'Awaiting first review'} · {row.assigneeActive ? `Next review ${formatDate(row.nextReminderAt)}` : 'Reminders paused'}
                   {data.canAssign && row.lastFailureAt && <> · Previous email delivery unconfirmed</>}
                 </p>)}
-                {(canEditPrices || data.canAssign) && <p>{priced} of {review.development.bedrooms.length} bedroom prices entered</p>}
+                {(ownReview || data.canAssign) && <p>{priced} of {review.development.bedrooms.length} bedroom prices entered</p>}
               </div>
               <div className="action-row">
                 <a className="back-link" href={'/?development=' + encodeURIComponent(id)} target="_blank" rel="noopener noreferrer">View development <ExternalLink size={14}/></a>
-                {canEditPrices && !editingPrices && <button type="button" disabled={busy} onClick={() => setPriceEditor({
+                {ownReview && !editingPrices && <button type="button" disabled={busy} onClick={() => setPriceEditor({
                   review, values: Object.fromEntries(Object.entries(review.development.unitPrices).map(([beds, price]) => [beds, String(price)])),
                 })}><Pencil size={14}/> Bedroom prices</button>}
                 {ownReview && <button type="button" className="primary" disabled={busy || Boolean(editingPrices)} onClick={() => void saveReview({developmentId: id, version: review.version}, 'POST', 'Details confirmed. The next review is due in 14 days.')}>Confirm details</button>}
