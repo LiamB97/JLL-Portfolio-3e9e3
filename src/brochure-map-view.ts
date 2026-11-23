@@ -1,10 +1,21 @@
-// A geographic overview of central London around Zones 1 and 2, rather than
-// exact fare-zone boundaries. Extend it only when a selected home lies outside.
-export const BROCHURE_LONDON_BOUNDS={west:-.30,south:51.43,east:.065,north:51.58};
-export const BROCHURE_MAP_BAND={top:128,height:104,width:210};
-export const BROCHURE_MAP_CANVAS={width:1500,height:743};
-export function brochureMapBounds(items:{lat:number;lng:number}[]){
- const b=BROCHURE_LONDON_BOUNDS;
- return [[Math.min(b.west,...items.map(d=>d.lng-.012)),Math.min(b.south,...items.map(d=>d.lat-.008))],
-  [Math.max(b.east,...items.map(d=>d.lng+.012)),Math.max(b.north,...items.map(d=>d.lat+.008))]] as [[number,number],[number,number]];
+export const A4_WIDTH = 595.28;
+export const A4_HEIGHT = 841.89;
+export const SHORTLIST_MAP_TOP = 150;
+export const SHORTLIST_MAP_WIDTH_PX = 1190;
+
+export function shortlistMapHeight(count: number) {
+  return count <= 3 ? 380 : 300;
+}
+
+export function brochureMapBounds(items: {lat: number; lng: number}[]) {
+  const west = Math.min(...items.map(item => item.lng));
+  const east = Math.max(...items.map(item => item.lng));
+  const south = Math.min(...items.map(item => item.lat));
+  const north = Math.max(...items.map(item => item.lat));
+  const latitude = (south + north) / 2;
+  const longitude = (west + east) / 2;
+  const kilometresPerDegree = 111.32 * Math.cos(latitude * Math.PI / 180);
+  const halfWidth = Math.max((east - west) * .65, 3 / kilometresPerDegree);
+  const halfHeight = (north - south) * .65;
+  return [[longitude - halfWidth, latitude - halfHeight], [longitude + halfWidth, latitude + halfHeight]] as [[number, number], [number, number]];
 }

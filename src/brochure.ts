@@ -1,128 +1,549 @@
-import {startingPrice,unitLabel} from '../shared/pricing.ts';
 import {jsPDF} from 'jspdf';
-import {layoutBrochurePins,type BrochureMapImage} from './brochure-map-layout.ts';
+import {BROCHURE_MAX_CLIENT_NAME, BROCHURE_MAX_DEVELOPMENTS, BROCHURE_MAX_INTRO, BROCHURE_MAX_NOTE} from '../shared/brochure-settings.ts';
+import {startingPrice} from '../shared/pricing.ts';
+import {developmentLink} from '../shared/sharing.ts';
+import {layoutBrochurePins, MAP_TAG_HEIGHT, MAP_TAG_MAX_WIDTH, MAP_TAG_TIP_HEIGHT, type BrochureMapImage} from './brochure-map-layout.ts';
+import {A4_HEIGHT, A4_WIDTH, SHORTLIST_MAP_TOP, shortlistMapHeight} from './brochure-map-view.ts';
 import type {Development} from './types';
-import {BROCHURE_MAP_BAND} from './brochure-map-view.ts';
 
-export interface BrochureInput {title:string;intro:string;notes:Record<string,string>;items:Development[];broker:{name:string;whatsapp:string;photo?:string;title?:string;email?:string};origin:string;collection?:string;brokerSlug?:string;date?:Date;coverImage?:string}
-export interface BrochureAssets {regular:string;semibold:string;light?:string;serifItalic?:string;logoLight?:string;logoDark?:string;whatsappIcon?:string;photos:Record<string,string>;galleries?:Record<string,string[]>;map?:BrochureMapImage;developmentLogos?:Record<string,string>;fadedCover?:string;fadedPhotos?:Record<string,string>}
-export function brochureFilename(title:string){return (title.normalize('NFKD').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,70)||'JLL-brochure')+'.pdf';}
-export function brochureDevelopmentName(name:string){
- if(/^opus\b/i.test(name)&&/bankside/i.test(name))return 'Opus, Bankside Yards';
- if(/^seven(?:\b|,)/i.test(name)&&(/southbank/i.test(name)||/^seven$/i.test(name.trim())))return 'SEVEN, Southbank Place';
- return name.replace(/\bnew homes\b/gi,'New Homes');
+export interface BrochureInput {
+  title: string;
+  clientName?: string;
+  intro: string;
+  notes: Record<string, string>;
+  items: Development[];
+  broker: {name: string; whatsapp: string; photo?: string; title?: string; email?: string};
+  origin: string;
+  collection?: string;
+  brokerSlug?: string;
+  date?: Date;
+  coverImage?: string;
 }
-export function brochureIntroduction(description:string){const paragraphs=description.split(/\n+/).map(s=>s.trim()).filter(Boolean);const text=paragraphs.find(s=>s.length>60&&!/^(?:book\b|contact\b|register\b|enquire\b|request\b|call\s|email\s|please\b)/i.test(s))||paragraphs.find(s=>!/^(?:book\b|contact\b|register\b|enquire\b)/i.test(s))||'';return text.match(/^.+?[.!?](?:\s|$)/)?.[0].trim()||text;}
-const clean=(value:string)=>String(value||'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/[\u2010-\u2015]/g,'-').replace(/\u00a0/g,' ').replace(/\bnew homes\b/gi,'New Homes');
-const money=(n:number)=>new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n);
-const price=(n:number|null|undefined)=>n&&Number.isFinite(n)&&n>0?'From '+money(n):'From £[ ]';
-const C={midnight:'#131E29',sand:'#E0C6AD',white:'#FFFFFF',space:'#003E51',card:'#1F2A35',border:'#6B7783',green:'#25D366'};
-const M=14,W=182,MM=25.4/72;
-export const coverHeroHeight=(intro:string,includeMap=true)=>includeMap?(intro.trim().length>650?68:82):(intro.trim().length>650?116:136);
-export const developmentHeroHeight=(note?:string,last=false)=>last?52:note?.trim()?88:108;
+export interface BrochureAssets {
+  regular: string;
+  semibold: string;
+  light?: string;
+  serifItalic?: string;
+  logoDark?: string;
+  whatsappMidnight?: string;
+  whatsappSand?: string;
+  photos: Record<string, string>;
+  map: BrochureMapImage;
+}
 
-export function buildBrochure(input:BrochureInput,assets:BrochureAssets){
- if(!input.title.trim()||input.items.length<1||input.items.length>20)throw Error('Choose 1–20 developments and add a title.');
- if(assets.map&&input.items.some(d=>!assets.map!.points.some(p=>p.id===d.id)))throw Error('The location map does not match the selected developments. Generate it again.');
- const doc=new jsPDF({unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true});
- for(const [file,weight,data]of [['Regular','normal',assets.regular],['Semibold','bold',assets.semibold],['Light','light',assets.light||assets.regular]]){doc.addFileToVFS('SourceSans'+file+'.ttf',data!);doc.addFont('SourceSans'+file+'.ttf','SourceSans',weight!);}
- if(assets.serifItalic){doc.addFileToVFS('SourceSerifLightItalic.ttf',assets.serifItalic);doc.addFont('SourceSerifLightItalic.ttf','SourceSerif','italic');}
- const warnings=new Set<string>(),date=(input.date||new Date()).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
- const portfolio=new URL('/',input.origin);if(input.collection)portfolio.searchParams.set('collection',input.collection);else if(input.brokerSlug)portfolio.searchParams.set('broker',input.brokerSlug);
- const whatsapp='https://wa.me/'+input.broker.whatsapp.replace(/\D/g,''),tel='tel:'+input.broker.whatsapp.replace(/[^+\d]/g,'');
- const devLink=(id:string)=>{const url=new URL(portfolio);url.searchParams.set('development',id);return url.href;};
- function style(size=12,weight='light',colour=C.white,opacity=1){doc.setGState(doc.GState({opacity,'stroke-opacity':1}));doc.setFont('SourceSans',weight);doc.setFontSize(size);doc.setTextColor(colour);doc.setCharSpace(0);}
- function serif(size=16,colour=C.sand){style(size,'light',colour);if(assets.serifItalic)doc.setFont('SourceSerif','italic');else doc.setFont('times','italic');}
- function page(){doc.addPage();background();}
- function background(){style();doc.setFillColor(C.midnight);doc.rect(0,0,210,297,'F');}
- function fit(value:string,width:number,size:number,maxLines:number,weight='light',label?:string,min=size){
-  let lines:string[]=[];for(;size>=min;size-=.5){style(size,weight);lines=doc.splitTextToSize(clean(value).replace(/\s+/g,' ').trim(),width);if(lines.length<=maxLines)break;}size=Math.max(size,min);
-  if(lines.length>maxLines){if(label)warnings.add(label);lines=lines.slice(0,maxLines);style(size,weight);let last=lines.at(-1)||'';while(last&&doc.getTextWidth(last+'…')>width)last=last.slice(0,-1);lines[maxLines-1]=last+'…';}
-  return {lines,size};
- }
- function block(value:string,x:number,y:number,width:number,size:number,maxLines:number,{weight='light',colour=C.white,leading=1.5,label,opacity=1}:{weight?:string;colour?:string;leading?:number;label?:string;opacity?:number}={}){
-  const text=fit(value,width,size,Math.max(1,maxLines),weight,label);style(size,weight,colour,opacity);doc.text(text.lines,x,y,{lineHeightFactor:leading});return y+text.lines.length*size*MM*leading;
- }
- function logo(x=M,y=10,width=46){style();const height=width*94.065/517.30957;doc.setFillColor(C.midnight);doc.rect(x-3,y-3,width+6,height+6,'F');const img=assets.logoDark;if(img)doc.addImage(img,'PNG',x,y,width,height);else{style(16,'bold');doc.text('JLL Residential',x,y+6);}}
- function footer(){logo();style(9,'light',C.white,.65);doc.text(String(doc.getNumberOfPages()),196,287,{align:'right'});}
- function image(image:string,x:number,y:number,w:number,h:number){const p=doc.getImageProperties(image),scale=Math.max(w/p.width,h/p.height);doc.saveGraphicsState();doc.rect(x,y,w,h,null);doc.clip();doc.discardPath();doc.addImage(image,'JPEG',x+(w-p.width*scale)/2,y+Math.min(0,(h-p.height*scale)*.3),p.width*scale,p.height*scale,undefined,'MEDIUM');doc.restoreGraphicsState();}
- // A true photo-to-Midnight fade, restricted to the photograph behind the headline.
- function photoFade(top:number,bottom:number){for(let y=top;y<bottom;y+=.2){const opacity=Math.pow((y-top)/(bottom-top),1.15);doc.setGState(doc.GState({opacity}));doc.setFillColor(C.midnight);doc.rect(0,y,210,Math.min(.2,bottom-y),'F');}doc.setGState(doc.GState({opacity:1}));}
- function portrait(x:number,y:number,r:number){doc.setFillColor(C.sand);doc.circle(x,y,r,'F');if(input.broker.photo){doc.saveGraphicsState();doc.circle(x,y,r-.3,null);doc.clip();doc.discardPath();doc.addImage(input.broker.photo,'JPEG',x-r+.3,y-r+.3,(r-.3)*2,(r-.3)*2,undefined,'MEDIUM');doc.restoreGraphicsState();}else{style(r*.95,'light',C.midnight);doc.text(input.broker.name.split(/\s+/).map(s=>s[0]).slice(0,2).join(''),x,y+r*.13,{align:'center'});}}
+type Face = 'light' | 'normal' | 'bold' | 'italic';
+interface TextStyle {face?: Face; colour?: string; opacity?: number; align?: 'left' | 'center' | 'right'; leading?: number}
+interface FittedText {lines: string[]; size: number; shortened: boolean}
+const colour = {midnight: '#131E29', space: '#003E51', sand: '#E0C6AD', white: '#FFFFFF'};
+const left = 36;
+const right = A4_WIDTH - left;
+const contentWidth = right - left;
+const firstShortlistLimit = 6;
+const continuationLimit = 11;
+const money = new Intl.NumberFormat('en-GB', {style: 'currency', currency: 'GBP', maximumFractionDigits: 0});
+const priceLabel = (price: number | null) => price === null ? 'To be confirmed' : money.format(price % 1000 === 999 ? price + 1 : price);
+const bedLabel = (beds: number) => beds === 0 ? 'Studio' : `${beds} ${beds === 1 ? 'bed' : 'beds'}`;
+const bedroomTypes = (development: Development) => [...new Set(development.bedrooms)].sort((a, b) => a - b);
+const clean = (value: string) => value.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/[\u2010-\u2015]/g, '-').replace(/\s+/g, ' ').trim().replace(/\bnew homes\b/gi, 'New Homes');
 
- function pin(x:number,y:number,n:number,scale=1){
-  const shape=(x:number,y:number)=>[{op:'m',c:[x,y]},{op:'c',c:[x-scale,y-1.5*scale,x-4*scale,y-4.2*scale,x-4*scale,y-6*scale]},{op:'c',c:[x-4*scale,y-11*scale,x+4*scale,y-11*scale,x+4*scale,y-6*scale]},{op:'c',c:[x+4*scale,y-4.2*scale,x+scale,y-1.5*scale,x,y]},{op:'h',c:[]}];
-  style();doc.setGState(doc.GState({opacity:.15}));doc.setFillColor(C.midnight);doc.path(shape(x+.45*scale,y+.55*scale));doc.fill();style();doc.setFillColor(C.space);doc.setDrawColor(C.white);doc.setLineWidth(.53*scale);doc.path(shape(x,y));doc.fillStroke();style(10*scale,'bold');doc.text(String(n),x,y-4.7*scale,{align:'center'});
- }
- function contactCard(y:number,measureOnly=false){
-  const x=M,textX=50,textW=146,name=fit(input.broker.name,textW,15,2,'bold',undefined,12),role=fit(input.broker.title||'',textW,11,2,'light');
-  const nameY=y+17,roleY=nameY+name.lines.length*name.size*MM*1.2+2,phoneY=roleY+(input.broker.title?.trim()?role.lines.length*11*MM*1.3+2:0)+5;
-  style(10.5,'bold',C.sand);const phoneLabel='WhatsApp or call',phoneWidth=doc.getTextWidth(phoneLabel+'  '+input.broker.whatsapp)+6;
-  const email=fit(input.broker.email||'',textW,10.5,2,'bold'),inline=Boolean(input.broker.email&&email.lines.length===1&&phoneWidth+5+doc.getTextWidth(input.broker.email)<textW),emailY=inline?phoneY:phoneY+7;
-  const height=Math.max(48,(input.broker.email?emailY-y+(email.lines.length-1)*5:phoneY-y)+9);
-  if(measureOnly)return height;
-  style();doc.setFillColor(C.card);doc.setDrawColor(C.border);doc.setLineWidth(.2);doc.roundedRect(x,y,W,height,2.5,2.5,'FD');portrait(31,y+height/2,11);
-  serif(12);doc.text('Your contact',textX,y+9);style(name.size,'bold');doc.text(name.lines,textX,nameY,{lineHeightFactor:1.2});
-  if(input.broker.title?.trim()){style(11,'light',C.white,.8);doc.text(role.lines,textX,roleY,{lineHeightFactor:1.3});}
-  style(10.5,'light');if(assets.whatsappIcon){doc.addImage(assets.whatsappIcon,'PNG',textX,phoneY-3.3,3.7,3.7);doc.link(textX,phoneY-4,4,5,{url:whatsapp});}style(10.5,'light');doc.textWithLink(phoneLabel,textX+5,phoneY,{url:whatsapp});
-  const phoneX=textX+5+doc.getTextWidth(phoneLabel)+2;style(10.5,'bold',C.sand);doc.textWithLink(input.broker.whatsapp,phoneX,phoneY,{url:tel});
-  if(input.broker.email){style(10.5,'bold',C.sand);email.lines.forEach((line,i)=>doc.textWithLink(line,inline?textX+phoneWidth+5:textX,emailY+i*5,{url:'mailto:'+input.broker.email}));}
-  return y+height;
- }
- function coverContact(y:number){
-  const x=37,width=159,name=fit(input.broker.name,width,13.5,1,'bold','Cover broker name',12);
-  portrait(22,y+10,8);style(name.size,'bold');doc.text(name.lines,x,y);
-  if(input.broker.title?.trim()){const role=fit(input.broker.title,width,10.5,1,'light','Cover job title');style(10.5,'light',C.white,.8);doc.text(role.lines,x,y+6);}
-  const baseline=y+14;style(10.5,'light');if(assets.whatsappIcon){doc.addImage(assets.whatsappIcon,'PNG',x,baseline-3.3,3.7,3.7);doc.link(x,baseline-4,4,5,{url:whatsapp});}
-  doc.textWithLink('WhatsApp or call',x+5,baseline,{url:whatsapp});const phoneX=x+7+doc.getTextWidth('WhatsApp or call');style(10.5,'bold',C.sand);doc.textWithLink(input.broker.whatsapp,phoneX,baseline,{url:tel});
-  if(input.broker.email){const emailX=phoneX+doc.getTextWidth(input.broker.whatsapp)+7,email=fit(input.broker.email,width,10.5,2,'bold','Cover email');const inline=email.lines.length===1&&emailX+doc.getTextWidth(input.broker.email)<196;style(10.5,'bold',C.sand);email.lines.forEach((line,i)=>doc.textWithLink(line,inline?emailX:x,baseline+(inline?0:7)+i*5,{url:'mailto:'+input.broker.email}));}
- }
- background();
- // One fuller opening page combines the skyline, introduction and London map.
- const intro=clean(input.intro.trim().slice(0,1600)||'Explore a personal selection of London New Homes, chosen for you. Browse these neighbourhoods and contact me to discuss the available homes and arrange your next steps.');
- const hero=input.coverImage||input.items.map(d=>assets.photos[d.id]).find(Boolean),heroEnd=coverHeroHeight(input.intro,Boolean(assets.map));
- if(assets.fadedCover)image(assets.fadedCover,0,0,210,heroEnd);else if(hero){image(hero,0,0,210,heroEnd);photoFade(Math.max(0,heroEnd-60),heroEnd);}else background();
- const headline=fit(input.title.trim().slice(0,100),W,30,3,'light','Cover headline',24);style(headline.size);doc.text(headline.lines,M,heroEnd-9-(headline.lines.length-1)*headline.size*MM*1.12,{lineHeightFactor:1.12});
- serif(15,C.white);doc.text('Your handpicked London New Homes',M,heroEnd+10);
- const introLimit=assets.map?BROCHURE_MAP_BAND.top-6:234;
- block(intro,M,heroEnd+22,W,11.5,Math.floor((introLimit-heroEnd-22)/(11.5*MM*1.5)),{label:'Cover introduction'});
- if(assets.map){
-  const {top,height,width}=BROCHURE_MAP_BAND,map=assets.map;doc.addImage(map.image,'JPEG',0,top,width,height,undefined,'MEDIUM');style();doc.setDrawColor(C.sand);doc.setLineWidth(.53);doc.line(0,top,width,top);doc.line(0,top+height,width,top+height);
-  for(const area of map.areas){const x=area.x*width,y=top+area.y*height;serif(area.major?10:7,'#6B7783');if(area.major)style(10,'bold',C.midnight);else doc.setCharSpace(.4);doc.setDrawColor(C.white);doc.setLineWidth(.6);doc.text(area.major?area.name:area.name.toUpperCase(),x,y,{align:'center',renderingMode:'fillThenStroke'});doc.text(area.major?area.name:area.name.toUpperCase(),x,y,{align:'center'});doc.setCharSpace(0);}
-  const placements=layoutBrochurePins(map.points,width,height);
-  for(const p of placements){if(Math.hypot(p.pin.x-p.anchor.x,p.pin.y-p.anchor.y)>1){style();doc.setDrawColor(C.space);doc.setLineWidth(.25);doc.line(p.anchor.x,top+p.anchor.y,p.pin.x,top+p.pin.y);doc.setFillColor(C.space);doc.circle(p.anchor.x,top+p.anchor.y,.5,'F');}}
-  for(const p of placements){pin(p.pin.x,top+p.pin.y,input.items.findIndex(d=>d.id===p.id)+1);doc.link(p.pin.x-4,top+p.pin.y-10,8,11,{url:devLink(p.id)});}
-  style(5.5,'light',C.midnight,.8);doc.text('© OpenStreetMap contributors',208,top+height-1.8,{align:'right'});
-  style(6.5,'light',C.white,.65);doc.text(map.attribution,M,top+height+4);
- }
- coverContact(251);logo();style(9,'light',C.white,.65);doc.text(date,196,287,{align:'right'});
- // Every development still owns one page, with matching numbers throughout.
- for(const [index,d]of input.items.entries()){
-  page();const name=brochureDevelopmentName(d.name),note=input.notes[d.id]?.trim().slice(0,1600),last=index===input.items.length-1,heroEnd=developmentHeroHeight(note,last),photo=assets.photos[d.id];const ctaTop=272-contactCard(0,true),contentLimit=last?ctaTop-23:262;
-  if(assets.fadedPhotos?.[d.id])image(assets.fadedPhotos[d.id],0,0,210,heroEnd);else if(photo){image(photo,0,0,210,heroEnd);photoFade(heroEnd-48,heroEnd);}
-  pin(85,21,index+1,.9);const title=fit(name,W,28,2,'bold',name+' headline',22);style(title.size,'bold');doc.text(title.lines,M,heroEnd-10-(title.lines.length-1)*title.size*MM*1.15,{lineHeightFactor:1.15});
-  const developmentLogo=assets.developmentLogos?.[d.id];if(developmentLogo){const p=doc.getImageProperties(developmentLogo),scale=Math.min(40/p.width,14/p.height);doc.addImage(developmentLogo,'PNG',196-p.width*scale,12,p.width*scale,p.height*scale);}
-  style(10.5,'bold',C.sand);doc.text(clean(d.area+' / '+d.postcode),M,heroEnd+9);
-  const introduction=clean(brochureIntroduction(d.description)).replace(/\s+/g,' ').trim();const summary=fit(introduction,W,12.5,2,'light',name+' introduction');style(12.5);doc.text(summary.lines,M,heroEnd+19,{lineHeightFactor:1.5});
-  style(20,'bold',C.sand);doc.text(price(d.priceFrom),M,heroEnd+39);if(d.sample){style(9,'light');doc.text('Illustrative sample, not live stock',196,heroEnd+39,{align:'right'});}
-  let y=heroEnd+49;const bedrooms=[...new Set(d.bedrooms)].sort((a,b)=>a-b),columns=bedrooms.length>6?3:2,cellW=(W-8*(columns-1))/columns;
-  for(let row=0;row<Math.ceil(bedrooms.length/columns);row++){
-   for(let col=0;col<columns;col++){const beds=bedrooms[row*columns+col];if(beds===undefined)continue;const x=M+col*(cellW+8);style(10.5,'light',C.white,.8);doc.text(unitLabel(beds),x,y);style(12,'bold',C.sand);doc.text(price(startingPrice(d,beds)),x,y+5.5);}
-   y+=14;
+function listingText(value: string) {
+  return value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<br\s*\/?>|<\/(?:p|div|li)\s*>/gi, '\n').replace(/<[^>]*>/g, '')
+    .replace(/&(?:nbsp|#160);/gi, ' ').replace(/&amp;/gi, '&').replace(/&(?:apos|#39);/gi, '’').replace(/&quot;/gi, '"');
+}
+
+function bedRange(development: Development) {
+  const beds = bedroomTypes(development);
+  if (beds.length <= 1) return beds.length ? bedLabel(beds[0]) : '';
+  if (beds.length === 2) return `${beds[0] === 0 ? 'Studio' : beds[0]} and ${beds[1]} beds`;
+  return `${beds[0] === 0 ? 'Studio' : beds[0]} to ${beds.at(-1)} beds`;
+}
+
+export function brochureFilename(title: string) {
+  return (title.normalize('NFKD').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 70) || 'JLL-brochure') + '.pdf';
+}
+
+export function brochureDevelopmentName(name: string) {
+  if (/^opus\b/i.test(name) && /bankside/i.test(name)) return 'Opus, Bankside Yards';
+  if (/^seven(?:\b|,)/i.test(name) && (/southbank/i.test(name) || /^seven$/i.test(name.trim()))) return 'SEVEN, Southbank Place';
+  return clean(name);
+}
+
+export function brochureIntroduction(description: string) {
+  const paragraphs = listingText(description).split(/\n+/).map(clean).filter(Boolean);
+  const substantive = paragraphs.filter(value => !/^(?:book\b|contact\b|register\b|enquire\b|request\b|call\s|email\s|please\b|up to £)/i.test(value));
+  const summary = substantive.find(value => value.length > 60) || substantive[0] || '';
+  return summary.match(/^.+?[.!?](?:\s|$)/)?.[0].trim() || summary;
+}
+
+function brochureFeatures(development: Development) {
+  return development.amenities.map(feature => clean(listingText(feature)).replace(/\s*(?:…|\.{3})$/, ''))
+    .filter(feature => feature && !/^(?:(?:prices?\s+)?(?:from|starting (?:at|from))\s+£|£[\d,]+\s*$)/i.test(feature))
+    .slice(0, 6);
+}
+
+export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
+  const total = input.items.length;
+  if (!input.title.trim() || total < 1 || total > BROCHURE_MAX_DEVELOPMENTS) throw Error('Choose 1–20 developments and add a title.');
+  const pointsById = new Map(assets.map?.points.map(point => [point.id, point]));
+  if (!assets.map?.image || input.items.some(item => {
+    const point = pointsById.get(item.id);
+    return !point || ![point.x, point.y].every(coordinate => Number.isFinite(coordinate) && coordinate >= 0 && coordinate <= 1);
+  })) throw Error('The shortlist map does not match the selected developments. Generate it again.');
+
+  const doc = new jsPDF({unit: 'pt', format: 'a4', compress: true, putOnlyUsedFonts: true});
+  for (const [face, data] of [['normal', assets.regular], ['bold', assets.semibold], ['light', assets.light || assets.regular]]) {
+    const file = `SourceSans-${face}.ttf`;
+    doc.addFileToVFS(file, data);
+    doc.addFont(file, 'SourceSans', face);
   }
-  y+=3;style();doc.setDrawColor(C.white);doc.setGState(doc.GState({opacity:.15,'stroke-opacity':.15}));doc.setLineWidth(.2);doc.line(M,y,196,y);style();y+=9;
-  if(d.amenities.length){
-   const lineLimit=last?1:2,rowHeight=lineLimit*11*MM*1.5+3,potentialRows=Math.floor((contentLimit-y-7)/rowHeight),reserve=note&&potentialRows>=3?18:0,maxRows=last?Math.max(0,Math.min(3,Math.floor((contentLimit-y-7-reserve)/rowHeight))):3;
-   const features=d.amenities.slice(0,maxRows*2);if(features.length<Math.min(d.amenities.length,6))warnings.add(name+' features');
-   if(features.length){style(12,'bold');doc.text('Key features',M,y);y+=7;for(let row=0;row<Math.ceil(features.length/2);row++){
-    let rows=1;for(let col=0;col<2;col++){const feature=features[row*2+col];if(!feature)continue;const f=fit('• '+feature,87,11,lineLimit,'light',name+' features');style(11);doc.text(f.lines,M+col*95,y,{lineHeightFactor:1.5});rows=Math.max(rows,f.lines.length);}y+=rows*11*MM*1.5+3;
-   }}
+  if (assets.serifItalic) {
+    doc.addFileToVFS('SourceSerif-Italic.ttf', assets.serifItalic);
+    doc.addFont('SourceSerif-Italic.ttf', 'SourceSerif', 'italic');
   }
-  if(note){const noteY=y+11,maxLines=Math.floor((contentLimit-noteY)/(11*MM*1.5));if(maxLines>0){y+=4;style(12,'bold');doc.text('Your broker’s perspective',M,y);block(note,M,noteY,W,11,maxLines,{label:name+' broker notes'});}else warnings.add(name+' broker notes');}
-  style(10.5,'bold');doc.textWithLink('View this home in your portfolio',M,last?ctaTop-17:271,{url:devLink(d.id)});
-  if(last){style(17);doc.text('Arrange your next viewing',M,ctaTop-8);contactCard(ctaTop);style(8.5,'light',C.white,.65);doc.text('Prices and availability subject to change.',196,276,{align:'right'});}footer();
- }
+  const warnings = new Set<string>();
+  const brokerName = clean(input.broker.name);
+  const firstName = brokerName.split(' ')[0];
+  const brokerTitle = clean(input.broker.title || '');
+  const role = brokerTitle && !/JLL Residential/i.test(brokerTitle) ? `${brokerTitle}, JLL Residential` : brokerTitle || 'JLL Residential';
+  const digits = input.broker.whatsapp.replace(/\D/g, '');
+  const phone = digits.startsWith('447') && digits.length === 12 ? `+44 ${digits.slice(2, 6)} ${digits.slice(6)}` : `+${digits}`;
+  const callLink = `tel:+${digits}`;
+  const email = input.broker.email?.trim() || '';
+  const emailLink = email ? `mailto:${email}?subject=${encodeURIComponent('Your London New Homes')}` : '';
+  const whatsapp = (message: string) => `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+  const generalEnquiry = whatsapp(`Hi ${firstName}, I've been looking at the New Homes you sent me and would like to arrange some viewings.`);
+  const developmentEnquiry = (name: string) => whatsapp(`Hi ${firstName}, I'm interested in ${name}. Could we arrange a viewing?`);
+  const homeLink = (id: string) => developmentLink(input.origin, id, input.collection, input.brokerSlug);
 
- doc.setProperties({title:clean(input.title),author:input.broker.name,subject:'Selected London New Homes',creator:'JLL New Homes Portfolio'});
- return Object.assign(doc,{brochureWarnings:[...warnings]});
+  function font(size: number, face: Face) {
+    if (face === 'italic') doc.setFont(assets.serifItalic ? 'SourceSerif' : 'times', 'italic');
+    else doc.setFont('SourceSans', face);
+    doc.setFontSize(size);
+  }
+
+  function text(value: string | string[], x: number, y: number, size: number, style: TextStyle = {}) {
+    const {face = 'light', colour: ink = colour.white, opacity = 1, align = 'left', leading = size * 1.2} = style;
+    doc.saveGraphicsState();
+    if (opacity < 1) doc.setGState(doc.GState({opacity}));
+    font(size, face);
+    doc.setTextColor(ink);
+    doc.text(value, x, y, {align, lineHeightFactor: leading / size});
+    doc.restoreGraphicsState();
+  }
+
+  function spanWidth(value: string, size: number, face: Face) {
+    font(size, face);
+    return doc.getTextWidth(value);
+  }
+
+  function limitedCopy(value: string, max: number, label: string) {
+    const plain = clean(value);
+    if (plain.length <= max) return plain;
+    warnings.add(label);
+    const prefix = plain.slice(0, max - 1);
+    const boundary = plain[max - 1] === ' ' ? prefix.length : prefix.lastIndexOf(' ');
+    return prefix.slice(0, boundary > 0 ? boundary : prefix.length).trimEnd() + '…';
+  }
+
+  function fit(value: string, width: number, size: number, maxLines: number, face: Face = 'light', minSize = size): FittedText {
+    if (!value) return {lines: [], size, shortened: false};
+    while (true) {
+      font(size, face);
+      const lines: string[] = doc.splitTextToSize(value, width);
+      if (lines.length <= maxLines) return {lines, size, shortened: false};
+      if (size > minSize) {size = Math.max(minSize, size - 1); continue;}
+      const kept = lines.slice(0, maxLines);
+      let last = kept[maxLines - 1].replace(/[\s.…]+$/, '');
+      while (last.includes(' ') && doc.getTextWidth(last + '…') > width) last = last.slice(0, last.lastIndexOf(' '));
+      while (last && doc.getTextWidth(last + '…') > width) last = last.slice(0, -1);
+      kept[maxLines - 1] = last + '…';
+      return {lines: kept, size, shortened: true};
+    }
+  }
+
+  function fitted(value: string, x: number, baseline: number, width: number, size: number, maxLines: number,
+    style: TextStyle = {}, minSize = size, warning?: string) {
+    const content = fit(value, width, size, maxLines, style.face, minSize);
+    if (warning && content.shortened) warnings.add(warning);
+    if (content.lines.length) text(content.lines, x, baseline, content.size, style);
+    return content;
+  }
+
+  function rect(x: number, y: number, width: number, height: number, fill: string) {
+    doc.setFillColor(fill);
+    doc.rect(x, y, width, height, 'F');
+  }
+
+  function rule(x: number, y: number, length: number, opacity: number) {
+    doc.saveGraphicsState();
+    doc.setGState(doc.GState({'stroke-opacity': opacity}));
+    doc.setDrawColor(colour.white);
+    doc.setLineWidth(.5);
+    doc.line(x, y, x + length, y);
+    doc.restoreGraphicsState();
+  }
+
+  function newPage() {
+    doc.addPage();
+    rect(0, 0, A4_WIDTH, A4_HEIGHT, colour.midnight);
+  }
+
+  function lockup(cover = false) {
+    const width = cover ? 150 : 120;
+    const y = cover ? 32 : 28;
+    if (assets.logoDark) {
+      const logo = doc.getImageProperties(assets.logoDark);
+      doc.addImage(assets.logoDark, 'PNG', left, y, width, width * logo.height / logo.width);
+    } else {
+      text('JLL Residential', left, y + 18, 18, {face: 'bold'});
+    }
+  }
+
+  function photo(image: string, x: number, y: number, width: number, height: number) {
+    const info = doc.getImageProperties(image);
+    const scale = Math.max(width / info.width, height / info.height);
+    const imageWidth = info.width * scale;
+    const imageHeight = info.height * scale;
+    doc.saveGraphicsState();
+    doc.rect(x, y, width, height, null);
+    doc.clip();
+    doc.discardPath();
+    doc.addImage(image, 'JPEG', x + (width - imageWidth) / 2, y + (height - imageHeight) / 2, imageWidth, imageHeight);
+    doc.restoreGraphicsState();
+  }
+
+  function fade(top: number, bottom: number, opacityAt: (progress: number) => number) {
+    const steps = 24;
+    const height = (bottom - top) / steps;
+    for (let index = 0; index < steps; index++) {
+      doc.saveGraphicsState();
+      doc.setGState(doc.GState({opacity: opacityAt(index / (steps - 1))}));
+      rect(0, top + index * height, A4_WIDTH, height, colour.midnight);
+      doc.restoreGraphicsState();
+    }
+  }
+
+  function hero(image: string | undefined, bottom: number, bottomFadeStart = bottom - 195) {
+    if (!image) return;
+    photo(image, 0, 0, A4_WIDTH, bottom);
+    fade(0, 110, progress => .55 * (1 - progress));
+    fade(bottomFadeStart, bottom, progress => progress <= .5 ? progress * 1.6 : .8 + (progress - .5) * .4);
+    // Cover the anti-aliased image edge where the fade meets the page.
+    rect(0, bottom - 1, A4_WIDTH, 2, colour.midnight);
+  }
+
+  function portrait(x: number, y: number, diameter: number) {
+    const radius = diameter / 2;
+    const centreX = x + radius;
+    const centreY = y + radius;
+    doc.setFillColor(colour.sand);
+    doc.circle(centreX, centreY, radius, 'F');
+    if (input.broker.photo) {
+      doc.saveGraphicsState();
+      doc.circle(centreX, centreY, radius - 1.5, null);
+      doc.clip();
+      doc.discardPath();
+      doc.addImage(input.broker.photo, 'JPEG', x + 1.5, y + 1.5, diameter - 3, diameter - 3);
+      doc.restoreGraphicsState();
+    } else {
+      const initials = brokerName.split(' ').slice(0, 2).map(word => Array.from(word)[0]).join('');
+      text(initials, centreX, centreY + diameter * .12, diameter * .32, {align: 'center', colour: colour.midnight});
+    }
+  }
+
+  function heading(value: string, y: number, size: number, width: number, minSize: number, warning?: string) {
+    const title = fit(value, width, size, 2, 'light', minSize);
+    if (warning && title.shortened) warnings.add(warning);
+    const leading = title.size + 4;
+    const baseline = y - (title.lines.length - 1) * leading;
+    text(title.lines, left - 2, baseline, title.size, {leading});
+    return baseline - title.size * .8 - 8;
+  }
+
+  function textLink(label: string, x: number, y: number, width: number, size: number, url: string, style: TextStyle = {}) {
+    const fittedLabel = fit(label, width, size, 1, style.face, 11);
+    const line = fittedLabel.lines[0];
+    if (!line || !url) return;
+    text(line, x, y, fittedLabel.size, style);
+    doc.link(x, y - fittedLabel.size - 3, spanWidth(line, fittedLabel.size, style.face || 'light'), fittedLabel.size + 10, {url});
+  }
+
+  function whatsappButtonWidth(maxWidth: number) {
+    return Math.min(maxWidth, Math.max(144, spanWidth(`WhatsApp ${firstName}`, 14, 'bold') + 53));
+  }
+
+  function button(label: string, x: number, y: number, width: number, url: string, style: 'sand' | 'midnight' | 'outline', icon?: string) {
+    const height = 38;
+    const fill = style === 'midnight' ? colour.midnight : colour.sand;
+    const ink = style === 'midnight' ? colour.sand : style === 'outline' ? colour.white : colour.midnight;
+    doc.setFillColor(fill);
+    doc.setDrawColor(colour.white);
+    doc.setLineWidth(1);
+    doc.roundedRect(x, y, width, height, 2, 2, style === 'outline' ? 'S' : 'F');
+    const iconSpace = icon ? 21 : 0;
+    const labelText = fit(label, width - 30 - iconSpace, 14, 1, 'bold', 11);
+    const line = labelText.lines[0];
+    const start = x + (width - iconSpace - spanWidth(line, labelText.size, 'bold')) / 2;
+    if (icon) doc.addImage(icon, 'PNG', start, y + 12, 14, 14);
+    text(line, start + iconSpace, y + 24, labelText.size, {face: 'bold', colour: ink});
+    doc.link(x, y, width, height, {url});
+  }
+
+  function whatsappButton(x: number, y: number, width: number, url: string, dark = false) {
+    button(`WhatsApp ${firstName}`, x, y, width, url, dark ? 'midnight' : 'sand', dark ? assets.whatsappSand : assets.whatsappMidnight);
+  }
+
+  function numberCircle(number: number, x: number, y: number, diameter = 20) {
+    doc.setFillColor(colour.sand);
+    doc.circle(x + diameter / 2, y + diameter / 2, diameter / 2, 'F');
+    text(String(number), x + diameter / 2, y + diameter / 2 + 4, 12, {face: 'bold', align: 'center', colour: colour.midnight});
+  }
+
+  function tag(label: string | string[], number: number, x: number, y: number, width: number, fontSize: number) {
+    doc.setFillColor(colour.midnight);
+    doc.roundedRect(x, y, width, MAP_TAG_HEIGHT, 15, 15, 'F');
+    numberCircle(number, x + 5, y + 5);
+    const multiline = Array.isArray(label) && label.length > 1;
+    text(label, x + 31, y + (multiline ? 12.5 : 19.5), fontSize, {face: 'bold', leading: 12});
+  }
+
+  function pageNumber(y = 827) {
+    text(String(doc.getNumberOfPages()), right, y, 10, {align: 'right', opacity: .6});
+  }
+
+  function cover() {
+    rect(0, 0, A4_WIDTH, A4_HEIGHT, colour.midnight);
+    hero(input.coverImage, 480, 210);
+    lockup(true);
+    const labelY = heading(clean(input.title), 442, 46, 540, 34, 'Cover headline');
+    const client = limitedCopy(input.clientName || '', BROCHURE_MAX_CLIENT_NAME, 'Client name');
+    if (client) fitted(`Selected for ${client}`, left, labelY, contentWidth, 20, 1, {face: 'italic', colour: colour.sand}, 16, 'Client name');
+    const date = (input.date || new Date()).toLocaleDateString('en-GB', {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London'});
+    text(`${total} ${total === 1 ? 'development' : 'developments'} · ${date}`, left, 465, 13, {face: 'normal', opacity: .75});
+    rule(left, 500, contentWidth, .25);
+    const intro = limitedCopy(input.intro, BROCHURE_MAX_INTRO, 'Cover introduction');
+    const actionTop = intro ? 786 : 629;
+    const portraitSize = 64;
+    let portraitTop = actionTop - portraitSize - 30;
+    if (intro) {
+      const introBaseline = 550;
+      const introLeading = 23;
+      fitted(`A note from ${firstName}`, left, 526, contentWidth, 18, 1, {face: 'italic', colour: colour.sand}, 14);
+      const copy = fitted(intro, left, introBaseline, contentWidth, 16, 7, {leading: introLeading}, 16, 'Cover introduction');
+      const lastIntroBaseline = introBaseline + (copy.lines.length - 1) * introLeading;
+      portraitTop = Math.max(portraitTop, lastIntroBaseline + 16);
+    }
+    portrait(left, portraitTop, portraitSize);
+    fitted(brokerName, 114, portraitTop + 26, right - 114, 18, 1, {face: 'bold'}, 14, 'Cover broker name');
+    fitted(role, 114, portraitTop + 45, right - 114, 13, 2, {opacity: .75, leading: 15}, 12, 'Cover job title');
+    const whatsappWidth = whatsappButtonWidth(188);
+    whatsappButton(left, actionTop, whatsappWidth, generalEnquiry);
+    const callX = left + whatsappWidth + 20;
+    const callLabel = `Call ${phone}`;
+    textLink(callLabel, callX, actionTop + 24, 140, 13, callLink, {face: 'bold'});
+    const emailX = callX + spanWidth(callLabel, 13, 'bold') + 20;
+    textLink(email, emailX, actionTop + 24, right - emailX, 13, emailLink, {opacity: .8});
+  }
+
+  function shortlistHeading(continued: boolean) {
+    newPage();
+    lockup();
+    text(continued ? 'Your shortlist (continued)' : 'Your shortlist', left, 102, 32);
+    if (!continued) text(`${total} New ${total === 1 ? 'Home' : 'Homes'}, mapped`, left, 133, 16, {face: 'italic', colour: colour.sand});
+  }
+
+  function shortlistMap(height: number) {
+    const map = assets.map;
+    doc.addImage(map.image, doc.getImageProperties(map.image).fileType, 0, SHORTLIST_MAP_TOP, A4_WIDTH, height);
+    const labels = input.items.map((development, index) => {
+      const name = brochureDevelopmentName(development.name);
+      const single = fit(name, MAP_TAG_MAX_WIDTH - 41, 13, 1, 'bold', 11);
+      const label = single.shortened ? fit(name, MAP_TAG_MAX_WIDTH - 41, 11, 2, 'bold') : single;
+      const width = Math.max(...label.lines.map(line => spanWidth(line, label.size, 'bold'))) + 41;
+      return {...pointsById.get(development.id)!, label: label.lines, size: label.size, number: index + 1, width};
+    });
+    const placements = layoutBrochurePins(labels, A4_WIDTH, height);
+    for (const {anchor, tip} of placements) {
+      if (Math.hypot(anchor.x - tip.x, anchor.y - tip.y) < 1) continue;
+      doc.setDrawColor(colour.midnight);
+      doc.setLineWidth(.6);
+      doc.line(anchor.x, SHORTLIST_MAP_TOP + anchor.y, tip.x, SHORTLIST_MAP_TOP + tip.y);
+      doc.setFillColor(colour.midnight);
+      doc.circle(anchor.x, SHORTLIST_MAP_TOP + anchor.y, 2, 'F');
+    }
+    placements.forEach(({rect: box, tip}, index) => {
+      const label = labels[index];
+      const y = SHORTLIST_MAP_TOP + box.y;
+      tag(label.label, label.number, box.x, y, box.width, label.size);
+      doc.setFillColor(colour.midnight);
+      doc.triangle(tip.x - 5.5, SHORTLIST_MAP_TOP + tip.y - MAP_TAG_TIP_HEIGHT,
+        tip.x + 5.5, SHORTLIST_MAP_TOP + tip.y - MAP_TAG_TIP_HEIGHT,
+        tip.x, SHORTLIST_MAP_TOP + tip.y, 'F');
+      doc.link(box.x, y, box.width, box.height + MAP_TAG_TIP_HEIGHT, {url: homeLink(label.id)});
+    });
+    const creditRight = A4_WIDTH - 10;
+    const creditY = SHORTLIST_MAP_TOP + height - 7;
+    const creditWidth = spanWidth(map.attribution, 8, 'light');
+    doc.saveGraphicsState();
+    doc.setGState(doc.GState({opacity: .84}));
+    rect(creditRight - creditWidth - 4, creditY - 8, creditWidth + 8, 12, colour.white);
+    doc.restoreGraphicsState();
+    text(map.attribution, creditRight, creditY, 8, {align: 'right', colour: colour.midnight});
+  }
+
+  function shortlistRows(start: number, end: number, y: number, rowHeight: number) {
+    for (let index = start; index < end; index++, y += rowHeight) {
+      const development = input.items[index];
+      const image = assets.photos[development.id];
+      if (image) photo(image, left, y, 75, 52);
+      else rect(left, y, 75, 52, colour.space);
+      numberCircle(index + 1, 123, y + 4, 18);
+      const name = fitted(brochureDevelopmentName(development.name), 150, y + 18, 278, 16, 2, {face: 'bold', leading: 16}, 13);
+      fitted(`${development.area}, ${development.postcode} · ${bedRange(development)}`, 150, y + (name.lines.length === 2 ? 48 : 38), 278, 12, 1, {opacity: .8}, 11);
+      text('From', right, y + 19, 12, {face: 'italic', align: 'right', colour: colour.sand});
+      const price = startingPrice(development);
+      fitted(priceLabel(price), right, y + 41, 120, price === null ? 14 : 18, 1, {align: 'right', face: 'bold'}, 11);
+      rule(left, y + rowHeight - 4, contentWidth, .2);
+      doc.link(left, y, contentWidth, rowHeight - 4, {url: homeLink(development.id)});
+    }
+  }
+
+  function shortlist() {
+    shortlistHeading(false);
+    const height = shortlistMapHeight(total);
+    shortlistMap(height);
+    const firstPageEnd = Math.min(total, firstShortlistLimit);
+    const rowHeight = total <= 3 ? 72 : total >= 6 ? 56 : 60;
+    shortlistRows(0, firstPageEnd, SHORTLIST_MAP_TOP + height + (total <= 3 ? 20 : 14), rowHeight);
+    pageNumber();
+    for (let start = firstPageEnd; start < total; start += continuationLimit) {
+      shortlistHeading(true);
+      shortlistRows(start, Math.min(start + continuationLimit, total), 144, 60);
+      pageNumber();
+    }
+  }
+
+  function developmentPage(development: Development, index: number) {
+    newPage();
+    const name = brochureDevelopmentName(development.name);
+    hero(assets.photos[development.id], 320);
+    lockup();
+    const tagLabel = `${index + 1} of ${total} on your shortlist`;
+    const tagWidth = spanWidth(tagLabel, 13, 'bold') + 41;
+    tag(tagLabel, index + 1, right - tagWidth, 28, tagWidth, 13);
+    const areaY = heading(name, 300, 48, contentWidth + 2, 34, `${name} headline`);
+    fitted(clean(`${development.area}, ${development.postcode}`), left, areaY, contentWidth, 18, 1, {face: 'italic', colour: colour.sand}, 14);
+
+    const bedTypes = bedroomTypes(development).slice(0, 5);
+    const priceTop = 340;
+    const priceBottom = priceTop + 110 + bedTypes.length * 25;
+    rect(340, priceTop, right - 340, priceBottom - priceTop, colour.space);
+    text('Prices from', 358, 371, 16, {face: 'italic', colour: colour.sand});
+    const price = startingPrice(development);
+    fitted(priceLabel(price), 358, 409, right - 376, price === null ? 21 : 32, 1, {face: 'bold'}, 16);
+    rule(358, 435, right - 376, .3);
+    bedTypes.forEach((beds, row) => {
+      const y = 460 + row * 25;
+      text(bedLabel(beds), 358, y, 13);
+      fitted(priceLabel(startingPrice(development, beds)), right - 18, y, 114, 14, 1, {align: 'right', face: 'bold'}, 11);
+    });
+
+    const description = brochureIntroduction(development.description);
+    const features = brochureFeatures(development);
+    const note = limitedCopy(input.notes[development.id] || '', BROCHURE_MAX_NOTE, `${name} broker note`);
+    const layout = (descriptionLimit: number, featureLimit: number, noteLimit: number) => {
+      const summary = fit(description, 280, 14, descriptionLimit);
+      const visibleFeatures = features.slice(0, featureLimit).map(feature => fit(feature, 264, 13, 1));
+      const summaryBottom = summary.lines.length ? 352 + (summary.lines.length - 1) * 21 : 331;
+      const featuresTitle = summaryBottom + 28;
+      const featuresBottom = visibleFeatures.length ? featuresTitle + 24 + (visibleFeatures.length - 1) * 21 + 4 : summaryBottom + 4;
+      const noteText = fit(note, contentWidth - 86, 13, noteLimit);
+      const noteY = Math.max(featuresBottom, priceBottom) + 18;
+      const noteHeight = noteText.lines.length ? 65 + (noteText.lines.length - 1) * 19 : 0;
+      return {summary, visibleFeatures, featuresTitle, noteText, noteY, noteHeight};
+    };
+    let body = layout(6, 6, 4);
+    if (body.noteHeight && body.noteY + body.noteHeight > 718) body = layout(5, 6, 4);
+    if (body.noteHeight && body.noteY + body.noteHeight > 718) body = layout(5, 5, 4);
+    if (body.noteHeight && body.noteY + body.noteHeight > 718) body = layout(5, 5, 3);
+    if (body.summary.shortened) warnings.add(`${name} description`);
+    if (body.visibleFeatures.length < features.length || body.visibleFeatures.some(feature => feature.shortened)) warnings.add(`${name} features`);
+    if (body.noteText.shortened) warnings.add(`${name} broker note`);
+    if (body.summary.lines.length) text(body.summary.lines, left, 352, 14, {leading: 21});
+    if (body.visibleFeatures.length) {
+      text('Key features', left, body.featuresTitle, 16, {face: 'italic', colour: colour.sand});
+      body.visibleFeatures.forEach((feature, row) => {
+        const y = body.featuresTitle + 24 + row * 21;
+        rect(left, y - 4, 9, 1, colour.sand);
+        text(feature.lines, 52, y, 13);
+      });
+    }
+    if (body.noteHeight) {
+      rect(left, body.noteY, contentWidth, body.noteHeight, colour.space);
+      rect(left, body.noteY, 3, body.noteHeight, colour.sand);
+      portrait(left + 18, body.noteY + 16, 38);
+      fitted(`A note from ${firstName}`, left + 68, body.noteY + 29, contentWidth - 86, 16, 1, {face: 'italic', colour: colour.sand}, 13);
+      text(body.noteText.lines, left + 68, body.noteY + 49, 13, {leading: 19});
+    }
+
+    rect(0, 732, A4_WIDTH, A4_HEIGHT - 732, colour.sand);
+    const buttonWidth = whatsappButtonWidth(184);
+    const buttonX = right - buttonWidth;
+    const copyWidth = buttonX - left - 16;
+    fitted(`Interested in ${name}?`, left, 762, copyWidth, 16, 1, {face: 'italic', colour: colour.midnight}, 13);
+    fitted(`Message ${firstName} to arrange a viewing`, left, 787, copyWidth, 17, 1, {face: 'bold', colour: colour.midnight}, 13);
+    whatsappButton(buttonX, 758, buttonWidth, developmentEnquiry(name), true);
+    textLink('View in the JLL portfolio →', left, 815, copyWidth, 12, homeLink(development.id), {face: 'bold', colour: colour.midnight});
+    const disclaimer = development.sample ? 'Illustrative sample. Prices are indicative.' : 'Prices and availability subject to change.';
+    text(disclaimer, right, 815, 10, {align: 'right', colour: colour.midnight});
+    text(String(doc.getNumberOfPages()), right - spanWidth(disclaimer, 10, 'light') - 20, 815, 10, {align: 'right', colour: colour.midnight});
+  }
+
+  function nextSteps() {
+    newPage();
+    hero(input.coverImage, 320);
+    lockup();
+    heading('Let’s arrange your viewings', 300, 40, contentWidth, 36);
+    const body = 'Message me on WhatsApp with the developments you’d like to see and a few times that suit you. I’ll arrange the viewings and send you everything you need beforehand.';
+    fitted(body, left, 359, contentWidth, 15, 3, {leading: 22});
+    const steps = [
+      ['Message me', 'Tell me which homes you like'],
+      ['Book a viewing', 'I’ll confirm the time and place'],
+      ['Reserve', 'I’ll guide you through each step'],
+    ];
+    steps.forEach(([title, copy], index) => {
+      const x = left + 180 * index;
+      doc.setDrawColor(colour.sand);
+      doc.setLineWidth(1);
+      doc.circle(x + 14, 454, 14, 'S');
+      text(String(index + 1), x + 14, 459, 15, {face: 'italic', align: 'center', colour: colour.sand});
+      text(title, x, 493, 15, {face: 'bold'});
+      fitted(copy, x, 511, Math.min(165, right - x), 12, 2, {opacity: .8, leading: 16});
+    });
+    rect(left, 560, contentWidth, 180, colour.space);
+    portrait(56, 580, 84);
+    const contactX = 161;
+    const contactWidth = right - 18 - contactX;
+    text('Your contact', contactX, 596, 15, {face: 'italic', colour: colour.sand});
+    fitted(brokerName, contactX, 624, contactWidth, 22, 1, {face: 'bold'}, 16, 'Contact name');
+    fitted(role, contactX, 644, contactWidth, 13, 1, {opacity: .8}, 11, 'Contact job title');
+    if (email) {
+      text('Email', contactX, 666, 13, {face: 'bold', colour: colour.sand});
+      textLink(email, contactX + 37, 666, contactWidth - 37, 13, emailLink);
+    }
+    const width = whatsappButtonWidth(204);
+    whatsappButton(56, 682, width, generalEnquiry);
+    const callLabel = `Call ${phone}`;
+    button(callLabel, 66 + width, 682, Math.max(155, spanWidth(callLabel, 14, 'bold') + 32), callLink, 'outline');
+    text('Prices and availability subject to change. Images are indicative and may include CGIs or show homes.', left, 803, 10, {opacity: .6});
+    pageNumber();
+  }
+
+  cover();
+  shortlist();
+  input.items.forEach(developmentPage);
+  nextSteps();
+  doc.setProperties({title: clean(input.title), author: brokerName, subject: 'Selected London New Homes', creator: 'JLL New Homes Portfolio'});
+  return Object.assign(doc, {brochureWarnings: [...warnings]});
 }

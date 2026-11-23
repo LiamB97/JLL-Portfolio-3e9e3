@@ -1,63 +1,90 @@
+import type {Map as VectorMap} from 'maplibre-gl';
 import type {Development} from './types';
 import type {BrochureMapImage} from './brochure-map-layout';
-import {brochureMapBounds,BROCHURE_MAP_CANVAS} from './brochure-map-view';
+import {brochureMapBounds, shortlistMapHeight, SHORTLIST_MAP_WIDTH_PX} from './brochure-map-view';
 
-const areaLabels=[
- ['Paddington',51.517,-.177],['Marylebone',51.52,-.153],['Mayfair',51.509,-.148],['Soho',51.514,-.133],['Holborn',51.519,-.117],
- ['Covent Garden',51.512,-.123],['Knightsbridge',51.5,-.163],['Belgravia',51.496,-.153],['Victoria',51.493,-.143],
- ['Westminster',51.499,-.13,true],['City of London',51.515,-.091,true],['South Bank',51.505,-.112],['Bankside',51.506,-.097],
- ['Vauxhall',51.486,-.124],['Pimlico',51.488,-.14],['Chelsea',51.487,-.169],['Battersea',51.475,-.156],
- ['Canary Wharf',51.505,-.02],['Greenwich',51.482,-.009],['Stratford',51.542,-.003],['Islington',51.539,-.103],['Camden Town',51.539,-.144],
-] as const;
+const mapError = 'The shortlist map could not load. Check your connection and try generating the PDF again.';
 
-// Same public, key-free vector basemap as the portfolio. Rendering is local to
-// the broker's browser; no screenshot service or new external account is needed.
-export async function brochureMap(items:Development[]):Promise<BrochureMapImage>{
- if(!items.length||items.some(d=>!Number.isFinite(d.lat)||!Number.isFinite(d.lng)))throw Error('Check the selected development locations before creating the map.');
- const message='The location map could not load. Try again, or turn off “Include a location map” to generate the brochure without it.';
- const response=await fetch('https://tiles.openfreemap.org/styles/positron',{signal:AbortSignal.timeout(15000)}).catch(()=>{throw Error(message);});
- if(!response.ok)throw Error(message);
- const style=await response.json();
- const [maplibre,{default:workerUrl}]=await Promise.all([import('maplibre-gl'),import('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url')]);
- maplibre.setWorkerUrl(workerUrl);
- const {width,height}=BROCHURE_MAP_CANVAS;
- const node=document.createElement('div');Object.assign(node.style,{position:'fixed',left:'-10000px',top:'0',width:width+'px',height:height+'px',pointerEvents:'none'});node.setAttribute('aria-hidden','true');node.inert=true;document.body.append(node);
- let map:InstanceType<typeof maplibre.Map>|undefined;
- try{
-  return await new Promise<BrochureMapImage>((resolve,reject)=>{
-   const timer=window.setTimeout(()=>reject(Error(message)),40000);
-   const fail=()=>{clearTimeout(timer);reject(Error(message));};
-   try{
-    map=new maplibre.Map({container:node,style,interactive:false,attributionControl:false,canvasContextAttributes:{preserveDrawingBuffer:true},pixelRatio:1,fadeDuration:0,renderWorldCopies:false});
-    map.on('error',fail);
-    map.fitBounds(brochureMapBounds(items),{padding:{top:55,right:70,bottom:45,left:70},duration:0,maxZoom:11});
-    map.once('load',()=>{
-     if(!map)return;try{
-     for(const layer of map.getStyle().layers){
-      const source=('source-layer' in layer?layer['source-layer']:'')||'';
-      if(layer.type==='background')map.setPaintProperty(layer.id,'background-color','#F2F2F0');
-      if(layer.type==='fill'){
-       if(source==='water')map.setPaintProperty(layer.id,'fill-color','#CBDEEC');
-       else if(source==='park'||/park|wood|forest|grass/.test(layer.id)){map.setPaintProperty(layer.id,'fill-color','#DBE7CF');map.setPaintProperty(layer.id,'fill-opacity',1);}
-       else if(source==='building')map.setPaintProperty(layer.id,'fill-color','#E6E5E1');
-       else if(['landuse','landcover'].includes(source))map.setPaintProperty(layer.id,'fill-color',['match',['get','class'],['wood','forest','grass','grassland','park','garden','recreation_ground','village_green','allotments','cemetery'],'#DBE7CF','#F2F2F0']);
+function stylePrintMap(map: VectorMap) {
+  for (const layer of map.getStyle().layers) {
+    const source = 'source-layer' in layer ? layer['source-layer'] : '';
+    if (layer.type === 'background') map.setPaintProperty(layer.id, 'background-color', '#F0F0EF');
+    if (layer.type === 'fill') {
+      if (source === 'water') map.setPaintProperty(layer.id, 'fill-color', '#CBCCD1');
+      else if (source === 'park' || /park|wood|forest|grass/.test(layer.id)) map.setPaintProperty(layer.id, 'fill-color', '#DEE3DC');
+      else if (source === 'building') map.setPaintProperty(layer.id, 'fill-color', '#E4E4E2');
+      else if (['landuse', 'landcover'].includes(source ?? '')) map.setPaintProperty(layer.id, 'fill-color', [
+        'match', ['get', 'class'], ['wood', 'forest', 'grass', 'grassland', 'park', 'garden', 'recreation_ground', 'allotments', 'cemetery'], '#DEE3DC', '#F0F0EF',
+      ]);
+    }
+    if (layer.type === 'line' && source === 'transportation' && !/rail|tunnel/.test(layer.id)) {
+      map.setPaintProperty(layer.id, 'line-color', '#FFFFFF');
+    }
+    if (layer.type === 'symbol') {
+      if (/poi|housenumber/.test(layer.id)) map.setLayoutProperty(layer.id, 'visibility', 'none');
+      else if (layer.layout?.['text-field']) {
+        map.setPaintProperty(layer.id, 'text-color', '#686D76');
+        map.setPaintProperty(layer.id, 'text-halo-color', '#FFFFFF');
       }
-      if(layer.type==='line'&&source==='transportation'&&!/rail|tunnel/.test(layer.id))map.setPaintProperty(layer.id,'line-color','#FFFFFF');
-      if(layer.type==='symbol'){
-       if(/place.*(?:suburb|neighbourhood|city)|poi/.test(layer.id))map.setLayoutProperty(layer.id,'visibility','none');
-       else{map.setPaintProperty(layer.id,'text-color','#6B7783');map.setPaintProperty(layer.id,'text-halo-color','#FFFFFF');}
-      }
-     }
-     map.once('idle',()=>{requestAnimationFrame(()=>{
-      try{if(!map)return;const project=(lng:number,lat:number)=>{const p=map!.project([lng,lat]);return {x:p.x/width,y:p.y/height};};
-       const areas=areaLabels.filter(a=>a[3]);
-       const result:BrochureMapImage={image:map.getCanvas().toDataURL('image/jpeg',.9),points:items.map(d=>({id:d.id,...project(d.lng,d.lat)})),areas:areas.map(([name,lat,lng,major])=>({name,...project(lng,lat),major})).filter(p=>p.x>.05&&p.x<.95&&p.y>.04&&p.y<.94),attribution:'© OpenStreetMap contributors · OpenMapTiles · OpenFreeMap'};
-       clearTimeout(timer);resolve(result);
-      }catch{fail();}
-     });});
-     }catch{fail();}
+    }
+  }
+}
+
+// Capture the existing portfolio basemap at the PDF's aspect ratio. Pins and
+// their links are added as vectors, using positions from the real map projection.
+export async function brochureMap(items: Development[]): Promise<BrochureMapImage> {
+  if (!items.length || items.some(item => !Number.isFinite(item.lat) || !Number.isFinite(item.lng))) {
+    throw Error('Check the selected development locations before creating the shortlist map.');
+  }
+  const [response, maplibre, {default: workerUrl}] = await Promise.all([
+    fetch('https://tiles.openfreemap.org/styles/positron', {signal: AbortSignal.timeout(15_000)}),
+    import('maplibre-gl'),
+    import('maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'),
+  ]).catch(() => {throw Error(mapError);});
+  if (!response.ok) throw Error(mapError);
+  const style = await response.json().catch(() => {throw Error(mapError);});
+  maplibre.setWorkerUrl(workerUrl);
+  const width = SHORTLIST_MAP_WIDTH_PX;
+  const height = shortlistMapHeight(items.length) * 2;
+  const node = document.createElement('div');
+  Object.assign(node.style, {position: 'fixed', left: '-10000px', top: '0', width: `${width}px`, height: `${height}px`, pointerEvents: 'none'});
+  node.setAttribute('aria-hidden', 'true');
+  node.inert = true;
+  document.body.append(node);
+  let map: VectorMap | undefined;
+  try {
+    map = new maplibre.Map({
+      container: node, style, interactive: false, attributionControl: false,
+      canvasContextAttributes: {preserveDrawingBuffer: true}, pixelRatio: 1, fadeDuration: 0, renderWorldCopies: false,
     });
-   }catch{fail();}
-  });
- }finally{map?.remove();node.remove();}
+    const printMap = map;
+    return await new Promise<BrochureMapImage>((resolve, reject) => {
+      const timer = window.setTimeout(fail, 40_000);
+      function fail() {clearTimeout(timer); reject(Error(mapError));}
+      printMap.on('error', fail);
+      printMap.once('load', () => {
+        try {
+          stylePrintMap(printMap);
+          printMap.once('idle', () => {
+            try {
+              const points = items.map(item => {
+                const {x, y} = printMap.project([item.lng, item.lat]);
+                return {id: item.id, x: x / width, y: y / height};
+              });
+              const image = printMap.getCanvas().toDataURL('image/png');
+              if (!image.startsWith('data:image/png;base64,')) return fail();
+              clearTimeout(timer);
+              resolve({image, points, attribution: '© OpenStreetMap contributors · OpenMapTiles · OpenFreeMap'});
+            } catch {fail();}
+          });
+        } catch {fail();}
+      });
+      printMap.fitBounds(brochureMapBounds(items), {duration: 0});
+    });
+  } catch {
+    throw Error(mapError);
+  } finally {
+    map?.remove();
+    node.remove();
+  }
 }
