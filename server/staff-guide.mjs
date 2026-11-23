@@ -24,9 +24,9 @@ export function staffGuide(role) {
     'Save changes before sharing an edited collection. Existing links use the latest saved selection and their owner’s current WhatsApp details. Removing a collection stops its link. Admins can manage all collections; editing someone else’s collection does not change its contact.'
    ]},
    {id:'brochures',title:'Create and save a PDF brochure',steps:[
-    'Open PDF brochures and choose up to 20 published developments, or start from a saved buyer collection. Reorder the homes and add your introduction and notes.',
-    'Choose the shared London cover or a selected development photo. Include a location map adds numbered home pins to the opening page. The brochure uses your profile photo, name, job title, WhatsApp number and work email. If the map fails, retry or turn it off.',
-    'Generate PDF brochure and check the preview, photos, bedroom prices and shortened-copy warnings. Each development has an A4 page; the viewing invitation and contact card sit beneath the final development. Confirm prices and availability before sharing.',
+    'Open PDF brochures and choose up to 20 published developments, or start from a saved buyer collection. Reorder the homes and add an optional client name, introduction and notes.',
+    'The brochure includes the shared London skyline, a numbered shortlist map, a page for each development and a viewing invitation. The PDF uses your profile photo, name, job title, WhatsApp number and work email.',
+    'Generate & save PDF, then check the preview for photos, bedroom prices and shortened copy. Confirm prices and availability before sharing.',
     'Outlook draft · PDF attached downloads an .eml message containing the PDF. Open it in Outlook, add the recipient and review before sending. WhatsApp downloads a PDF for you to attach manually. Share file uses a supported device share sheet. Nothing is sent automatically.',
     'Save brochure keeps private settings. Generate & save PDF also stores PDFs up to 3.5MB. Saved brochures allows 50 brochures / 100MB per broker; larger PDFs remain downloadable. A PDF is a snapshot: regenerate it for current prices, stock or profile details.'
    ]},

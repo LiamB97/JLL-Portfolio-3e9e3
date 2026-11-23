@@ -445,10 +445,27 @@ test('profile job titles belong to the signed-in user and override per-brochure 
  await e.call('admin/profile',{method:'POST',actor:broker,body:{jobTitle:''}});assert.equal((await e.call('access/me',{actor:broker})).data.user.jobTitle,'');assert.equal((await e.call('access/me',{actor:owner})).data.user.jobTitle,'Senior Sales Broker');
 });
 
-test('brochure map choice is validated, saved privately and preserved when reopening',async()=>{
- const e=environment(),owner=await e.owner(),broker=await e.broker(owner),config={title:'Map selection',developmentIds:[samples[0].id],cover:{kind:'default'}};
- const created=await e.call('admin/brochures',{method:'POST',actor:broker,body:{config}});assert.equal(created.status,200);assert.equal(created.data.config.includeMap,true);
- const changed=await e.call('admin/brochures',{method:'POST',actor:broker,body:{id:created.data.id,version:created.data.version,config:{...config,includeMap:false}}});assert.equal(changed.status,200);assert.equal(changed.data.config.includeMap,false);
- const invalid=await e.call('admin/brochures',{method:'POST',actor:broker,body:{config:{...config,includeMap:'no'}}});assert.equal(invalid.status,422);
- const rows=(await e.call('admin/brochures',{actor:broker})).data;assert.equal(rows.length,1);assert.equal(rows[0].config.includeMap,false);assert.equal((await e.call('admin/brochures',{actor:owner})).data.length,0);
+test('brochures save optional client details privately and preserve longer legacy draft copy',async()=>{
+ const e=environment(),owner=await e.owner(),broker=await e.broker(owner),developmentId=samples[0].id;
+ const config={title:'Mapped selection',clientName:'  Test buyer  ',developmentIds:[developmentId],intro:'A personal selection.',notes:{[developmentId]:'Near the river.'}};
+ const created=await e.call('admin/brochures',{method:'POST',actor:broker,body:{config}});
+ assert.equal(created.status,200);assert.equal(created.data.config.clientName,'Test buyer');assert.equal(created.data.config.includeMap,true);
+ assert.equal((await e.call('admin/brochures',{actor:owner})).data.length,0);
+ const longIntro='I'.repeat(900),longNote='N'.repeat(320);
+ for(const invalid of [{clientName:'X'.repeat(101)},{intro:longIntro},{notes:{[developmentId]:longNote}},{includeMap:'no'}]){
+   assert.equal((await e.call('admin/brochures',{method:'POST',actor:broker,body:{config:{...config,...invalid}}})).status,422);
+ }
+ await e.repository.update(state=>{
+   const legacy=state.brochures.find(row=>row.id===created.data.id);
+   legacy.config={...legacy.config,includeMap:false,intro:longIntro,notes:{[developmentId]:longNote}};
+   delete legacy.config.clientName;
+ });
+ const [legacy]=(await e.call('admin/brochures',{actor:broker})).data;
+ assert.equal(legacy.config.includeMap,false);
+ const updated=await e.call('admin/brochures',{method:'POST',actor:broker,body:{
+   id:legacy.id,version:legacy.version,config:{...config,intro:legacy.config.intro,notes:legacy.config.notes}
+ }});
+ assert.equal(updated.status,200);assert.equal(updated.data.config.intro,longIntro);
+ assert.equal(updated.data.config.notes[developmentId],longNote);
+ assert.equal(updated.data.config.clientName,'Test buyer');
 });
