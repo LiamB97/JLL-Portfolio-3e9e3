@@ -1,24 +1,37 @@
 import {randomBytes} from 'node:crypto';
 import {AccessError} from './access.mjs';
-const MAX_PDF=3500000;
+import {BROCHURE_MAX_CLIENT_NAME, BROCHURE_MAX_DEVELOPMENTS, BROCHURE_MAX_INTRO, BROCHURE_MAX_NOTE, BROCHURE_MAX_SAVED_BYTES} from '../shared/brochure-settings.ts';
+const legacyCopyLimit = 1600;
 export function memoryBrochureFiles(){const files=new Map();return {put:async(key,bytes,type)=>files.set(key,{bytes,type}),get:async key=>files.get(key)||null,remove:async key=>{files.delete(key);}};}
 export function brochureService(repository,files){
  const own=(state,id,check)=>{const actor=check(state),row=(state.brochures||[]).find(b=>b.id===id&&b.ownerId===actor.id);if(!row)throw new AccessError('Saved brochure not found.',404);return row;};
  function config(body,state,actor){const input=body.config;if(!input||typeof input!=='object'||Array.isArray(input))throw new AccessError('A brochure needs its saved settings.');
-  const text=(v,max)=>{if(typeof v!=='string'||v.length>max)throw new AccessError('Check the brochure text lengths.');return v;};
-  const ids=input.developmentIds;if(!Array.isArray(ids)||!ids.length||ids.length>20||ids.some(id=>typeof id!=='string'||!state.developments.some(d=>d.id===id)))throw new AccessError('Choose 1–20 published developments.');
+  const previous = (state.brochures || []).find(row => row.id === body.id && row.ownerId === actor.id)?.config;
+  const text = (value, max, label, savedValue) => {
+    // Keep longer copy in existing drafts. The new layout shortens it at export.
+    const limit = value === savedValue ? Math.max(max, legacyCopyLimit) : max;
+    if (typeof value !== 'string' || value.length > limit) throw new AccessError(`${label} can be up to ${max} characters.`);
+    return value;
+  };
+  const ids=input.developmentIds;if(!Array.isArray(ids)||!ids.length||ids.length>BROCHURE_MAX_DEVELOPMENTS||ids.some(id=>typeof id!=='string'||!state.developments.some(d=>d.id===id)))throw new AccessError('Choose 1–20 published developments.');
   if(input.includeMap!==undefined&&typeof input.includeMap!=='boolean')throw new AccessError('Choose whether to include the location map.');
-  const result={includeMap:input.includeMap!==false,title:text(input.title,100).trim(),intro:text(input.intro||'',1600),brokerTitle:actor.jobTitle||'',developmentIds:[...new Set(ids)],notes:{},collection:String(input.collection||''),cover:{kind:'default'}};
+  const result={includeMap:input.includeMap!==false,title:text(input.title,100,'The brochure headline').trim(),intro:text(input.intro??'',BROCHURE_MAX_INTRO,'The introduction',previous?.intro),brokerTitle:actor.jobTitle||'',developmentIds:[...new Set(ids)],notes:{},collection:String(input.collection||''),cover:{kind:'default'}};
   if(!result.title)throw new AccessError('Give the brochure a title.');
   if(result.collection&&!state.collections?.some(c=>c.slug===result.collection&&c.ownerId===actor.id))throw new AccessError('Choose one of your own collections.',403);
-  for(const id of ids)if(input.notes?.[id])result.notes[id]=text(input.notes[id],1600);
+  if (input.clientName !== undefined) {
+    const name = text(input.clientName, BROCHURE_MAX_CLIENT_NAME, 'The client name').trim();
+    if (name) result.clientName = name;
+  }
+  for (const id of result.developmentIds) {
+    if (input.notes?.[id]) result.notes[id] = text(input.notes[id], BROCHURE_MAX_NOTE, 'Each development note', previous?.notes?.[id]);
+  }
   if(input.cover?.kind==='development'){const d=state.developments.find(d=>d.id===input.cover.developmentId&&ids.includes(d.id));if(!d||!d.images.includes(input.cover.imageUrl))throw new AccessError('Choose a cover image from a selected development.');result.cover={kind:'development',developmentId:d.id,imageUrl:input.cover.imageUrl};}
   return result;
  }
  return {
   async list(check){const s=await repository.read(),actor=check(s);return (s.brochures||[]).filter(b=>b.ownerId===actor.id).map(({fileKey,...b})=>({...b,hasPdf:Boolean(fileKey)})).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));},
   async save(body,check){const s=await repository.read(),actor=check(s);config(body,s,actor);let bytes=null,key=null;
-   if(body.pdfBase64!==undefined){if(typeof body.pdfBase64!=='string'||body.pdfBase64.length>Math.ceil(MAX_PDF/3)*4+4||!/^[A-Za-z0-9+/]+={0,2}$/.test(body.pdfBase64))throw new AccessError('Saved PDFs must be no larger than 3.5MB.',413);bytes=Buffer.from(body.pdfBase64,'base64');if(bytes.toString('base64')!==body.pdfBase64)throw new AccessError('The PDF encoding is invalid.');if(bytes.length>MAX_PDF||bytes.subarray(0,5).toString()!=='%PDF-'||!bytes.subarray(-1024).toString().includes('%%EOF'))throw new AccessError('This file is not a complete PDF.');key='pdf/'+randomBytes(20).toString('hex');await files.put(key,bytes,'application/pdf');}
+   if(body.pdfBase64!==undefined){if(typeof body.pdfBase64!=='string'||body.pdfBase64.length>Math.ceil(BROCHURE_MAX_SAVED_BYTES/3)*4+4||!/^[A-Za-z0-9+/]+={0,2}$/.test(body.pdfBase64))throw new AccessError('Saved PDFs must be no larger than 3.5MB.',413);bytes=Buffer.from(body.pdfBase64,'base64');if(bytes.toString('base64')!==body.pdfBase64)throw new AccessError('The PDF encoding is invalid.');if(bytes.length>BROCHURE_MAX_SAVED_BYTES||bytes.subarray(0,5).toString()!=='%PDF-'||!bytes.subarray(-1024).toString().includes('%%EOF'))throw new AccessError('This file is not a complete PDF.');key='pdf/'+randomBytes(20).toString('hex');await files.put(key,bytes,'application/pdf');}
    let previousKey;try{const row=await repository.update(state=>{const current=check(state),fresh=config(body,state,current);state.brochures||=[];let existing=body.id?own(state,body.id,check):null;
     if(existing&&existing.version!==body.version)throw new AccessError('A newer version of this brochure was saved. Reopen it before saving.',409);
     const mine=state.brochures.filter(b=>b.ownerId===current.id);if(!existing&&mine.length>=50)throw new AccessError('Remove an old saved brochure before adding another (50 per broker).');
