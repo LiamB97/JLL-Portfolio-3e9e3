@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {reviewRegions} from '../shared/development-review.ts';
+import {canReviewDevelopments} from '../shared/staff-roles.ts';
 import {AccessError} from './access.mjs';
 import {recordStaff} from './activity.mjs';
 import {newDevelopmentReview, reviewInterval} from './development-review-record.mjs';
@@ -12,13 +13,17 @@ const retryWindow = 20 * 60 * 60 * 1000;
 const batchSize = 4;
 
 const developments = state => state.developments.filter(development => !development.sample);
-const activeStaff = state => (state.users ?? []).filter(user => user.active && user.email);
+const canTakeAssignments = user => Boolean(user?.active && user.email && canReviewDevelopments(user.role));
+const activeReviewers = state => (state.users ?? []).filter(canTakeAssignments);
 const summary = ({id, name, area, postcode, _reviewRegion}) => ({id, name, area, postcode, region: _reviewRegion ?? null});
 
 export function developmentReviewWorkspace(state, actor, emailConfigured) {
+  const canAssign = actor.role === 'admin';
+  if (!canAssign && !canReviewDevelopments(actor.role)) {
+    throw new AccessError('Development reviews require Broker admin or Development consultant access.', 403);
+  }
   const stock = developments(state);
   const consultants = state.users ?? [];
-  const canAssign = actor.role === 'admin';
   const reviews = (state.developmentReviews ?? []).flatMap(review => {
     const development = stock.find(item => item.id === review.developmentId);
     if (!development || (!canAssign && review.assigneeId !== actor.id)) return [];
@@ -27,7 +32,7 @@ export function developmentReviewWorkspace(state, actor, emailConfigured) {
       ...review,
       development: {...summary(development), bedrooms: development.bedrooms, unitPrices: development.unitPrices ?? {}},
       assigneeName: assignee?.name ?? 'Former staff member',
-      assigneeActive: Boolean(assignee?.active),
+      assigneeActive: canTakeAssignments(assignee),
     }];
   });
   return {
@@ -35,7 +40,7 @@ export function developmentReviewWorkspace(state, actor, emailConfigured) {
     canAssign,
     emailConfigured,
     developments: canAssign ? stock.map(summary) : [],
-    consultants: canAssign ? activeStaff(state).map(({id, name, email}) => ({id, name, email})) : [],
+    consultants: canAssign ? activeReviewers(state).map(({id, name, email}) => ({id, name, email})) : [],
   };
 }
 
@@ -52,9 +57,11 @@ export function assignDevelopmentReview(state, body, now = Date.now()) {
   if (!stillCurrent) throw new AccessError('The assignment changed. Refresh the list and try again.', 409);
 
   const assigneeIds = shared ? body.assigneeIds : body.assigneeId === null ? [] : [body.assigneeId];
-  const eligible = new Set([...activeStaff(state).map(user => user.id), ...current.map(review => review.assigneeId)]);
+  const eligible = new Set([...activeReviewers(state).map(user => user.id), ...current.map(review => review.assigneeId)]);
   if (!Array.isArray(assigneeIds) || new Set(assigneeIds).size !== assigneeIds.length ||
-      assigneeIds.some(id => typeof id !== 'string' || !eligible.has(id))) throw new AccessError('Choose active consultants.');
+      assigneeIds.some(id => typeof id !== 'string' || !eligible.has(id))) {
+    throw new AccessError('Choose active Broker admins or Development consultants.');
+  }
   if (body.region !== undefined) {
     if (body.region !== null && !reviewRegions.includes(body.region)) throw new AccessError('Choose East London, Core or PCL.');
     if (body.expectedRegion !== (development._reviewRegion ?? null)) throw new AccessError('The region changed. Refresh the list and try again.', 409);
@@ -72,6 +79,9 @@ export function assignDevelopmentReview(state, body, now = Date.now()) {
 }
 
 function assignedReview(state, actor, body) {
+  if (!canReviewDevelopments(actor.role)) {
+    throw new AccessError('Development reviews require Broker admin or Development consultant access.', 403);
+  }
   const reviews = (state.developmentReviews ?? []).filter(item => item.developmentId === body?.developmentId);
   const development = developments(state).find(item => item.id === body?.developmentId);
   if (!reviews.length || !development) throw new AccessError('Development review not found.', 404);
@@ -114,7 +124,7 @@ function sameCycle(review, job, cycle) {
 }
 
 function currentJob(state, job) {
-  return activeStaff(state).some(user => user.id === job.assigneeId && user.email === job.to) &&
+  return activeReviewers(state).some(user => user.id === job.assigneeId && user.email === job.to) &&
     job.cycles.every(cycle => developments(state).some(d => d.id === cycle.developmentId) &&
       (state.developmentReviews ?? []).some(review => sameCycle(review, job, cycle)));
 }
@@ -134,7 +144,7 @@ function finishJob(state, job, time, delivered) {
 
 function dueDigests(state, time) {
   const stock = new Map(developments(state).map(development => [development.id, development]));
-  const staff = new Map(activeStaff(state).map(user => [user.id, user]));
+  const staff = new Map(activeReviewers(state).map(user => [user.id, user]));
   const digests = new Map();
   for (const review of state.developmentReviews ?? []) {
     const consultant = staff.get(review.assigneeId), development = stock.get(review.developmentId);
@@ -158,7 +168,7 @@ function queueDigests(state, time, from, workspaceUrl) {
     state.developmentReviewMail.push({
       id: randomUUID(), assigneeId: consultant.id, queuedAt: time, from, to: consultant.email,
       subject: 'JLL portfolio development details due for review',
-      text: `Hi ${consultant.name},\n\nPlease check the description, pricing and availability for these developments. Update any details that need changing, then confirm each review in the staff workspace.\n\n${names}\n\nOpen Development reviews: ${workspaceUrl}\n`,
+      text: `Hi ${consultant.name},\n\nPlease check the published description, pricing and availability. Use Bedroom prices to enter confirmed starting prices by bedroom type and arrange any other corrections with a stock manager before confirming the review.\n\n${names}\n\nOpen Development reviews: ${workspaceUrl}\n`,
       cycles: items.map(({review: {developmentId, version, nextReminderAt}}) => ({developmentId, version, nextReminderAt})),
     });
   }

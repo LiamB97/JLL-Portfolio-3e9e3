@@ -1,4 +1,5 @@
 import {profilePhoto} from './profile-photo.mjs';
+import {canManagePortfolioStock,canReviewDevelopments,canUseBuyerTools,isStaffRole} from '../shared/staff-roles.ts';
 import {isYourFirstHomeSlug} from '../shared/your-first-home.ts';
 import {publicYourFirstHome} from './your-first-home.mjs';
 import transportNetwork from './data/tfl-network.json' with {type:'json'};
@@ -18,7 +19,7 @@ export const digest=value=>createHash('sha256').update(value).digest('hex');
 export const equal=(a,b)=>timingSafeEqual(Buffer.from(digest(a)),Buffer.from(digest(b)));
 function email(value){if(typeof value!=='string'||value.length>254||!/^\S+@\S+\.\S+$/.test(value.trim()))throw new AccessError('Enter a valid email address.');return value.trim().toLowerCase();}
 function name(value){if(typeof value!=='string'||!value.trim()||value.length>100)throw new AccessError('Enter a name of up to 100 characters.');return value.trim();}
-function role(value){if(!['admin','broker_admin','broker'].includes(value))throw new AccessError('Choose Admin, Broker admin or Broker.');return value;}
+function role(value){if(!isStaffRole(value))throw new AccessError('Choose a valid staff role.');return value;}
 export function whatsappNumber(value){const number=String(value||'').trim().replace(/[ ()-]/g,'').replace(/^00/,'+');if(!/^\+[1-9]\d{7,14}$/.test(number))throw new AccessError('Enter your WhatsApp number with country code, for example +447900123456.');return number;}
 function password(value){if(typeof value!=='string'||value.length<12||value.length>128)throw new AccessError('Use a password of 12–128 characters.');return value;}
 async function passwordHash(value){const salt=randomBytes(16).toString('hex');const key=await scrypt(password(value),salt,64,{N:32768,r:8,p:1,maxmem:64*1024*1024});return `scrypt-v1:${salt}:${key.toString('hex')}`;}
@@ -28,7 +29,7 @@ export function publicDevelopment(d){const {createdBy,updatedBy,importSource,...
 function init(s){for(const key of ['users','sessions','invites','collections','authFailures'])if(!Array.isArray(s[key]))s[key]=[];}
 function ownerGuard(s,u,nextRole,nextActive){if(u.role==='admin'&&u.active&&(nextRole!=='admin'||!nextActive)&&s.users.filter(x=>x.active&&x.role==='admin').length<=1)throw new AccessError('Keep at least one active administrator.');}
 function activateInvitedReviews(state, invitation, user, now){
- if(!invitation._reviewDevelopments?.length||!['admin','broker_admin'].includes(user.role))return;
+ if(!invitation._reviewDevelopments?.length||!canReviewDevelopments(user.role))return;
  const assignments=state.developmentReviews??=[];
  const assigned=new Set(assignments.filter(review=>review.assigneeId===user.id).map(review=>review.developmentId));
  const regions=new Map(state.developments.filter(d=>!d.sample).map(d=>[d.id,d._reviewRegion]));
@@ -67,7 +68,7 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
  }
  function current(s,actor){if(actor.legacy){if((s.users||[]).length)throw new AccessError('Sign in with your staff account.',401);return actor;}const u=(s.users||[]).find(x=>x.id===actor.id&&x.active),session=(s.sessions||[]).find(x=>x.userId===actor.id&&x.expiresAt>now()&&equal(x.tokenHash,digest(actor.token||'')));if(!u||!session)throw new AccessError('Your session has ended. Sign in again.',401);return {...actor,...publicUser(u)};}
  function csrf(request,actor){checkOrigin(request);if(!actor.legacy&&!equal(request.headers.get('x-csrf-token')||'',actor.csrf||''))throw new AccessError('Your session needs refreshing. Sign in again.',403);}
- function stock(actor){if(!['admin','broker_admin'].includes(actor.role))throw new AccessError('Admin or Broker admin access is required to change developments.',403);}
+ function stock(actor){if(!canManagePortfolioStock(actor.role))throw new AccessError('Admin or Broker admin access is required to change developments.',403);}
  function admin(actor){if(actor.role!=='admin')throw new AccessError('Administrator access is required.',403);}
  async function bootstrap(body){
   if(!bootstrapSecret||bootstrapSecret.length<12)throw new AccessError('First set ADMIN_PASSWORD in Netlify Functions environment variables and redeploy. Then create your owner account here.',503);
@@ -93,8 +94,10 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
  async function accept(body){
   if(typeof body.token!=='string'||body.token.length>100)throw new AccessError('This invitation is invalid or expired.',410);
   const hash=await passwordHash(body.password);return repository.update(s=>{init(s);const invitation=s.invites.find(x=>x.expiresAt>now()&&equal(x.tokenHash,digest(body.token)));const inviter=invitation&&s.users.find(x=>x.id===invitation.createdBy&&x.active);if(!invitation||!inviter||(inviter.role!=='admin'&&(invitation.role!=='broker'||s.users.some(x=>x.email===invitation.email))))throw new AccessError('This invitation is invalid or expired.',410);
-   if(email(body.email)!==invitation.email)throw new AccessError('Use the email address your invitation was sent to.');const phone=whatsappNumber(body.whatsapp);let u=s.users.find(x=>x.email===invitation.email);if(u){ownerGuard(s,u,invitation.role,true);u.passwordHash=hash;u.role=invitation.role;u.active=true;u.name=invitation.name;}else{u={id:randomBytes(12).toString('hex'),email:invitation.email,name:invitation.name,role:invitation.role,active:true,passwordHash:hash,createdAt:new Date(now()).toISOString()};s.users.push(u);}
-   u.whatsapp=phone;if(!u.shareSlug){u.shareSlug=randomBytes(12).toString('base64url');recordStaff(s,u,'personal_link_created',{now:now()});}
+   if(email(body.email)!==invitation.email)throw new AccessError('Use the email address your invitation was sent to.');
+   const phone=canUseBuyerTools(invitation.role)?whatsappNumber(body.whatsapp):null;
+   let u=s.users.find(x=>x.email===invitation.email);if(u){ownerGuard(s,u,invitation.role,true);u.passwordHash=hash;u.role=invitation.role;u.active=true;u.name=invitation.name;}else{u={id:randomBytes(12).toString('hex'),email:invitation.email,name:invitation.name,role:invitation.role,active:true,passwordHash:hash,createdAt:new Date(now()).toISOString()};s.users.push(u);}
+   if(phone){u.whatsapp=phone;if(!u.shareSlug){u.shareSlug=randomBytes(12).toString('base64url');recordStaff(s,u,'personal_link_created',{now:now()});}}
    issueBrokerPassword(s,u,true);
    activateInvitedReviews(s,invitation,u,now());
    s.invites=s.invites.filter(x=>x.id!==invitation.id);s.sessions=s.sessions.filter(x=>x.userId!==u.id);s.authFailures=s.authFailures.filter(x=>x.key!==digest(u.email));return addSession(s,u);
@@ -104,7 +107,7 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
  function brokerCard(u){return u?.active&&u.whatsapp&&u.shareSlug?{name:u.name,whatsapp:u.whatsapp,slug:u.shareSlug,photo:u.photo||''}:null;}
  async function publicBroker(slug,state){const s=state??await repository.read();const u=(s.users||[]).find(u=>u.shareSlug===slug&&u.active);const card=brokerCard(u);if(!card)throw new AccessError('This broker link is unavailable.',404);return card;}
  async function updateUser(actor,id,body){admin(actor);return repository.update(s=>{init(s);const acting=current(s,actor);admin(acting);const u=s.users.find(x=>x.id===id);if(!u)throw new AccessError('User not found.',404);const nextRole=body.role===undefined?u.role:role(body.role),active=body.active===undefined?u.active:body.active;if(typeof active!=='boolean')throw new AccessError('Choose whether the account is active.');ownerGuard(s,u,nextRole,active);u.role=nextRole;u.active=active;if(active)issueBrokerPassword(s,u);else delete u._buyerPasswordVersion;s.sessions=s.sessions.filter(x=>x.userId!==u.id);s.invites=s.invites.filter(x=>x.email!==u.email&&x.createdBy!==u.id);recordStaff(s,acting,'user_update',{id:u.id,label:u.name,now:now()});return publicUser(u);});}
- function canEdit(actor,d){return ['admin','broker_admin'].includes(actor.role);}
+ function canEdit(actor,d){return canManagePortfolioStock(actor.role);}
  async function collections(actor){
   const state=await repository.read(),acting=current(state,actor);
   return (state.collections||[]).filter(c=>!isYourFirstHomeSlug(c.slug)&&(acting.role==='admin'||c.ownerId===acting.id)).map(c=>privateCollection(state,c));

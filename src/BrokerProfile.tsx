@@ -3,11 +3,11 @@ import WhatsAppIcon from './WhatsAppIcon';
 import {useEffect,useState} from 'react';
 import {Copy,ExternalLink,ChevronDown} from 'lucide-react';
 import EmailShare from './EmailShare';
-import {portfolioInvitation} from './sharing';
+import {personalPortfolioLink,portfolioInvitation} from './sharing';
 import type {StaffUser,StaffRequest} from './staff-types';
 export default function BrokerProfile({user,request,updated,active=true}:{user:StaffUser;request:StaffRequest;updated:(u:StaffUser)=>void;active?:boolean}){
  const [jobTitle,setJobTitle]=useState(user.jobTitle||''),[profileBusy,setProfileBusy]=useState(false),[profileMessage,setProfileMessage]=useState('');
- const [phone,setPhone]=useState(user.whatsapp||''),[editing,setEditing]=useState(false),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);const link=user.shareSlug?location.origin+'/?broker='+encodeURIComponent(user.shareSlug):'';
+ const [phone,setPhone]=useState(user.whatsapp||''),[editing,setEditing]=useState(false),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);const link=personalPortfolioLink(location.origin,user.shareSlug);
  const [buyerPassword,setBuyerPassword]=useState<string|null>(null);
  useEffect(()=>{
   if(!active)return;

@@ -1,5 +1,24 @@
+import {canManagePortfolioStock,canReviewDevelopments} from '../shared/staff-roles.ts';
+
 export function staffGuide(role) {
- const stock = role === 'admin' || role === 'broker_admin';
+ const stock = canManagePortfolioStock(role);
+ const reviewChapter = {id:'reviews',title:'Keep assigned development reviews current',steps:[
+  'Open Development reviews from Overview or the sidebar. Use View development to check the published description, pricing and availability.',
+  'Use Bedroom prices to enter confirmed starting prices by bedroom type. Leave unknown prices blank.',
+  stock ? 'Make other stock edits in Developments.' : 'Send corrections to descriptions, images or availability to an Admin or Broker admin.',
+  'Select Confirm details once the published information is correct. This starts a new 14-day period for your assignment. Other reviewers on the same development have their own review dates.',
+  'Check due dates in the workspace. Email reminders require configured sender details.',
+ ]};
+ const pricesFaq = {id:'prices',question:'Where do I add bedroom prices or confirm a review?',answer:'Open Development reviews and use Bedroom prices on one of your assigned homes. Once the listing is correct, select Confirm details to start a new 14-day review period.'};
+ if(role === 'development_consultant') return {
+  title:'Development consultant guide', role,
+  chapters:[reviewChapter,{id:'profile',title:'Sign in and get help',steps:[
+   'Open https://digitalportfolio.live.jll.com/#admin and sign in with your JLL email.',
+   'To activate a new invitation, use the matching work email and choose a password of at least 12 characters. The WhatsApp field is optional for this role.',
+   'Ask an Admin to assign developments, reissue an expired invitation or help with your account.',
+  ]}],
+  faqs:[pricesFaq,{id:'review-scope',question:'How do I correct a description, photo or availability?',answer:'Send the development name and verified correction to an Admin or Broker admin. Confirm the review once the published details are correct.'}],
+ };
  return {
   title: 'How the portfolio works for your team', role,
   chapters: [
@@ -8,7 +27,7 @@ export function staffGuide(role) {
     'New colleagues open their own invitation, enter the matching JLL email, choose a password of at least 12 characters and add an international WhatsApp number. Invitations are single-use and expire after seven days. Existing staff should use their current account.',
     'In My profile, check your WhatsApp number, name and job title. Upload a JPEG, PNG or WebP in Your broker photo, adjust its position and zoom, then Save photo. Your photo appears on buyer links and newly generated brochures.',
     'Your personal and collection links show your name and WhatsApp contact. Your work email appears in brochures. Profile changes update existing buyer links; regenerate saved PDFs to update their contact details.',
-    'Overview provides shortcuts to collections, PDFs, your profile, assigned reviews and the pinned Your First Home collection. Use Workspace section on mobile. Switching sections preserves in-progress forms in the current tab; refresh or sign-out clears unsaved work.'
+    'Overview puts collections and PDFs first, with personal and Your First Home links in Sharing. Use Workspace section on mobile. Switching sections preserves in-progress forms in the current tab; refresh or sign-out clears unsaved work.'
    ]},
    {id:'share',title:'Share your personal portfolio link',steps:[
     'In My profile, use Copy my portfolio link to share the available London portfolio with your own WhatsApp contact attached. Preview it before sending.',
@@ -20,7 +39,7 @@ export function staffGuide(role) {
     'Open Buyer collections → New collection. Choose a general title and 1–50 published developments. Keep buyer names and other personal details out of titles.',
     'Map layers on opening lets you choose transport lines or specific stations for that collection. General portfolio links open with optional overlays off. Selected stations have prominent markers and visible names.',
     'Create buyer link, then preview it. Your picks appear first in List and Split with featured styling, and the map initially frames your selection. View picks returns to the selection; Picked homes only filters results. Other homes remain available unless access settings restrict the collection.',
-    'Every staff role can tick Password protect this collection before saving to generate a buyer password. Share the password separately. Replace collection password invalidates the previous password without changing the link.',
+    'Tick Password protect this collection before saving to generate a buyer password. Share the password separately. Replace collection password invalidates the previous password without changing the link.',
     'Save changes before sharing an edited collection. Existing links use the latest saved selection and their owner’s current WhatsApp details. Removing a collection stops its link. Admins can manage all collections; editing someone else’s collection does not change its contact.'
    ]},
    {id:'brochures',title:'Create and save a PDF brochure',steps:[
@@ -39,19 +58,16 @@ export function staffGuide(role) {
     'Prices are starting points. With a bedroom filter, missing confirmed prices for that bedroom type are not replaced by another unit type’s price. Check suitable homes, availability, translations and travel estimates with the buyer.'
    ]},
    {id:'your-first-home',title:'Use the shared Your First Home preview',steps:[
-    'Your First Home is pinned on Overview and in Buyer collections, with its own workspace section. Every staff role can copy their own buyer link to the shared selection or preview it. Enquiries from this link use their current profile WhatsApp number.',
+    'Your First Home is pinned on Overview and in Buyer collections, with its own workspace section. Copy your buyer link from the workspace. Enquiries from this link use your current profile WhatsApp number.',
     'This is being prepared ahead of scheme launch. Developments are potential options only: participation, individual home prices, availability and buyer eligibility remain unconfirmed. Do not describe a development or buyer as approved for the scheme.',
     'The standalone collection has Your First Home branding, pink pins, an illustrative calculator and expandable scheme FAQs. Use Calculator & FAQs for assumptions and government guidance links. Figures are calculated in the buyer’s browser and are not saved.',
     'The public Your First Home link and landing-page embed go to the shared team contact, initially James Dewhurst. Links copied from the broker workspace use the sharing broker’s WhatsApp number, including development enquiries and onward shortlist links. Add your number in My profile before sharing.',
     stock ? 'Admins and Broker admins manage the homes, local authorities, team WhatsApp number and optional password in Your First Home. Only selected developments with a recorded price within their local cap are shown. Save shared collection updates everyone’s existing link.' : 'Ask an Admin or Broker admin to change homes, the team contact or password settings. Share this managed collection rather than creating separate campaign copies.'
    ]},
-   {id:'reviews',title:'Keep assigned development reviews current',steps:[
-    'Assigned developments appear under Your development reviews on Overview. Open Development reviews, check the published description, pricing and availability, then Confirm details to start a new 14-day period for your assignment.',
-    'Several colleagues can be assigned the same development; each has their own review confirmation.',
-    stock ? 'For a development assigned to you, Bedroom prices saves confirmed starting prices by bedroom type. Leave unknown prices blank. Save prices, check the published details and then Confirm details. Other stock edits belong in Developments.' : 'Regular Brokers can confirm their own assigned reviews. Ask an Admin or Broker admin to change published copy, stock or bedroom prices.',
-    'Email reminders depend on sender configuration and successful delivery. Workspace due dates and reviews work even when email delivery is unavailable.',
-    ...(role === 'admin' ? ['Admins assign reviews in Development reviews: choose the development, region and all responsible colleagues, then save. Regions are East London, Core and PCL. Several colleagues can be assigned together.'] : [])
-   ]},
+   ...(canReviewDevelopments(role) ? [reviewChapter] : role === 'admin' ? [{id:'reviews',title:'Assign development reviews',steps:[
+    'Open Review assignments under Portfolio stock. Choose a development, region and the Broker admins or Development consultants responsible for it.',
+    'Several people can review the same development. Each reviewer confirms their own review. Check email delivery status on the assignment page.',
+   ]}] : []),
    ...(stock ? [
     {id:'pending',title:'Complete Pending input',steps:[
      'Pending input lists requested developments. Existing listings are linked; unpublished entries stay private until reviewed and published.',
@@ -75,13 +91,13 @@ export function staffGuide(role) {
     'Stock editing, imports, drafts and publishing are for Admins and Broker admins. Admins control portfolio-wide access, instructed-only settings, roles, review assignments and reporting.'
    ]}]),
    {id:'people',title:'Invitations and account access',steps:[
-    role === 'admin' ? 'In People & roles, invite Broker, Broker admin or Admin accounts, manage roles/access and issue password-reset invitations. Check for an existing account before reinviting an email.' : 'Invite brokers creates an invitation for a new regular Broker. Only Admins can reset existing accounts or assign higher roles.',
+    role === 'admin' ? 'In People & roles, invite colleagues as Broker, Broker admin, Development consultant or Admin. Manage roles, access and password-reset invitations there.' : 'Invite brokers creates an invitation for a new regular Broker. Only Admins can reset existing accounts or assign other roles.',
     'Each named invitation requires its matching email, can be used once, expires after seven days and can be revoked. The app does not email invitations automatically.',
     'Use your own account and never send staff activation links to buyers. Disabling an account stops its personal and ordinary collection links. Ask an Admin for a new invitation if you forget your sign-in password.'
    ]},
    ...(role === 'admin' ? [
     {id:'buyer-access',title:'Control buyer access and instructed-only stock',steps:[
-     'Open Buyer access from Overview or Team. Password protect the full portfolio generates a unique buyer password for each active staff account, available in their My profile.',
+     'Open Buyer access from Overview or Team. Password protect the full portfolio generates a unique buyer password for accounts with buyer-sharing access, available in My profile.',
      'Show only JLL-instructed developments limits buyer portfolio and collection results to stock on the last verified JLL Residential new homes list. Save settings updates existing links; an excluded home can disappear from a saved collection.',
      'Replace password invalidates the previous buyer password. Collection passwords are managed separately in their editor. A collection password unlocks only selected homes when the full portfolio is protected.',
      'Buyer controls do not change staff roles or sign-in passwords. Check buyer previews after changing access or visibility settings.'
@@ -106,16 +122,16 @@ export function staffGuide(role) {
    {id:'selected-homes',question:'What will buyers see first in my collection?',answer:'Your picks appear first in List and Split with featured styling. The opening map frames them. View picks returns to your selection; Picked homes only filters results. Other homes depend on the current collection and portfolio access settings.'},
    {id:'travel',question:'Can I highlight a station or sort homes by commute?',answer:'In Map layers, turn on stations and use Highlight specific stations, or click a station and choose Highlight station. Find homes by commute checks a destination postcode and travel limit. List and Split default to Shortest journey using confirmed TfL durations.'},
    {id:'saved-pdfs',question:'Will a saved PDF update when stock or prices change?',answer:'No. A PDF is a snapshot. Reopen its saved settings, regenerate and review it before sending. Online collection links use the latest saved selection and published details.'},
-   {id:'campaign',question:'Can I share Your First Home, and who receives enquiries?',answer:'Every staff role can share the pinned collection. It is being prepared ahead of scheme launch with potential homes only; participation and eligibility are unconfirmed. Calculator & FAQs contains the outline and guidance links. Your copied broker link routes enquiries to your profile WhatsApp. The public campaign link and landing-page embed route to the Your First Home team, initially James Dewhurst.'},
+   {id:'campaign',question:'Can I share Your First Home, and who receives enquiries?',answer:'Share the pinned collection from your workspace. It is being prepared ahead of scheme launch with potential homes only; participation and eligibility are unconfirmed. Calculator & FAQs contains the outline and guidance links. Your copied broker link routes enquiries to your profile WhatsApp. The public campaign link and landing-page embed route to the Your First Home team, initially James Dewhurst.'},
    {id:'buyer-data',question:'Do buyers register, and what does the portfolio track?',answer:'Buyers need no account or enquiry form; some links require a buyer password. Favourites stay in their browser/device. WhatsApp opens a separate conversation. Optional buyer analytics needs consent. Admins can review staff activity; this does not reveal who forwarded a buyer link.'},
    {id:'sending',question:'Does the portfolio send messages or book viewings automatically?',answer:'No. Share actions copy wording, prepare a draft or open another app. Review and send it yourself. Attach PDFs manually in WhatsApp, or open an Outlook draft with its PDF attached. A viewing request needs confirmation.'},
    ...(stock ? [
-    {id:'prices',question:'Where do I add bedroom prices or confirm a review?',answer:'Development reviews shows your assigned homes. Bedroom prices saves confirmed starting prices by bedroom type, then Confirm details starts a new 14-day period for your assignment. Other stock edits are in Developments. Leave unknown bedroom prices blank.'},
+    ...(canReviewDevelopments(role) ? [pricesFaq] : []),
     {id:'website-edits',question:'Will website refresh overwrite our manual edits?',answer:'Manual field edits are preserved. Check Website changes needing review to accept an incoming value or keep the saved one. Review availability and missing website listings with the responsible colleague.'}
-   ] : [{id:'stock-help',question:'How do I get an incorrect price, photo or description corrected?',answer:'Send an Admin or Broker admin the development name and correction/source. Regular Brokers share homes and confirm their own assigned reviews but cannot edit shared stock or publish developments.'}]),
+   ] : [{id:'stock-help',question:'How do I get an incorrect price, photo or description corrected?',answer:'Send an Admin or Broker admin the development name and the correction or source.'}]),
    ...(role === 'admin' ? [
     {id:'portfolio-password',question:'Where do I protect the whole portfolio or show instructed homes only?',answer:'Open Buyer access. Choose Password protect the full portfolio and/or Show only JLL-instructed developments, then Save settings. Staff find their individual buyer password in My profile. Preview buyer links after changing these settings.'},
-    {id:'review-assignments',question:'Can two colleagues review the same home, and are reminder emails live?',answer:'Yes. In Development reviews, choose a development, region and all responsible colleagues, then save. Each colleague has their own review period. The page shows whether email delivery is configured; check sender setup and delivery before assuming reminders are sending.'}
+    {id:'review-assignments',question:'Can two colleagues review the same home, and are reminder emails live?',answer:'Yes. In Review assignments, choose a development, region and its Broker admins or Development consultants. Each reviewer has their own review period. The page shows whether email delivery is configured.'}
    ] : [])
   ]
  };
