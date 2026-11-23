@@ -61,10 +61,11 @@ export function yourFirstHomeBroker(state) {
   slug:'your-first-home',campaign:'your-first-home'};
 }
 
-export function publicYourFirstHome(state,visible) {
+export function publicYourFirstHome(state,visible,broker) {
  const collection=yourFirstHomeCollection(state),ids=new Set(visible.map(d=>d.id));
  const {_buyerPasswordVersion,ownerId,id,...publicFields}=collection;
- return {...publicFields,brokerName:'Your First Home team',broker:yourFirstHomeBroker(state),
+ const contact=broker?{...broker,campaign:'your-first-home'}:yourFirstHomeBroker(state);
+ return {...publicFields,brokerName:contact.name,broker:contact,
   developmentIds:collection.developmentIds.filter(id=>ids.has(id))};
 }
 

@@ -45,7 +45,7 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
     const state=await repository.read(),context=buyer(state,request,target);
     const developments=buyerDevelopments(state,context).map(d=>context.collection?.campaign==='your-first-home'?campaignDevelopment(state,publicDevelopment(d)):publicDevelopment(d));
     if(route==='/api/developments')return json(developments);
-    const collection=context.collection?await access.publicCollection(context.collection.slug,state,developments):null;
+    const collection=context.collection?await access.publicCollection(context.collection.slug,state,developments,context.broker?.shareSlug):null;
     const broker=collection?collection.broker:context.broker?await access.publicBroker(context.broker.shareSlug,state):null;
     return json({developments,collection,broker,collectionOnly:context.collectionOnly,linkError:context.linkError});
    }
@@ -58,9 +58,9 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    }
    if(method==='GET'&&route.startsWith('/api/collections/')){
     const slug=decodeURIComponent(route.slice('/api/collections/'.length)),state=await repository.read();
-    const context=buyer(state,request,{collection:slug});
+    const context=buyer(state,request,{collection:slug,broker:target.broker});
     if(!context.collection)throw new AccessError('This collection is no longer available.',404);
-    return json(await access.publicCollection(slug,state,buyerDevelopments(state,context)));
+    return json(await access.publicCollection(slug,state,buyerDevelopments(state,context),context.broker?.shareSlug));
    }
    if(method==='POST'&&route==='/api/buyer/unlock'){
     checkOrigin(request);

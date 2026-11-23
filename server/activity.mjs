@@ -30,7 +30,7 @@ export function engagementService(repository,{now=Date.now}={}){
   for(const item of body.events){
    if(!item||!BUYER_EVENTS.includes(item.event))throw new AccessError('Unsupported activity count.');
    let owner=null,c=null;
-   if(item.collection){c=(state.collections||[]).find(c=>c.slug===item.collection);owner=c&&(state.users||[]).find(u=>u.id===c.ownerId&&u.active);if(!owner&&!isYourFirstHomeSlug(item.collection))continue;}
+   if(item.collection){c=(state.collections||[]).find(c=>c.slug===item.collection);owner=c&&(state.users||[]).find(u=>u.id===c.ownerId&&u.active);if(isYourFirstHomeSlug(item.collection)&&item.broker&&item.broker!=='your-first-home'){owner=(state.users||[]).find(u=>u.shareSlug===item.broker&&u.active&&u.whatsapp);if(!owner)continue;}if(!owner&&!isYourFirstHomeSlug(item.collection))continue;}
    else if(item.broker){owner=(state.users||[]).find(u=>u.shareSlug===item.broker&&u.active);if(!owner)continue;}
    if(['development_view','favourite_add','favourite_remove'].includes(item.event)&&!state.developments.some(d=>d.id===item.development))continue;
    resolved.push({ownerId:owner?.id||'unattributed',event:item.event});

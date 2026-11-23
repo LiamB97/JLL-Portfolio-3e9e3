@@ -137,9 +137,9 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
   });
  }
  async function deleteCollection(actor,id){return repository.update(s=>{init(s);const acting=current(s,actor);const c=s.collections.find(x=>x.id===id);if(!c)throw new AccessError('Collection not found.',404);if(isYourFirstHomeSlug(c.slug))throw new AccessError('Manage this shared collection in Your First Home.',409);if(acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('You can only remove your own collections.',403);s.collections=s.collections.filter(x=>x.id!==id);recordStaff(s,acting,'collection_delete',{id:c.id,label:c.title,now:now()});return {ok:true};});}
- async function publicCollection(slug,state,visible){
+ async function publicCollection(slug,state,visible,brokerSlug){
   const s=state??await repository.read();
-  if(isYourFirstHomeSlug(slug))return publicYourFirstHome(s,visible??s.developments);
+  if(isYourFirstHomeSlug(slug))return publicYourFirstHome(s,visible??s.developments,brokerSlug?await publicBroker(brokerSlug,s):undefined);
   const c=(s.collections||[]).find(x=>x.slug===slug),owner=c&&(s.users||[]).find(u=>u.id===c.ownerId&&u.active);
   if(!c||!owner)throw new AccessError('This collection is no longer available.',404);
   const ids=new Set((visible??s.developments).map(d=>d.id));
