@@ -9,3 +9,9 @@ The supplied **JLL Residential Guidelines — 2026, Version 01** is the source f
 - Source Sans Pro font files were obtained from Google Fonts' `sourcesanspro/v24` distribution; Noto Sans Arabic from `notosansarabic/v33`. Both are served from this application. Their SIL Open Font Licences are included beside the fonts. WhatsApp's monochrome glyph comes from Simple Icons (CC0) and is bundled locally in `src/WhatsAppIcon.tsx`.
 
 Re-extraction should select only the 15 filled logo paths inside each page-5 logo boundary, not embed a full guideline page or add a new Residential word label. Compare a rendering against the original before replacing either asset.
+
+## Browser icons and sharing preview
+
+- `/public/favicon.svg` uses the original red Worldmark path from `jll-logo.svg`, centred on a white tile. `favicon-32.png`, `favicon.ico` (16/32/48 px) and `apple-touch-icon.png` (180 px) are raster derivatives of the same artwork. The Worldmark geometry and colour are preserved.
+- `/public/images/social-preview.jpg` is a generic 1200 × 630 preview for shared portfolio links. It uses the official Residential lockup, bundled Source Sans 3 and the established Space/Midnight/Sand palette. It contains no broker contact details, buyer details, development picks or password-protected information.
+- The document metadata uses the public `https://digitalportfolio.live.jll.com/` address. Canonical/social metadata does not redirect visitors or remove the broker, collection or development context from their links.
