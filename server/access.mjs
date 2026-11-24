@@ -140,6 +140,21 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
   });
  }
  async function deleteCollection(actor,id){return repository.update(s=>{init(s);const acting=current(s,actor);const c=s.collections.find(x=>x.id===id);if(!c)throw new AccessError('Collection not found.',404);if(isYourFirstHomeSlug(c.slug))throw new AccessError('Manage this shared collection in Your First Home.',409);if(acting.role!=='admin'&&c.ownerId!==acting.id)throw new AccessError('You can only remove your own collections.',403);s.collections=s.collections.filter(x=>x.id!==id);recordStaff(s,acting,'collection_delete',{id:c.id,label:c.title,now:now()});return {ok:true};});}
+ async function deleteCollections(actor, ids) {
+  return repository.update(state => {
+   const acting = current(state, actor);
+   if (acting.legacy) throw new AccessError('Sign in with a staff account.', 401);
+   admin(acting);
+   const collections = state.collections ?? [];
+   const removed = collections.filter(row => ids.has(row.id));
+   if (removed.some(row => isYourFirstHomeSlug(row.slug))) {
+    throw new AccessError('Manage this shared collection in Your First Home.', 409);
+   }
+   state.collections = collections.filter(row => !ids.has(row.id));
+   for (const row of removed) recordStaff(state, acting, 'collection_delete', {id: row.id, label: row.title, now: now()});
+   return {removedIds: removed.map(row => row.id)};
+  });
+ }
  async function publicCollection(slug,state,visible,brokerSlug){
   const s=state??await repository.read();
   if(isYourFirstHomeSlug(slug))return publicYourFirstHome(s,visible??s.developments,brokerSlug?await publicBroker(brokerSlug,s):undefined);
@@ -148,5 +163,5 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
   const ids=new Set((visible??s.developments).map(d=>d.id));
   return {slug:c.slug,title:c.title,transportDefaults:c.transportDefaults,brokerName:owner.name,broker:brokerCard(owner),developmentIds:c.developmentIds.filter(id=>ids.has(id))};
  }
- return {status,authenticate,current,staffSession,csrf,admin,stock,bootstrap,login,logout,users,invite,invites,revokeInvite,accept,updateUser,updateProfile,publicBroker,canEdit,collections,saveCollection,deleteCollection,publicCollection};
+ return {status,authenticate,current,staffSession,csrf,admin,stock,bootstrap,login,logout,users,invite,invites,revokeInvite,accept,updateUser,updateProfile,publicBroker,canEdit,collections,saveCollection,deleteCollection,deleteCollections,publicCollection};
 }

@@ -204,6 +204,41 @@ test('non-admin invitations cannot replace pending invitations and fail when the
  assert.equal((await e.call('access/accept',{method:'POST',body:{token:own.data.token,password:randomBytes(18).toString('hex')}})).status,410);await e.call('admin/users/'+a.user.id,{method:'PATCH',actor:admin,body:{active:true}});assert.equal((await e.call('access/accept',{method:'POST',body:{token:own.data.token,password:randomBytes(18).toString('hex')}})).status,410);
 });
 test('collections enforce ownership, validate stock, and expose only buyer-safe metadata',async()=>{const e=environment(),admin=await e.owner(),a=await e.broker(admin),b=await e.broker(admin,'other@example.test');const ids=samples.slice(0,3).map(d=>d.id);const created=await e.call('admin/collections',{method:'POST',actor:a,body:{title:'Three homes',developmentIds:ids,ownerId:admin.user.id}});assert.equal(created.status,201);assert.equal(created.data.ownerId,a.user.id);assert.equal((await e.call('admin/collections/'+created.data.id,{method:'PUT',actor:b,body:{title:'Hijacked',developmentIds:ids}})).status,403);assert.equal((await e.call('admin/collections/'+created.data.id,{method:'DELETE',actor:b})).status,403);assert.equal((await e.call('admin/collections',{method:'POST',actor:a,body:{title:'Missing',developmentIds:['does-not-exist']}})).status,422);const shared=await e.call('collections/'+created.data.slug);assert.equal(shared.status,200);assert.deepEqual(shared.data.developmentIds,ids);assert.equal(shared.data.brokerName,a.user.name);assert.equal('email' in shared.data,false);assert.equal('ownerId' in shared.data,false);assert.equal((await e.call('admin/collections',{actor:b})).data.length,0);await e.call('admin/users/'+a.user.id,{method:'PATCH',actor:admin,body:{active:false}});assert.equal((await e.call('collections/'+created.data.slug)).status,404);assert.equal((await e.call('access/me',{actor:a})).status,401);});
+test('admins can bulk-delete across brokers and invalidate the selected collection links', async () => {
+ const e = environment(), admin = await e.owner(), broker = await e.broker(admin);
+ const brokerAdmin = await e.broker(admin, 'broker-admin@example.test', 'broker_admin');
+ const collections = 'admin/collections', route = collections + '/bulk-delete';
+ const developmentIds = [samples[0].id];
+ async function save(actor, title) {
+  const response = await e.call(collections, {actor, method: 'POST', body: {title, developmentIds}});
+  assert.equal(response.status, 201);
+  return response.data;
+ }
+ const a = await save(broker, 'Canary Wharf picks');
+ const b = await save(brokerAdmin, 'Central London picks');
+ const keep = await save(admin, 'Collection to keep');
+ await e.repository.update(state => state.collections.push({...a, id: 'campaign', slug: 'your-first-home'}));
+ const visible = (await e.call(collections, {actor: admin})).data;
+ assert.deepEqual(visible.map(row => [row.ownerId, row.ownerName]), [[broker.user.id, broker.user.name], [brokerAdmin.user.id, brokerAdmin.user.name], [admin.user.id, admin.user.name]]);
+ assert.deepEqual((await e.call(collections, {actor: brokerAdmin})).data.map(row => row.id), [b.id]);
+ const ids = [a.id, b.id];
+ const remove = (actor, selection = ids, more = {}) => e.call(route, {actor, method: 'POST', body: {ids: selection}, ...more});
+ assert.equal((await remove(undefined)).status, 401);
+ assert.equal((await remove(broker, [a.id])).status, 403);
+ assert.equal((await remove(brokerAdmin, [b.id])).status, 403);
+ assert.equal((await remove(admin, ids, {csrf: false})).status, 403);
+ assert.equal((await remove(admin, ids, {origin: 'https://outside.example'})).status, 403);
+ assert.equal((await remove(admin, [])).status, 422);
+ assert.equal((await remove(admin, [...ids, 'campaign'])).status, 409);
+ assert.equal((await e.call('collections/' + a.slug)).status, 200);
+ assert.deepEqual((await remove(admin, [...ids, b.id])).data, {removedIds: ids});
+ assert.deepEqual((await remove(admin)).data, {removedIds: []});
+ assert.equal((await e.call('collections/' + a.slug)).status, 404);
+ assert.equal((await e.call('collections/' + b.slug)).status, 404);
+ assert.equal((await e.call('collections/' + keep.slug)).status, 200);
+ assert.deepEqual((await e.call(collections, {actor: admin})).data.map(row => row.id), [keep.id]);
+ assert.equal((await e.repository.read()).activity.people[admin.user.id].counts.collection_delete, 2);
+});
 test('admin role changes revoke existing sessions and the last active admin cannot be removed',async()=>{const e=environment(),admin=await e.owner();assert.equal((await e.call('admin/users/'+admin.user.id,{method:'PATCH',actor:admin,body:{role:'broker'}})).status,422);assert.equal((await e.call('admin/users/'+admin.user.id,{method:'PATCH',actor:admin,body:{active:false}})).status,422);const broker=await e.broker(admin);assert.equal((await e.call('admin/users/'+broker.user.id,{method:'PATCH',actor:admin,body:{role:'admin'}})).status,200);assert.equal((await e.call('admin/users',{actor:broker})).status,401);const logged=await e.call('access/login',{method:'POST',body:{email:broker.email,password:broker.password}});assert.equal(logged.status,200);assert.equal(logged.data.user.role,'admin');assert.match(logged.headers.get('set-cookie'),/HttpOnly/);});
 test('invitations are single-use, revocable, and never expose hashes or passwords',async()=>{const e=environment(),admin=await e.owner(),broker=await e.broker(admin);assert.equal((await e.call('access/accept',{method:'POST',body:{token:broker.invited.data.token,password:randomBytes(18).toString('hex')}})).status,410);const invitation=await e.call('admin/users/invite',{method:'POST',actor:admin,body:{name:'Pending',email:'pending@example.test',role:'broker'}});const pending=(await e.call('admin/invites',{actor:admin})).data;assert.equal(pending.length,1);assert.equal('tokenHash' in pending[0],false);assert.equal('token' in pending[0],false);await e.call('admin/invites/'+invitation.data.id,{method:'DELETE',actor:admin});assert.equal((await e.call('access/accept',{method:'POST',body:{token:invitation.data.token,password:randomBytes(18).toString('hex')}})).status,410);const users=(await e.call('admin/users',{actor:admin})).data;assert.ok(users.every(u=>!('passwordHash' in u)));const state=await e.repository.read();assert.ok(state.users.every(u=>u.passwordHash.startsWith('scrypt-v1:')));assert.ok(state.sessions.every(s=>typeof s.tokenHash==='string'&&!('token' in s)));});
 test('login failures lock the account temporarily and invalid tokens do not grant access',async()=>{const e=environment(),admin=await e.owner(),broker=await e.broker(admin);for(let i=0;i<5;i++)assert.equal((await e.call('access/login',{method:'POST',body:{email:broker.email,password:'wrong'}})).status,401);assert.equal((await e.call('access/login',{method:'POST',body:{email:broker.email,password:broker.password}})).status,429);assert.equal((await e.call('access/me',{actor:{cookie:'jll_session=forged',csrf:'forged'}})).status,401);});
@@ -495,6 +530,71 @@ test('profile job titles belong to the signed-in user and override per-brochure 
  }
  assert.equal((await e.call('admin/profile',{method:'POST',actor:broker,body:{jobTitle:'x'.repeat(101)}})).status,422);
  await e.call('admin/profile',{method:'POST',actor:broker,body:{jobTitle:''}});assert.equal((await e.call('access/me',{actor:broker})).data.user.jobTitle,'');assert.equal((await e.call('access/me',{actor:owner})).data.user.jobTitle,'Senior Sales Broker');
+});
+
+test('admins can delete selected brochures across brokers and retry saved PDF removal', async () => {
+ const {memoryBrochureFiles} = await import('./brochures.mjs');
+ const files = memoryBrochureFiles();
+ let failingKey;
+ const e = environment({brochureFiles: {...files, remove: async key => {
+  if (key === failingKey) throw new Error('Storage unavailable');
+  await files.remove(key);
+ }}});
+ const admin = await e.owner(), broker = await e.broker(admin);
+ const brokerAdmin = await e.broker(admin, 'second-owner@example.test', 'broker_admin');
+ const path = 'admin/brochures';
+ const developmentIds = [samples[0].id];
+ const pdfBase64 = Buffer.from('%PDF-1.4\nsmall fixture\n%%EOF').toString('base64');
+ const sharedCollection = (await e.call('admin/collections', {actor: broker, method: 'POST', body: {title: 'Linked picks', developmentIds}})).data;
+ async function save(actor, title, options = {}) {
+  const {collection = '', pdf = false} = options;
+  const config = {title, developmentIds, clientName: 'Buyer test', intro: 'Private introduction', collection};
+  const response = await e.call(path, {actor, method: 'POST', body: {config, ...(pdf && {pdfBase64})}});
+  assert.equal(response.status, 200);
+  return response.data;
+ }
+ const a = await save(broker, 'Riverside brochure', {pdf: true});
+ const b = await save(brokerAdmin, 'City brochure', {pdf: true});
+ const draft = await save(brokerAdmin, 'Draft brochure');
+ const keep = await save(broker, 'Keep this brochure', {pdf: true, collection: sharedCollection.slug});
+ const fileKeys = new Map((await e.repository.read()).brochures.map(row => [row.id, row.fileKey]));
+ const manage = path + '/manage', cleanup = path + '/retry-file-cleanup';
+ const ids = [a.id, b.id, draft.id];
+ const remove = (actor, selection = ids, more = {}) => e.call(path + '/bulk-delete', {actor, method: 'POST', body: {ids: selection}, ...more});
+ assert.equal((await e.call(manage, {actor: brokerAdmin})).status, 403);
+ assert.equal((await remove(broker, [a.id])).status, 403);
+ assert.equal((await remove(brokerAdmin, [b.id])).status, 403);
+ assert.equal((await remove(admin, ids, {csrf: false})).status, 403);
+ assert.equal((await e.call(cleanup, {actor: brokerAdmin, method: 'POST'})).status, 403);
+ assert.equal((await e.call(path + '/' + a.id + '/pdf', {actor: admin})).status, 404);
+ assert.deepEqual((await e.call(path, {actor: admin})).data, []);
+ const overview = (await e.call(manage, {actor: admin})).data;
+ assert.deepEqual(overview.brochures[0], {
+  id: a.id, ownerId: broker.user.id, ownerName: broker.user.name, title: a.title,
+  updatedAt: a.updatedAt, developmentCount: 1, hasPdf: true,
+ });
+ assert.equal(overview.brochures.length, 4);
+ failingKey = fileKeys.get(b.id);
+ assert.deepEqual((await remove(admin)).data, {removedIds: ids, pendingFiles: 1});
+ assert.equal(await files.get(fileKeys.get(a.id)), null);
+ assert.ok(await files.get(failingKey));
+ assert.ok(await files.get(fileKeys.get(keep.id)));
+ assert.equal((await e.call(path + '/' + b.id + '/pdf', {actor: brokerAdmin})).status, 404);
+ assert.deepEqual((await e.call(path, {actor: brokerAdmin})).data, []);
+ assert.equal((await e.call(manage, {actor: admin})).data.pendingFiles, 1);
+ failingKey = undefined;
+ assert.deepEqual((await e.call(cleanup, {actor: admin, method: 'POST'})).data, {pendingFiles: 0});
+ assert.equal(await files.get(fileKeys.get(b.id)), null);
+ assert.deepEqual((await remove(admin)).data, {removedIds: [], pendingFiles: 0});
+ const deleteCollection = await e.call('admin/collections/bulk-delete', {actor: admin, method: 'POST', body: {ids: [sharedCollection.id]}});
+ assert.equal(deleteCollection.status, 200);
+ const [retained] = (await e.call(path, {actor: broker})).data;
+ assert.equal(retained.id, keep.id);
+ assert.equal(retained.hasPdf, true);
+ assert.equal(retained.config.collection, '');
+ assert.equal((await e.call(path, {actor: broker, method: 'POST', body: {
+  id: retained.id, version: retained.version, config: retained.config, pdfBase64,
+ }})).status, 200);
 });
 
 test('brochures save optional client details privately and preserve longer legacy draft copy',async()=>{

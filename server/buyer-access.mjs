@@ -115,7 +115,7 @@ export function privateCollection(state, collection) {
   const {_buyerPasswordVersion, ...fields} = collection;
   const owner = (state.users ?? []).find(user => user.id === collection.ownerId);
   return {
-    ...fields, passwordProtected: Boolean(_buyerPasswordVersion),
+    ...fields, ownerName: owner?.name ?? null, passwordProtected: Boolean(_buyerPasswordVersion),
     password: collectionPassword(state, collection) ?? brokerPortfolioPassword(state, owner),
   };
 }

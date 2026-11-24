@@ -28,8 +28,67 @@ export function brochureService(repository,files){
   if(input.cover?.kind==='development'){const d=state.developments.find(d=>d.id===input.cover.developmentId&&ids.includes(d.id));if(!d||!d.images.includes(input.cover.imageUrl))throw new AccessError('Choose a cover image from a selected development.');result.cover={kind:'development',developmentId:d.id,imageUrl:input.cover.imageUrl};}
   return result;
  }
+ async function cleanDeletedFiles(pending) {
+  // Keep slow file storage out of the metadata transaction and bound work per request.
+  const cleaned = new Set();
+  const batch = pending.slice(0, 32);
+  for (let start = 0; start < batch.length; start += 8) {
+   const keys = batch.slice(start, start + 8);
+   const results = await Promise.allSettled(keys.map(async key => files.remove(key)));
+   results.forEach((result, index) => {
+    if (result.status === 'fulfilled') cleaned.add(keys[index]);
+   });
+  }
+  if (!cleaned.size) return pending.length;
+  return repository.update(state => {
+   state.pendingBrochureFileDeletes = (state.pendingBrochureFileDeletes ?? []).filter(key => !cleaned.has(key));
+   return state.pendingBrochureFileDeletes.length;
+  });
+ }
  return {
-  async list(check){const s=await repository.read(),actor=check(s);return (s.brochures||[]).filter(b=>b.ownerId===actor.id).map(({fileKey,...b})=>({...b,hasPdf:Boolean(fileKey)})).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));},
+  async list(check) {
+   const state = await repository.read(), actor = check(state);
+   const collectionSlugs = new Set((state.collections ?? []).filter(row => row.ownerId === actor.id).map(row => row.slug));
+   return (state.brochures ?? []).filter(row => row.ownerId === actor.id).map(({fileKey, config, ...row}) => ({
+    ...row,
+    config: config.collection && !collectionSlugs.has(config.collection) ? {...config, collection: ''} : config,
+    hasPdf: Boolean(fileKey),
+   })).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  },
+  async listForAdmin(checkAdmin) {
+   const state = await repository.read();
+   checkAdmin(state);
+   const owners = new Map((state.users ?? []).map(user => [user.id, user.name]));
+   return {
+    brochures: (state.brochures ?? []).map(row => ({
+     id: row.id,
+     ownerId: row.ownerId,
+     ownerName: owners.get(row.ownerId) ?? null,
+     title: row.title,
+     updatedAt: row.updatedAt,
+     developmentCount: row.config.developmentIds.length,
+     hasPdf: Boolean(row.fileKey),
+    })),
+    pendingFiles: state.pendingBrochureFileDeletes?.length ?? 0,
+   };
+  },
+  async removeMany(ids, checkAdmin) {
+   const {removedIds, pending} = await repository.update(state => {
+    checkAdmin(state);
+    const brochures = state.brochures ?? [];
+    const removed = brochures.filter(row => ids.has(row.id));
+    state.brochures = brochures.filter(row => !ids.has(row.id));
+    const pending = [...new Set([...(state.pendingBrochureFileDeletes ?? []), ...removed.flatMap(row => row.fileKey ? [row.fileKey] : [])])];
+    state.pendingBrochureFileDeletes = pending;
+    return {removedIds: removed.map(row => row.id), pending};
+   });
+   return {removedIds, pendingFiles: await cleanDeletedFiles(pending)};
+  },
+  async retryFileCleanup(checkAdmin) {
+   const state = await repository.read();
+   checkAdmin(state);
+   return {pendingFiles: await cleanDeletedFiles(state.pendingBrochureFileDeletes ?? [])};
+  },
   async save(body,check){const s=await repository.read(),actor=check(s);config(body,s,actor);let bytes=null,key=null;
    if(body.pdfBase64!==undefined){if(typeof body.pdfBase64!=='string'||body.pdfBase64.length>Math.ceil(BROCHURE_MAX_SAVED_BYTES/3)*4+4||!/^[A-Za-z0-9+/]+={0,2}$/.test(body.pdfBase64))throw new AccessError('Saved PDFs must be no larger than 3.5MB.',413);bytes=Buffer.from(body.pdfBase64,'base64');if(bytes.toString('base64')!==body.pdfBase64)throw new AccessError('The PDF encoding is invalid.');if(bytes.length>BROCHURE_MAX_SAVED_BYTES||bytes.subarray(0,5).toString()!=='%PDF-'||!bytes.subarray(-1024).toString().includes('%%EOF'))throw new AccessError('This file is not a complete PDF.');key='pdf/'+randomBytes(20).toString('hex');await files.put(key,bytes,'application/pdf');}
    let previousKey;try{const row=await repository.update(state=>{const current=check(state),fresh=config(body,state,current);state.brochures||=[];let existing=body.id?own(state,body.id,check):null;
