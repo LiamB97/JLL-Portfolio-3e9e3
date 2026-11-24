@@ -8,7 +8,7 @@ The A4 design uses Midnight, Space and Sand with Source Sans 3 and Source Serif 
 
 The shortlist uses the portfolio's OpenFreeMap basemap, styled in light grey for print, and fits the map around the selected homes. The PDF draws the pins and their links over the map image. If the map fails, retry generation. A failed generation leaves the saved PDF available. Missing photographs produce placeholders and a warning. Preview the brochure and check prices and availability before sharing.
 
-The current broker profile supplies the name, job title, photograph, work email and WhatsApp number. A WhatsApp number is required to generate a PDF. Its WhatsApp links prefill a viewing message and point to the same broker throughout. Development links preserve the selected collection or broker attribution. The brochure reads prices from published stock. Unconfirmed bedroom prices are labelled “To be confirmed”.
+The current broker profile supplies the name, job title, photograph, work email and WhatsApp number. A WhatsApp number is required to generate a PDF. Its WhatsApp links prefill a viewing message and point to the same broker throughout. Development links preserve the selected collection or broker attribution. The brochure reads prices from published stock. When a bedroom price is unavailable, the brochure says “Speak to your broker”.
 
 Save brochure stores private settings. Generate & save PDF stores the PDF if it is at most 3.5 MB. Each broker can retain up to 50 brochures and 100 MB of PDFs. Download larger PDFs from the preview. Saved PDFs are snapshots. Regenerate them for the new design or to refresh stock, prices and profile details. Saving edited settings clears the older snapshot. Version checks guard against concurrent overwrites.
 
