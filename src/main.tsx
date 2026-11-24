@@ -1,4 +1,4 @@
-import CollectionBar from './CollectionBar';
+import CollectionBar,{MobileCollectionBar} from './CollectionBar';
 import {YourFirstHomeBar,YourFirstHomeInformation} from './YourFirstHome';
 import {isYourFirstHomeSlug} from '../shared/your-first-home';
 import {isYourFirstHomeEmbed,PortfolioEmbedToolbar,PortfolioEmbedNotice} from './PortfolioEmbed';
@@ -163,9 +163,21 @@ function App() {
 
   const toggleFavourite=(id:string)=>{setShowFavouriteHighlights(true);favourites.toggle(id);};
   const resetMap=()=>{reset();setHighlightsEnabled(false);setShowFavouriteHighlights(false);setDimOthers(false);setCollectionFrameKey(0);setSelected(null);setShowFavourites(false);setFilters(false);setView('map');setSort(yourFirstHome?'price':'price-desc');setMapResetKey(n=>n+1);};
-  return <div className={`portfolio-app ${admin ? 'admin-active' : 'explorer-active'}${yourFirstHome&&!admin?' your-first-home':''}${embedded?' portfolio-embed':''}`}>
-    {!embedded&&<PortfolioHeader onResetMap={resetMap} broker={broker} collection={collection} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})} exploring={!admin&&!howItWorks&&!buyerLock&&!loading} staff={admin} view={view} setView={next=>{setView(next);track('view_change',{view_mode:next});}} saved={visibleFavourites.length} openFavourites={()=>{setSelected(null);setShowFavourites(true);track('shortlist_open',{saved_count:visibleFavourites.length});}} onNavigate={()=>{setSelected(null);setShowFavourites(false);setFilters(false);}}/>}
+  const changeView=(next:View)=>{setView(next);track('view_change',{view_mode:next});};
+  const mobileCollection=!admin&&!howItWorks&&!embedded&&!yourFirstHome&&narrow?collection:null;
+  const collectionActions={
+    broker,active:showHighlights,dimOthers,onlyPicked:featuredOnly,collectionOnly,
+    onView:()=>{setHighlightsEnabled(true);changeView('map');setCollectionFrameKey(n=>n+1);},
+    onDim:()=>setDimOthers(value=>!value),
+    onOnly:()=>{if(!featuredOnly)setHighlightsEnabled(true);setFeaturedOnly(!featuredOnly);},
+    onRestore:()=>{setHighlightsEnabled(true);setDimOthers(true);changeView('map');setCollectionFrameKey(n=>n+1);},
+    onContact:()=>track('whatsapp_click',{surface:'broker_banner'}),
+  };
+  return <div className={`portfolio-app ${admin ? 'admin-active' : 'explorer-active'}${yourFirstHome&&!admin?' your-first-home':''}${embedded?' portfolio-embed':''}${mobileCollection?' mobile-collection':''}`}>
+    {!embedded&&<PortfolioHeader onResetMap={resetMap} broker={broker} collection={collection} onContact={collectionActions.onContact} exploring={!admin&&!howItWorks&&!buyerLock&&!loading} staff={admin} view={view} setView={changeView} saved={visibleFavourites.length} openFavourites={()=>{setSelected(null);setShowFavourites(true);track('shortlist_open',{saved_count:visibleFavourites.length});}} onNavigate={()=>{setSelected(null);setShowFavourites(false);setFilters(false);}}/>}
     {admin ? <Suspense fallback={<p className="staff-portal">{t("Loading staff workspace…")}</p>}><div dir="ltr" lang="en"><StaffPortal/></div></Suspense> : loading?<main className="buyer-loading" role="status">{t('Loading London homes…')}</main> : buyerLock?<BuyerPasswordGate key={buyerLock} scope={buyerLock} unlock={unlock}/> : howItWorks?<Suspense fallback={<p className="staff-portal">{t('Loading guide…')}</p>}><BuyerGuide/></Suspense> : <main className={`discovery-page view-${view}`} aria-label={t("London development explorer")}>
+      {mobileCollection&&<MobileCollectionBar collection={mobileCollection} view={view} setView={changeView}
+        onBrowsePicks={()=>{reset();setSelected(null);setHighlightsEnabled(true);setFeaturedOnly(!collectionOnly);changeView('list');}} {...collectionActions}/>}
       <div className="discovery-toolbar">
         {embedded?<PortfolioEmbedToolbar query={query} setQuery={setQuery} count={filtered.length} view={view} setView={setView}/>:<>
         <form className="discovery-search" role="search" onSubmit={e=>e.preventDefault()}>
@@ -173,7 +185,7 @@ function App() {
           <input autoComplete="off" aria-label={t("Search by area, development or postcode")} placeholder={t(narrow?"Area, name or postcode":"Search an area, development or postcode")} value={query} onChange={e => setQuery(e.target.value)}/>
           {query && <button type="button" className="clear-search" aria-label={t("Clear search")} onClick={() => setQuery('')}><X size={15}/></button>}
         </form>
-        <button type="button" className={`discovery-filter-trigger ${filterCount ? 'filtered' : ''}`} aria-expanded={filters} aria-haspopup="dialog" onClick={() => setFilters(true)}>
+        <button type="button" className={`discovery-filter-trigger ${filterCount ? 'filtered' : ''}`} aria-label={t('Filters')} aria-expanded={filters} aria-haspopup="dialog" onClick={() => setFilters(true)}>
           <SlidersHorizontal size={17}/><span>{t("Filters")}</span>{filterCount > 0 && <b aria-hidden="true">{filterCount}</b>}
         </button>
         {filters && <Modal title={t("Find your London home")} close={()=>setFilters(false)} className="buyer-filter-dialog" doneLabel={t('Show {count} developments',{count:filtered.length})} footer={<button onClick={reset}>{t("Reset filters")}</button>}>
@@ -185,14 +197,14 @@ function App() {
           <p className="area-filter-note">{t("Areas show developments within 2 km of the named centre. Regions are approximate geographic sectors.")}</p>
         </Modal>}
         <CommuteSearch items={items} onChange={changeCommute} resetKey={commuteResetKey}/>
-        {view==='map'&&<div className="discovery-count" role="status">{resultCount}</div>}
+        {view==='map'&&(!mobileCollection||Boolean(query.trim())||filterCount>0||commute)&&<div className="discovery-count" role="status">{resultCount}</div>}
         {(filterCount>0||commute)&&<div className="discovery-active-filters">
           {activeFilters.map(({id,label,clear})=><button key={id} onClick={clear} aria-label={t('Remove filter {filter}',{filter:label||''})}>
             <span>{label}</span><X size={14} aria-hidden="true"/>
           </button>)}
           <button className="clear-filters" onClick={reset}>{t('Clear all')}</button>
         </div>}
-        {yourFirstHome?<YourFirstHomeBar broker={broker} count={items.length} onExplore={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onInformation={()=>setShowFirstHomeInformation(true)} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})}/>:collection&&<CollectionBar collection={collection} broker={broker} active={showHighlights} dimOthers={dimOthers} onlyPicked={featuredOnly} collectionOnly={collectionOnly} onView={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onDim={()=>setDimOthers(v=>!v)} onOnly={()=>setFeaturedOnly(v=>!v)} onRestore={()=>{setHighlightsEnabled(true);setDimOthers(true);setView('map');}} onContact={()=>track('whatsapp_click',{surface:'broker_banner'})}/>}
+        {yourFirstHome?<YourFirstHomeBar broker={broker} count={items.length} onExplore={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onInformation={()=>setShowFirstHomeInformation(true)} onContact={collectionActions.onContact}/>:collection&&!mobileCollection&&<CollectionBar collection={collection} {...collectionActions}/>}
 
         {broker&&!collection&&<section className="discovery-broker"><span className="broker-label">{t('Your JLL broker')}</span><a aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={()=>track('whatsapp_click',{surface:'broker_banner'})} href={'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments."))} target="_blank" rel="noopener noreferrer">{broker.photo?<img className="broker-avatar" src={broker.photo} alt=""/>:<WhatsAppIcon size={18}/>}<strong>{broker.name}</strong></a></section>}
         {collectionError&&<div className="explorer-message" role="status">{collectionError} {t("You can still explore the full portfolio.")}</div>}
@@ -201,7 +213,7 @@ function App() {
         {!loading && !filtered.length && !error && view === 'map' && <div className="explorer-message"><Building2 size={20}/><div><strong>{t(favouritesOnly?"No favourites match this view":"No homes found")}</strong><p>{t(favouritesOnly?"Save developments with the heart button, or clear your filters to see more favourites.":"Try a different area or broaden your filters.")}</p></div><button onClick={reset}>{t("Reset")}</button></div>}
       </div>
       <div className="discovery-workspace">
-        {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap embedded={embedded} clusterFeatured={yourFirstHome} resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers&&!collectionOnly} onDimOthers={collectionOnly?undefined:()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={showHighlights?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
+        {view !== 'list' && <Suspense fallback={<div className="map-shell map-loading" role="status">{t("Loading your London map…")}</div>}><PortfolioMap embedded={embedded} clusterFeatured={yourFirstHome} clusterCollection={Boolean(mobileCollection)} resetKey={mapResetKey} collectionFrameKey={collectionFrameKey} dimOthers={dimOthers&&!collectionOnly} onDimOthers={collectionOnly?undefined:()=>setDimOthers(v=>!v)} onReset={resetMap} commuteDestination={commute?.destination} commuteTimes={commuteTimes} transportDefaults={showHighlights?collection?.transportDefaults:undefined} items={filtered} selected={selected} onSelect={select} network={network} transportError={transportError} featuredIds={featuredIds} favouriteIds={showFavouriteHighlights?favourites.ids:[]} favouritesOnly={favouritesOnly}/></Suspense>}
         {view !== 'map' && <section className="explorer-list" aria-label={t("Development listings")}>
           {!embedded&&<div className="listing-heading">
             <h2><span role="status">{resultCount}</span>{narrow&&view==='split'&&<ChevronDown size={17} aria-hidden="true"/>}</h2>

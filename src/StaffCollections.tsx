@@ -3,12 +3,15 @@ import EmailShare from './EmailShare';
 import {portfolioInvitation} from './sharing';
 import WhatsAppIcon from './WhatsAppIcon';
 import {useEffect, useState} from 'react';
-import {Copy, ExternalLink, LockKeyhole, Plus, Star, Trash2} from 'lucide-react';
+import {Copy, ExternalLink, FileText, LockKeyhole, Plus, Star, Trash2} from 'lucide-react';
 import type {Development} from './types';
-import type {StaffCollection, StaffRequest, StaffUser} from './staff-types';
+import type {BrochureCollection, StaffCollection, StaffRequest, StaffUser} from './staff-types';
 import {YourFirstHomeShortcut} from './StaffYourFirstHome';
 
-export default function StaffCollections({items, request, user, active = true,onCampaign}: {items: Development[]; request: StaffRequest; user: StaffUser; active?: boolean;onCampaign:()=>void}) {
+export default function StaffCollections({items, request, user, active = true, onCampaign, onBrochure}: {
+  items: Development[]; request: StaffRequest; user: StaffUser; active?: boolean;
+  onCampaign: () => void; onBrochure: (collection: BrochureCollection) => void;
+}) {
   const [transport, setTransport] = useState(emptyTransportDefaults);
   const [collections, setCollections] = useState<StaffCollection[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -26,6 +29,8 @@ export default function StaffCollections({items, request, user, active = true,on
   const dirty = Boolean(link && (savedVersion.fields !== JSON.stringify(fields) || savedVersion.passwordProtected !== protectedLink));
   const choices = items.filter(d => `${d.name} ${d.area} ${d.postcode}`.toLowerCase().includes(query.toLowerCase()));
   const buyerLink = (slug: string) => location.origin + '/?collection=' + encodeURIComponent(slug);
+  const canStartBrochure = (collection: StaffCollection) =>
+    collection.ownerId === user.id && collection.developmentIds.some(id => items.some(item => item.id === id));
 
   useEffect(() => {
     if (!active) return;
@@ -156,6 +161,8 @@ export default function StaffCollections({items, request, user, active = true,on
             </div>
           </div>}
           <div className="action-row">
+            {saved && canStartBrochure(saved) && <button className="primary collection-create-brochure" disabled={busy}
+              onClick={() => onBrochure(saved)}><FileText size={17}/> Create brochure</button>}
             <button onClick={() => void navigator.clipboard.writeText(link).then(() => {
               setMessage('Buyer link copied.');
               shareEvent('collection_link_copy', 'Link copied, but the activity count could not be saved.');
@@ -179,6 +186,8 @@ export default function StaffCollections({items, request, user, active = true,on
           <p>{collection.developmentIds.length} featured developments</p>
           {collection.password && <p className="collection-password-status"><LockKeyhole size={14}/> {collection.passwordProtected ? 'Password protected' : 'Portfolio password required'}</p>}
           <div className="saved-collection-actions action-row">
+            {canStartBrochure(collection) && <button className="primary collection-create-brochure" disabled={busy}
+              aria-label={'Create brochure from ' + collection.title} onClick={() => onBrochure(collection)}><FileText size={17}/> Create brochure</button>}
             <a href={buyerLink(collection.slug)} target="_blank" rel="noopener noreferrer">Preview <ExternalLink size={13}/></a>
             <button disabled={busy} onClick={() => edit(collection)}>Edit & share</button>
             <button aria-label={'Delete ' + collection.title} onClick={() => void remove(collection)} disabled={busy}><Trash2 size={14}/> Remove</button>

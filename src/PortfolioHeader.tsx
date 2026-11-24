@@ -10,6 +10,14 @@ import {yourFirstHomeContact} from './YourFirstHome';
 import type {BrokerCard,BuyerCollection} from './types';
 export type PortfolioView='map'|'split'|'list';
 const views=([{value:'map',label:'Map',Icon:MapIcon},{value:'split',label:'Split',Icon:Columns2},{value:'list',label:'List',Icon:LayoutGrid}] as const);
+export function PortfolioViewSwitcher({view,setView,className='portfolio-views'}:{
+ view:PortfolioView;setView:(view:PortfolioView)=>void;className?:string;
+}){
+ const {t}=useLocale();
+ return <div className={className} role="group" aria-label={t('Portfolio view')}>{views.map(({value,label,Icon})=>
+  <button key={value} aria-label={t(label)} aria-pressed={view===value} onClick={()=>setView(value)}><Icon size={17}/><span>{t(label)}</span></button>
+ )}</div>;
+}
 export default function PortfolioHeader({exploring,staff,view,setView,saved,openFavourites,onNavigate,broker=null,collection=null,onContact,onResetMap}:{exploring:boolean;staff:boolean;view:PortfolioView;setView:(view:PortfolioView)=>void;saved:number;openFavourites:()=>void;onNavigate:()=>void;broker?:BrokerCard|null;collection?:BuyerCollection|null;onContact?:()=>void;onResetMap?:()=>void}){
  const {t,dark}=useLocale(),[menu,setMenu]=useState(false);
  const campaign=collection?.campaign==='your-first-home';
@@ -20,7 +28,7 @@ export default function PortfolioHeader({exploring,staff,view,setView,saved,open
   <a className="portfolio-header-brand" href={homeHref} aria-label={t('JLL Residential home')} onClick={onNavigate}><img src={dark?'/images/jll-residential-dark.svg?v=2026-01':'/images/jll-residential-light.svg?v=2026-01'} alt="JLL Residential"/></a>
   {staff&&<span className="portfolio-workspace-label">{t('Broker workspace')}</span>}
   {exploring&&<h1 className="portfolio-header-title"><a href={homeHref} onClick={onNavigate}>{campaign?'Your First Home':'London New Homes Portfolio'}</a></h1>}
-  {exploring&&<div className="portfolio-views" role="group" aria-label={t('Portfolio view')}>{views.map(({value,label,Icon})=><button key={value} aria-label={t(label)} aria-pressed={view===value} onClick={()=>setView(value)}><Icon size={17}/><span>{t(label)}</span></button>)}</div>}
+  {exploring&&<PortfolioViewSwitcher view={view} setView={setView}/>}
   <div className="portfolio-header-buttons">
    {staff&&<a className="portfolio-workspace-exit" href="/" target="_blank" rel="noopener noreferrer">{t('View portfolio')} <ArrowUpRight size={16} aria-hidden="true"/></a>}
    {exploring&&broker&&<a className="portfolio-mobile-broker" href={contactHref} target="_blank" rel="noopener noreferrer" aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={22}/></a>}
