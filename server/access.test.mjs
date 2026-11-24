@@ -23,11 +23,12 @@ test('designated reviewers can confirm their own assignments and admins manage a
   state.developments[1].sample=false;
   state.developmentReviews=[{developmentId:samples[1].id,assigneeId:broker.user.id,version:'legacy',nextReminderAt:Date.now()}];
  });
- const body={developmentId,assigneeId:consultant.user.id,version:null};
+ const body={action:'assign',developmentId,assigneeId:consultant.user.id,version:null};
  assert.equal((await e.call(path)).status,401);
- assert.equal((await e.call(path,{actor:consultant,method:'PUT',body})).status,403);
- assert.equal((await e.call(path,{actor:admin,method:'PUT',body,csrf:false})).status,403);
- assert.equal((await e.call(path,{actor:admin,method:'PUT',body:{...body,assigneeId:broker.user.id}})).status,422);
+ assert.equal((await e.call(path,{actor:consultant,method:'POST',body})).status,403);
+ assert.equal((await e.call(path,{actor:admin,method:'POST',body,csrf:false})).status,403);
+ assert.equal((await e.call(path,{actor:admin,method:'POST',body:{...body,assigneeId:broker.user.id}})).status,422);
+ assert.equal((await e.call(path,{actor:admin,method:'POST',body:{...body,action:'unknown'}})).status,404);
  const assignmentOverview=(await e.call(path,{actor:admin})).data;
  assert.equal(assignmentOverview.reviews[0].assigneeActive,false);
  assert.ok(assignmentOverview.consultants.some(row=>row.id===consultant.user.id));
@@ -36,20 +37,23 @@ test('designated reviewers can confirm their own assignments and admins manage a
  for(const method of ['POST','PATCH']){
   assert.equal((await e.call(path,{actor:broker,method,body:{developmentId:samples[1].id,version:'legacy'}})).status,403);
  }
- assert.equal((await e.call(path,{actor:admin,method:'PUT',body})).status,200);
+ assert.equal((await e.call(path,{actor:admin,method:'POST',body})).status,200);
  const assigned=(await e.call(path,{actor:consultant})).data;
  assert.equal(assigned.reviews.length,1);
  assert.equal(assigned.consultants.length,0);
  assert.equal((await e.call(path,{actor:other})).data.reviews.length,0);
  assert.ok(!(await e.call('developments')).data[0].assigneeId);
  const [firstReview]=assigned.reviews;
- const prices={developmentId,version:firstReview.version,unitPrices:{1:550000},expectedBedrooms:firstReview.development.bedrooms,expectedUnitPrices:{}};
- assert.equal((await e.call(path,{actor:other,method:'PATCH',body:prices})).status,403);
- assert.equal((await e.call(path,{actor:admin,method:'PATCH',body:prices})).status,403);
- assert.equal((await e.call(path,{actor:consultant,method:'PATCH',body:prices})).status,200);
+ const prices={action:'save-prices',developmentId,version:firstReview.version,unitPrices:{1:550000},expectedBedrooms:firstReview.development.bedrooms,expectedUnitPrices:{}};
+ assert.equal((await e.call(path,{actor:other,method:'POST',body:prices})).status,403);
+ assert.equal((await e.call(path,{actor:admin,method:'POST',body:prices})).status,403);
+ assert.equal((await e.call(path,{actor:consultant,method:'POST',body:prices,csrf:false})).status,403);
+ assert.equal((await e.call(path,{actor:consultant,method:'POST',body:prices,origin:'https://outside.example'})).status,403);
+ assert.equal((await e.call(path,{actor:consultant,method:'POST',body:prices})).status,200);
+ assert.equal((await e.call(path,{actor:consultant,method:'POST',body:prices})).status,409);
  const [updated]=(await e.call(path,{actor:consultant})).data.reviews;
  assert.deepEqual(updated.development.unitPrices,{1:550000});
- const confirmation={developmentId,version:updated.version};
+ const confirmation={action:'confirm',developmentId,version:updated.version};
  assert.equal((await e.call(path,{actor:admin,method:'POST',body:confirmation})).status,403);
  assert.equal((await e.call(path,{actor:consultant,method:'POST',body:confirmation})).status,200);
  const [confirmed]=(await e.call(path,{actor:consultant})).data.reviews;

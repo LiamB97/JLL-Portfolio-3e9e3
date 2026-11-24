@@ -125,10 +125,14 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
      const text=await request.text();
      if(Buffer.byteLength(text)>4000)throw new AccessError('Development review request is too large.',413);
      let body;try{body=JSON.parse(text);}catch{throw new AccessError('Send valid development review data.');}
+     if(!body||typeof body!=='object'||Array.isArray(body))throw new AccessError('Send valid development review data.');
+     // POST supports hosts that only forward GET and POST. Keep the original methods for existing clients.
+     const action=method==='PATCH'?'save-prices':method==='PUT'?'assign':body.action===undefined?'confirm':body.action;
+     if(!['confirm','save-prices','assign'].includes(action))throw new AccessError('Development review action not found.',404);
      return json(await repository.update(state=>{
       const acting=access.current(state,actor);
-      if(method==='POST')return confirmDevelopmentReview(state,acting,body);
-      if(method==='PATCH')return saveDevelopmentReviewPrices(state,acting,body);
+      if(action==='confirm')return confirmDevelopmentReview(state,acting,body);
+      if(action==='save-prices')return saveDevelopmentReviewPrices(state,acting,body);
       access.admin(acting);
       return assignDevelopmentReview(state,body);
      }));
