@@ -367,7 +367,7 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     newPage();
     lockup();
     text(continued ? 'Your shortlist (continued)' : 'Your shortlist', left, 102, 32);
-    if (!continued) text(`${total} New ${total === 1 ? 'Home' : 'Homes'}, mapped`, left, 133, 16, {face: 'italic', colour: colour.sand});
+    if (!continued) text('Development locations', left, 133, 16, {face: 'italic', colour: colour.sand});
   }
 
   function shortlistMap(height: number) {
@@ -463,7 +463,8 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     bedTypes.forEach((beds, row) => {
       const y = 460 + row * 25;
       text(bedLabel(beds), 358, y, 13);
-      fitted(priceLabel(startingPrice(development, beds)), right - 18, y, 114, 14, 1, {align: 'right', face: 'bold'}, 11);
+      const unitPrice = startingPrice(development, beds);
+      fitted(unitPrice === null ? 'Speak to your broker' : priceLabel(unitPrice), right - 18, y, 114, 14, 1, {align: 'right', face: 'bold'}, 11);
     });
 
     const description = brochureIntroduction(development.description);

@@ -1,9 +1,10 @@
 import {useEffect, useRef, useState} from 'react';
-import {ArrowDown, ArrowRight, ArrowUp, Download, FileText, Mail, Save, Search, Share2, Trash2, X} from 'lucide-react';
+import {ArrowDown, ArrowRight, ArrowUp, Download, FileText, FolderOpen, Mail, Save, Search, Share2, Trash2, X} from 'lucide-react';
 import {BROCHURE_MAX_CLIENT_NAME, BROCHURE_MAX_DEVELOPMENTS, BROCHURE_MAX_INTRO, BROCHURE_MAX_NOTE, BROCHURE_MAX_SAVED_BYTES} from '../shared/brochure-settings';
 import {brochureShareLinks} from '../shared/brochure-sharing';
 import {outlookDraft} from '../shared/email-draft';
 import BrochureCover from './BrochureCover';
+import StaffBrochureManagement from './StaffBrochureManagement';
 import WhatsAppIcon from './WhatsAppIcon';
 import type {BrochureInput} from './brochure';
 import type {Development} from './types';
@@ -64,6 +65,7 @@ export default function StaffBrochures({items, user, request, startCollection, a
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [progress, setProgress] = useState('');
+  const [managing, setManaging] = useState(false);
   const [saved, setSaved] = useState<Saved[]>([]);
   const [savedId, setSavedId] = useState('');
   const [version, setVersion] = useState<number | undefined>();
@@ -257,6 +259,7 @@ export default function StaffBrochures({items, user, request, startCollection, a
   }
 
   function newBrochure(source?: BrochureCollection) {
+    setManaging(false);
     const ids = source?.developmentIds.filter(id => items.some(item => item.id === id)) ?? [];
     setSavedId('');
     setVersion(undefined);
@@ -274,10 +277,27 @@ export default function StaffBrochures({items, user, request, startCollection, a
     }
   }
 
+  function forgetBrochures(ids: string[]) {
+    const removed = new Set(ids);
+    setSaved(old => old.filter(row => !removed.has(row.id)));
+    if (removed.has(savedId)) {
+      setSavedId('');
+      setVersion(undefined);
+      setResult(null);
+      setMessage('The saved brochure was deleted. You can save the current settings as a new draft.');
+    }
+  }
+
+  if (user.role === 'admin' && managing) return <StaffBrochureManagement request={request} active={active}
+    onBack={() => setManaging(false)} onDelete={forgetBrochures}/>;
+
   return <section className="staff-section brochure-workspace">
     <div className="staff-section-title">
       <div><h1>Brochures for your buyers</h1><p>Build a mapped shortlist with your own introduction and contact details.</p></div>
-      <button disabled={busy} onClick={() => newBrochure()}>New brochure</button>
+      <div className="action-row">
+        {user.role === 'admin' && <button disabled={busy} onClick={() => setManaging(true)}><FolderOpen size={16}/> Manage saved brochures</button>}
+        <button disabled={busy} onClick={() => newBrochure()}>New brochure</button>
+      </div>
     </div>
     <section className="admin-panel brochure-collection-start" aria-labelledby="brochure-collection-heading">
       <span className="brochure-collection-icon"><FileText size={23} aria-hidden="true"/></span>

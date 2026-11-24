@@ -7,6 +7,7 @@ import {Copy, ExternalLink, FileText, LockKeyhole, Plus, Star, Trash2} from 'luc
 import type {Development} from './types';
 import type {BrochureCollection, StaffCollection, StaffRequest, StaffUser} from './staff-types';
 import {YourFirstHomeShortcut} from './StaffYourFirstHome';
+import AdminSavedItems from './AdminSavedItems';
 
 export default function StaffCollections({items, request, user, active = true, onCampaign, onBrochure}: {
   items: Development[]; request: StaffRequest; user: StaffUser; active?: boolean;
@@ -24,6 +25,7 @@ export default function StaffCollections({items, request, user, active = true, o
   const [editorOpen, setEditorOpen] = useState(false);
   const [protectedLink, setProtectedLink] = useState(false);
   const [savedVersion, setSavedVersion] = useState({fields: '', passwordProtected: false});
+  const isAdmin = user.role === 'admin';
   const saved = collections.find(collection => collection.id === editing);
   const fields = {title, developmentIds: selected, transportDefaults: transport};
   const dirty = Boolean(link && (savedVersion.fields !== JSON.stringify(fields) || savedVersion.passwordProtected !== protectedLink));
@@ -104,8 +106,7 @@ export default function StaffCollections({items, request, user, active = true, o
     setBusy(true);
     try {
       await request('collections/' + collection.id, undefined, 'DELETE');
-      setCollections(old => old.filter(row => row.id !== collection.id));
-      if (editing === collection.id) {fresh();setEditorOpen(false);}
+      forgetCollections([collection.id]);
       setMessage('Collection link removed.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to remove the link.');
@@ -114,10 +115,42 @@ export default function StaffCollections({items, request, user, active = true, o
     }
   }
 
+  function forgetCollections(ids: string[]) {
+    const removed = new Set(ids);
+    setCollections(old => old.filter(row => !removed.has(row.id)));
+    if (editing && removed.has(editing)) {
+      fresh();
+      setEditorOpen(false);
+    }
+  }
+
+  async function bulkDelete(ids: string[]) {
+    const result: {removedIds: string[]} = await request('collections/bulk-delete', {ids});
+    forgetCollections(ids);
+    return result.removedIds.length;
+  }
+
+  function collectionActions(collection: StaffCollection) {
+    return <>
+      {canStartBrochure(collection) && <button className="primary collection-create-brochure" disabled={busy}
+        aria-label={'Create brochure from ' + collection.title} onClick={() => onBrochure(collection)}><FileText size={17}/> Create brochure</button>}
+      <a href={buyerLink(collection.slug)} target="_blank" rel="noopener noreferrer">Preview <ExternalLink size={13}/></a>
+      <button disabled={busy} onClick={() => edit(collection)}>Edit & share</button>
+      {!isAdmin && <button aria-label={'Delete ' + collection.title} onClick={() => void remove(collection)} disabled={busy}><Trash2 size={14}/> Remove</button>}
+    </>;
+  }
+
+  function collectionDetails(collection: StaffCollection) {
+    return <>
+      {collection.developmentIds.length} featured {collection.developmentIds.length === 1 ? 'development' : 'developments'}
+      {collection.password && <> · {collection.passwordProtected ? 'Password protected' : 'Portfolio password required'}</>}
+    </>;
+  }
+
   return <section className="staff-section">
     {!editorOpen&&<YourFirstHomeShortcut user={user} request={request} onOpen={onCampaign} active={active}/>}
     <div className="staff-section-title">
-      <div><h1>Collections for your buyers</h1><p>Choose developments to feature on the buyer’s map.</p></div>
+      <div><h1>{isAdmin ? 'Buyer collections' : 'Collections for your buyers'}</h1><p>{isAdmin ? 'Find saved collections by broker.' : 'Choose developments to feature on the buyer’s map.'}</p></div>
       <div className="action-row">
         {editorOpen ? <button disabled={busy} onClick={() => setEditorOpen(false)}>Back to saved collections</button>
           : (editing || selected.length > 0) && <button disabled={busy} onClick={() => setEditorOpen(true)}>Continue editing</button>}
@@ -178,22 +211,19 @@ export default function StaffCollections({items, request, user, active = true, o
           <a href={link} target="_blank" rel="noopener noreferrer">Preview collection <ExternalLink size={13}/></a>
         </div>}
       </section>
-      <section hidden={editorOpen} className="admin-panel collection-saved-panel">
+      {isAdmin ? <div hidden={editorOpen}>
+        <AdminSavedItems items={collections} noun="collection" disabled={busy} details={collectionDetails} actions={collectionActions}
+          empty="No buyer collections have been saved." consequence="Links to these collections will stop opening." onDelete={bulkDelete}/>
+      </div> : <section hidden={editorOpen} className="admin-panel collection-saved-panel">
         <h2>Your saved collections</h2>
         {!collections.length && <p>Create your first collection to highlight homes for a buyer. Your contact details stay attached to the link.</p>}
         {collections.map(collection => <div className="saved-collection" key={collection.id}>
           <strong>{collection.title}</strong>
           <p>{collection.developmentIds.length} featured developments</p>
           {collection.password && <p className="collection-password-status"><LockKeyhole size={14}/> {collection.passwordProtected ? 'Password protected' : 'Portfolio password required'}</p>}
-          <div className="saved-collection-actions action-row">
-            {canStartBrochure(collection) && <button className="primary collection-create-brochure" disabled={busy}
-              aria-label={'Create brochure from ' + collection.title} onClick={() => onBrochure(collection)}><FileText size={17}/> Create brochure</button>}
-            <a href={buyerLink(collection.slug)} target="_blank" rel="noopener noreferrer">Preview <ExternalLink size={13}/></a>
-            <button disabled={busy} onClick={() => edit(collection)}>Edit & share</button>
-            <button aria-label={'Delete ' + collection.title} onClick={() => void remove(collection)} disabled={busy}><Trash2 size={14}/> Remove</button>
-          </div>
+          <div className="saved-collection-actions action-row">{collectionActions(collection)}</div>
         </div>)}
-      </section>
+      </section>}
     </div>
     {message && <p role="status" className="admin-message">{message}</p>}
   </section>;
