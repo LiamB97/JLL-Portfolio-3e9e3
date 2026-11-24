@@ -23,6 +23,20 @@ import {ConflictError,refreshPortfolio} from './netlify-store.mjs';
 const reviewedDevelopment=(raw,options)=>{try{return validateDevelopment(raw,options);}catch(e){throw new AccessError(e.message);}};
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 const consultantRoutes = new Set(['/api/admin/development-reviews','/api/admin/guide','/api/admin/heartbeat']);
+async function bulkDeleteIds(request) {
+ const limit = 100_000;
+ const error = 'The selection is too large. Delete in smaller groups.';
+ if (Number(request.headers.get('content-length') || 0) > limit) throw new AccessError(error, 413);
+ const text = await request.text();
+ if (Buffer.byteLength(text) > limit) throw new AccessError(error, 413);
+ let body;
+ try {body = JSON.parse(text);} catch {throw new AccessError('Send valid deletion data.', 400);}
+ const ids = body?.ids;
+ if (!Array.isArray(ids) || !ids.length || ids.some(id => typeof id !== 'string' || !id.trim() || id.length > 100)) {
+  throw new AccessError('Select the saved items you want to delete.');
+ }
+ return new Set(ids);
+}
 export function createNetlifyApi({repository,password,fetchListings=fetchSource,extract=extractListing,network,connections,translations=defaultTranslations,visitorRepository,pendingOptions,brochureFiles,commute=defaultCommute,reviewEmailConfigured=false}){
  const access=accessService(repository,password);
  const brochures=brochureService(repository,brochureFiles||memoryBrochureFiles());
@@ -96,6 +110,23 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
     throw new AccessError('This workspace section is unavailable to Development consultants.',403);
    }
    if(!['GET','HEAD'].includes(method))access.csrf(request,actor);
+   if (route === '/api/admin/collections/bulk-delete' || route === '/api/admin/brochures/bulk-delete' ||
+       route === '/api/admin/brochures/manage' || route === '/api/admin/brochures/retry-file-cleanup') {
+    const checkAdmin = state => {
+     const user = access.current(state, actor);
+     if (user.legacy) throw new AccessError('Sign in with a staff account.', 401);
+     access.admin(user);
+    };
+    if (method === 'GET' && route === '/api/admin/brochures/manage') return json(await brochures.listForAdmin(checkAdmin));
+    if (method === 'POST' && route === '/api/admin/brochures/retry-file-cleanup') return json(await brochures.retryFileCleanup(checkAdmin));
+    if (method === 'POST' && route.endsWith('/bulk-delete')) {
+     access.admin(actor);
+     if (actor.legacy) throw new AccessError('Sign in with a staff account.', 401);
+     const ids = await bulkDeleteIds(request);
+     return json(route === '/api/admin/collections/bulk-delete' ? await access.deleteCollections(actor, ids) : await brochures.removeMany(ids, checkAdmin));
+    }
+    return json({error: 'Saved item action not found.'}, 404);
+   }
    if(method==='GET'&&route==='/api/admin/your-first-home'){
     if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);
     return json(campaignWorkspace(await repository.read(),actor));
