@@ -1,5 +1,10 @@
 import type {Development} from './types';
-import {SHORTLIST_MAP_WIDTH_PX} from './brochure-map-view';
+import {SHORTLIST_MAP_WIDTH_PX} from './brochure-map-view.ts';
+import {sizedDevelopmentPhoto} from './development-photo-url.ts';
+
+const PHOTO_WIDTH = 1280;
+const PHOTO_ATTEMPT_MS = 6000;
+const DEVELOPMENT_PHOTO_BUDGET_MS = 12000;
 
 function base64(bytes: Uint8Array) {
   let result = '';
@@ -27,7 +32,7 @@ function loadImage(url: string, timeout: number) {
     image.referrerPolicy = 'no-referrer';
     const timer = window.setTimeout(() => {
       image.onload = image.onerror = null;
-      image.src = '';
+      image.removeAttribute('src');
       reject(Error('Image loading timed out.'));
     }, timeout);
     image.onload = () => {clearTimeout(timer); resolve(image);};
@@ -36,9 +41,9 @@ function loadImage(url: string, timeout: number) {
   });
 }
 
-async function brochurePhoto(url: string, targetHeight: number) {
+async function brochurePhoto(url: string, targetHeight: number, timeout = PHOTO_ATTEMPT_MS) {
   try {
-    const image = await loadImage(url, 7000);
+    const image = await loadImage(url, timeout);
     // Keep the whole photograph. The PDF clips it to the placement, with its own fade.
     const {naturalWidth: width, naturalHeight: height} = image;
     const scale = Math.min(1, Math.max(SHORTLIST_MAP_WIDTH_PX / width, targetHeight / height), 2048 / Math.max(width, height));
@@ -61,24 +66,31 @@ function isExterior(url: string) {
   return /exterior|external|fa(?:c|ç|%c3%a7)ade/i.test(filename);
 }
 
-export async function brochurePhotos(items: Development[], progress: (value: string) => void) {
+export async function brochurePhotos(items: Development[], progress: (completed: number) => void) {
   const photos: Record<string, string> = {};
-  const missing: string[] = [];
+  let next = 0;
   let completed = 0;
-  for (let start = 0; start < items.length; start += 3) {
-    await Promise.all(items.slice(start, start + 3).map(async development => {
+  async function preparePhotos() {
+    while (next < items.length) {
+      const development = items[next++];
       const images = [...new Set(development.images)];
-      const urls = [...new Set([images.find(isExterior), ...images])].filter((url): url is string => Boolean(url));
-      for (const url of urls.slice(0, 3)) {
-        const image = await brochurePhoto(url, 640);
+      const originals = [...new Set([images.find(isExterior), ...images])]
+        .filter((url): url is string => Boolean(url)).slice(0, 3);
+      const candidates = new Set([...originals.map(url => sizedDevelopmentPhoto(url, PHOTO_WIDTH)), ...originals]);
+      const deadline = performance.now() + DEVELOPMENT_PHOTO_BUDGET_MS;
+      for (const url of candidates) {
+        const remaining = deadline - performance.now();
+        if (remaining <= 0) break;
+        const image = await brochurePhoto(url, 640, Math.min(remaining, PHOTO_ATTEMPT_MS));
         if (!image) continue;
         photos[development.id] = image;
         break;
       }
-      if (!photos[development.id]) missing.push(development.name);
-      progress(`Preparing photography ${++completed} of ${items.length}…`);
-    }));
+      progress(++completed);
+    }
   }
+  await Promise.all(Array.from({length: Math.min(items.length, 4)}, preparePhotos));
+  const missing = items.filter(item => !photos[item.id]).map(item => item.name);
   return {photos, missing};
 }
 
@@ -94,17 +106,33 @@ async function brandLogo() {
 }
 
 export async function brochureBrand() {
-  const [logoDark, icons] = await Promise.all([brandLogo(), pdfWhatsAppIcons()]);
-  return {logoDark, ...icons};
+  const [logoDark, icons] = await Promise.all([
+    brandLogo().catch(() => undefined),
+    pdfWhatsAppIcons().catch(() => undefined),
+  ]);
+  return {logoDark, ...icons, fallback: !logoDark || !icons};
 }
 
 export async function defaultBrochureCover() {
-  const response = await fetch('/api/admin/brochure-cover', {signal: AbortSignal.timeout(15_000)});
-  if (!response.ok) throw Error('The London skyline cover could not load. Try again.');
-  if (response.status === 204) return brochurePhoto('/images/london-skyline-cover.jpg', 960);
-  const url = URL.createObjectURL(await response.blob());
-  try {return await brochurePhoto(url, 960);}
-  finally {URL.revokeObjectURL(url);}
+  let fallback = false;
+  try {
+    const response = await fetch('/api/admin/brochure-cover', {signal: AbortSignal.timeout(6_000)});
+    if (response.status !== 204) {
+      if (!response.ok || !response.headers.get('Content-Type')?.startsWith('image/')) throw Error('Cover unavailable');
+      const url = URL.createObjectURL(await response.blob());
+      try {
+        const image = await brochurePhoto(url, 960);
+        if (image) return {image, fallback};
+        fallback = true;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+  } catch {
+    fallback = true;
+  }
+  const image = await brochurePhoto('/images/london-skyline-cover.jpg', 960);
+  return {image: image ?? undefined, fallback};
 }
 
 async function pdfWhatsAppIcons() {

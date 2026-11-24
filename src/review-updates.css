@@ -27,3 +27,23 @@
 .unit-prices dl>div[data-selected=true]{border-color:var(--accent);background:var(--selected-bg);box-shadow:0 0 0 1px var(--accent)}
 
 .staff-portal label.pricing-work-filter{display:flex;flex-direction:row;align-items:center;gap:10px;line-height:1.6}.pricing-work-filter input{width:18px!important;height:18px!important;min-height:18px!important;margin:0!important;flex-shrink:0}
+.brochure-workspace .brochure-collection-start{
+ display:grid;grid-template-columns:46px minmax(160px,1fr) minmax(230px,1.2fr);gap:14px;align-items:center;
+ padding:18px;border-inline-start:4px solid var(--accent);background:var(--page);
+}
+.brochure-collection-icon{
+ display:grid;place-items:center;width:46px;height:46px;border-radius:8px;background:var(--accent);color:var(--accent-contrast);
+}
+.brochure-collection-start h2{margin:0 0 5px;font-size:19px;line-height:1.25}
+.brochure-collection-start p{margin:0;color:var(--muted);line-height:1.35}
+.brochure-collection-picker{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+.brochure-collection-start .brochure-collection-picker :is(select,button){min-width:0;min-height:44px;margin:0}
+.brochure-collection-start .brochure-collection-picker button{white-space:nowrap}
+.brochure-linked-collection{display:flex;align-items:center;gap:7px;color:var(--accent);font-weight:600}
+.brochure-linked-collection svg{flex-shrink:0}
+.saved-collection-actions .collection-create-brochure,.collection-share .collection-create-brochure{min-height:44px;font-weight:600}
+@media(max-width:1050px){
+ .brochure-workspace .brochure-collection-start{grid-template-columns:46px minmax(0,1fr)}
+ .brochure-collection-picker{grid-column:1/-1}
+}
+@media(max-width:420px){.brochure-collection-picker{grid-template-columns:minmax(0,1fr)}}

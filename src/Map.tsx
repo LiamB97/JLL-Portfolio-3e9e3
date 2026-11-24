@@ -44,9 +44,11 @@ function showStationLabel(marker: L.CircleMarker, name: string, direction?: L.Di
 function frameOptions(m:L.Map):L.FitBoundsOptions{
  // Read the actual overlay bounds, so framing also fits translated controls and
  // short landscape viewports. Desktop and Split controls remain in normal flow.
- const toolbar=m.getContainer().closest('.discovery-page')?.querySelector<HTMLElement>('.discovery-toolbar');
+ const container=m.getContainer();
+ const toolbar=container.closest('.discovery-page')?.querySelector<HTMLElement>('.discovery-toolbar');
  const overlay=toolbar&&getComputedStyle(toolbar).position==='absolute';
- const top=overlay?Math.max(24,toolbar.getBoundingClientRect().bottom-m.getContainer().getBoundingClientRect().top+16):24;
+ const clearance=container.closest('.mobile-collection')?54:16;
+ const top=overlay?Math.max(24,toolbar.getBoundingClientRect().bottom-container.getBoundingClientRect().top+clearance):24;
  const size=m.getSize();
  return {paddingTopLeft:[24,Math.min(top,size.y*.45)],paddingBottomRight:[24,Math.min(84,size.y*.25)],maxZoom:14};
 }
@@ -63,11 +65,12 @@ function stationPopup(station:TransportNetwork['stations'][number], network:Tran
   if(action){const button=document.createElement('button');button.type='button';button.className='station-highlight-action';button.textContent=action.label;button.addEventListener('click',action.run);popup.append(button);}
   return popup;
 }
-export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset,clusterFeatured=false,embedded=false}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void;clusterFeatured?:boolean;embedded?:boolean}) {
+export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset,clusterFeatured=false,clusterCollection=false,embedded=false}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void;clusterFeatured?:boolean;clusterCollection?:boolean;embedded?:boolean}) {
   const {t,dark}=useLocale();
   const lastView=useRef<{centre:L.LatLngExpression;zoom:number}>({centre:CENTRAL_LONDON.centre,zoom:CENTRAL_LONDON.zoom});
   const el=useRef<HTMLDivElement>(null), map=useRef<L.Map|null>(null);
   const markers=useRef<L.MarkerClusterGroup|null>(null), lines=useRef<L.LayerGroup|null>(null), stationLayer=useRef<L.LayerGroup|null>(null),featuredLayer=useRef<L.LayerGroup|null>(null);
+  const collectionClusters=useRef<L.MarkerClusterGroup|null>(null);
   const [showLines,setShowLines]=useState(false),[showStations,setShowStations]=useState(false),[failed,setFailed]=useState(false),[baseReady,setBaseReady]=useState(false);
   const commuteLayer=useRef<L.LayerGroup|null>(null);
   const landmarkLayer=useRef<L.LayerGroup|null>(null);
@@ -122,6 +125,13 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     landmarkLayer.current=L.layerGroup().addTo(m);
     universityLayer.current=L.layerGroup().addTo(m);
     markers.current=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:40,spiderfyOnMaxZoom:true,iconCreateFunction:cluster=>L.divIcon({html:`<span>${cluster.getChildCount()}</span>`,className:'development-cluster'+(collectionActive.current?' subdued-cluster':''),iconSize:[42,42],iconAnchor:[21,21]})}).addTo(m);
+    collectionClusters.current=L.markerClusterGroup({
+      showCoverageOnHover:false,maxClusterRadius:54,removeOutsideVisibleBounds:false,
+      iconCreateFunction:cluster=>L.divIcon({
+        html:`<span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>${cluster.getChildCount()}</span>`,
+        className:'development-cluster collection-pick-cluster',iconSize:[44,44],iconAnchor:[22,22],
+      }),
+    }).addTo(m);
     lines.current=L.layerGroup().addTo(m);stationLayer.current=L.layerGroup().addTo(m);featuredLayer.current=L.layerGroup().addTo(m);
     const resize=new ResizeObserver(()=>m.invalidateSize({pan:false}));resize.observe(el.current);
     return()=>{window.clearTimeout(styleTimeout);resize.disconnect();m.stop();
@@ -132,14 +142,17 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   },[dark,embedded]);
   useEffect(()=>{
     const group=markers.current,featured=featuredLayer.current;if(!group||!featured)return;group.clearLayers();featured.clearLayers();
+    collectionClusters.current?.clearLayers();
+    const highlightedLayer=(clusterCollection?collectionClusters.current:null)??(clusterFeatured?group:featured);
     for(const d of items){
       const highlighted=featuredIds.includes(d.id),saved=favouriteIds.includes(d.id);
       const icon=L.divIcon({className:'development-pin-wrap',html:`<span class="development-pin ${d.id===selected?'active':''} ${highlighted?'featured-pin':''} ${saved?'favourite-pin':''}">${highlighted?'<svg class="pin-feature-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>':saved?'<svg class="pin-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>':'<span class="pin-centre"></span>'}${highlighted&&saved?'<b class="pin-saved-badge">♥</b>':''}</span>`,iconSize:highlighted?[46,54]:[34,40],iconAnchor:highlighted?[23,50]:[17,38]});
       const marker=L.marker([d.lat,d.lng],{icon,keyboard:true,title:d.name+(highlighted?' · '+t('FEATURED'):'')+(saved?' · '+t('Saved to favourites'):''),opacity:dimOthers&&featuredIds.length&&!highlighted&&!saved&&d.id!==selected ? 0.32 : 1,zIndexOffset:d.id===selected?3000:highlighted?2000:saved?1000:0});
       if(commuteTimes[d.id]!==undefined){const label=document.createElement('span');label.textContent=d.name+' · '+commuteTimes[d.id]+' min commute';marker.bindTooltip(label);}
-      marker.on('add',()=>marker.getElement()?.setAttribute('aria-label',`${d.name}${highlighted?', '+t('FEATURED'):''}${saved?', '+t('Saved to favourites'):''}`)).on('click',()=>onSelect(d.id)).addTo((highlighted&&(!clusterFeatured||d.id===selected))||saved?featured:group);
+      const pinLayer=saved||(highlighted&&d.id===selected)?featured:highlighted?highlightedLayer:group;
+      marker.on('add',()=>marker.getElement()?.setAttribute('aria-label',`${d.name}${highlighted?', '+t('FEATURED'):''}${saved?', '+t('Saved to favourites'):''}`)).on('click',()=>onSelect(d.id)).addTo(pinLayer);
     }
-  },[items,selected,onSelect,featuredIds,favouriteIds,commuteTimes,dimOthers,dark,t,clusterFeatured]);
+  },[items,selected,onSelect,featuredIds,favouriteIds,commuteTimes,dimOthers,dark,t,clusterFeatured,clusterCollection]);
   useEffect(()=>{
     const m=map.current,group=landmarkLayer.current;if(!m||!group)return;
     function render(){

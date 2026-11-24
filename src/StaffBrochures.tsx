@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {ArrowDown, ArrowUp, Download, FileText, Mail, Save, Search, Share2, Trash2, X} from 'lucide-react';
+import {useEffect, useRef, useState} from 'react';
+import {ArrowDown, ArrowRight, ArrowUp, Download, FileText, Mail, Save, Search, Share2, Trash2, X} from 'lucide-react';
 import {BROCHURE_MAX_CLIENT_NAME, BROCHURE_MAX_DEVELOPMENTS, BROCHURE_MAX_INTRO, BROCHURE_MAX_NOTE, BROCHURE_MAX_SAVED_BYTES} from '../shared/brochure-settings';
 import {brochureShareLinks} from '../shared/brochure-sharing';
 import {outlookDraft} from '../shared/email-draft';
@@ -7,7 +7,7 @@ import BrochureCover from './BrochureCover';
 import WhatsAppIcon from './WhatsAppIcon';
 import type {BrochureInput} from './brochure';
 import type {Development} from './types';
-import type {StaffCollection, StaffRequest, StaffUser} from './staff-types';
+import type {BrochureCollection, StaffCollection, StaffRequest, StaffUser} from './staff-types';
 
 const defaultTitle = 'Your London New Homes';
 
@@ -44,15 +44,17 @@ function download(url: string, name: string) {
   link.click();
 }
 
-export default function StaffBrochures({items, user, request, active = true, onProfile}: {
+export default function StaffBrochures({items, user, request, startCollection, active = true, onProfile}: {
   items: Development[];
   user: StaffUser;
   request: StaffRequest;
+  startCollection?: BrochureCollection | null;
   active?: boolean;
   onProfile: () => void;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [collections, setCollections] = useState<StaffCollection[]>([]);
+  const [collectionChoice, setCollectionChoice] = useState('');
   const [collection, setCollection] = useState('');
   const [title, setTitle] = useState(defaultTitle);
   const [clientName, setClientName] = useState('');
@@ -65,7 +67,8 @@ export default function StaffBrochures({items, user, request, active = true, onP
   const [saved, setSaved] = useState<Saved[]>([]);
   const [savedId, setSavedId] = useState('');
   const [version, setVersion] = useState<number | undefined>();
-  const [result, setResult] = useState<{url: string; file: File; missing: string[]; warnings: string[]; count: number} | null>(null);
+  const [result, setResult] = useState<{url: string; file: File; missing: string[]; warnings: string[]; assetWarnings: string[]; count: number} | null>(null);
+  const appliedCollection = useRef<BrochureCollection | null>(null);
 
   async function refresh() {
     setSaved(await request('brochures', undefined, 'GET'));
@@ -80,6 +83,11 @@ export default function StaffBrochures({items, user, request, active = true, onP
   }, [request, active, user.id]);
   useEffect(() => () => {if (result) URL.revokeObjectURL(result.url);}, [result]);
   useEffect(() => {setResult(null);}, [user.name, user.photo, user.whatsapp, user.jobTitle, user.email, user.shareSlug]);
+  useEffect(() => {
+    if (!startCollection || appliedCollection.current === startCollection || busy || !items.length) return;
+    appliedCollection.current = startCollection;
+    newBrochure(startCollection);
+  }, [startCollection, busy, items]);
 
   const chosen = selected.flatMap(id => {
     const development = items.find(d => d.id === id);
@@ -87,18 +95,13 @@ export default function StaffBrochures({items, user, request, active = true, onP
   });
   const shareLinks = brochureShareLinks(location.origin, user.shareSlug, collection, title, user.name);
   const config: Settings = {title, clientName, intro, notes, collection, developmentIds: chosen.map(d => d.id)};
+  const eligibleCollections = collections.filter(row => row.developmentIds.some(id => items.some(item => item.id === id)));
+  const selectedCollection = eligibleCollections.find(row => row.slug === collectionChoice);
+  const linkedCollection = collections.find(row => row.slug === collection);
 
   function edit() {
     setResult(null);
     setMessage('');
-  }
-
-  function startFromCollection(slug: string) {
-    edit();
-    setCollection(slug);
-    const match = collections.find(c => c.slug === slug);
-    setSelected(match?.developmentIds.filter(id => items.some(d => d.id === id)).slice(0, BROCHURE_MAX_DEVELOPMENTS) ?? []);
-    if (match) setTitle(old => old && old !== 'Your London homes' && old !== defaultTitle ? old : match.title);
   }
 
   function move(index: number, offset: number) {
@@ -136,6 +139,7 @@ export default function StaffBrochures({items, user, request, active = true, onP
   }
 
   async function generate() {
+    let preparing = true;
     setBusy(true);
     setMessage('');
     setResult(null);
@@ -143,19 +147,27 @@ export default function StaffBrochures({items, user, request, active = true, onP
     try {
       const [{buildBrochure, brochureFilename}, {brochureFonts, brochurePhotos, brochureBrand, defaultBrochureCover}, {brochureMap}] =
         await Promise.all([import('./brochure'), import('./brochure-assets'), import('./brochure-map')]);
-      const [fonts, brand, coverImage] = await Promise.all([brochureFonts(), brochureBrand(), defaultBrochureCover()]);
-      if (!coverImage) throw Error('The London skyline cover could not load. Try again.');
-      const {photos, missing} = await brochurePhotos(chosen, setProgress);
-      setProgress('Preparing your shortlist map…');
-      const map = await brochureMap(chosen);
+      setProgress('Preparing your shortlist map and photos…');
+      const [fonts, brand, cover, {photos, missing}, map] = await Promise.all([
+        brochureFonts(), brochureBrand(), defaultBrochureCover(),
+        brochurePhotos(chosen, completed => {
+          if (preparing) setProgress(completed < chosen.length
+            ? `Preparing photography ${completed} of ${chosen.length}…` : 'Finishing the shortlist map and cover…');
+        }),
+        brochureMap(chosen),
+      ]);
       setProgress('Designing your New Homes brochure…');
       const input: BrochureInput = {
         title, clientName, intro, notes, items: chosen, broker: {...user, title: user.jobTitle || ''},
-        origin: location.origin, brokerSlug: user.shareSlug, collection: collection || undefined, coverImage,
+        origin: location.origin, brokerSlug: user.shareSlug, collection: collection || undefined, coverImage: cover.image,
       };
       const pdf = buildBrochure(input, {...fonts, ...brand, photos, map});
       const file = new File([pdf.output('blob')], brochureFilename(title), {type: 'application/pdf'});
-      setResult({url: URL.createObjectURL(file), file, missing, warnings: pdf.brochureWarnings, count: chosen.length});
+      const assetWarnings = [];
+      if (!cover.image) assetWarnings.push('The cover photo was unavailable. A plain cover was used.');
+      else if (cover.fallback) assetWarnings.push('The saved cover could not load. The standard London skyline was used.');
+      if (brand.fallback) assetWarnings.push('Some branding images could not load. Review the text and contact links before sharing.');
+      setResult({url: URL.createObjectURL(file), file, missing, assetWarnings, warnings: pdf.brochureWarnings, count: chosen.length});
       try {
         await persist(file);
         setMessage(file.size > BROCHURE_MAX_SAVED_BYTES
@@ -167,6 +179,7 @@ export default function StaffBrochures({items, user, request, active = true, onP
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to create the PDF.');
     } finally {
+      preparing = false;
       setBusy(false);
       setProgress('');
     }
@@ -190,7 +203,7 @@ export default function StaffBrochures({items, user, request, active = true, onP
         const response = await fetch('/api/admin/brochures/' + encodeURIComponent(row.id) + '/pdf');
         if (!response.ok) throw Error('The saved PDF could not load. Regenerate it from this draft.');
         const file = new File([await response.blob()], row.filename, {type: 'application/pdf'});
-        setResult({url: URL.createObjectURL(file), file, missing: [], warnings: [], count: c.developmentIds.length});
+        setResult({url: URL.createObjectURL(file), file, missing: [], warnings: [], assetWarnings: [], count: c.developmentIds.length});
       }
       setMessage('Saved brochure opened. Regenerate the PDF to include the latest layout, prices and profile details.');
     } catch (error) {
@@ -243,23 +256,45 @@ export default function StaffBrochures({items, user, request, active = true, onP
     setMessage('Outlook draft downloaded. Open it in Outlook, add your recipient and review the draft before sending.');
   }
 
-  function newBrochure() {
+  function newBrochure(source?: BrochureCollection) {
+    const ids = source?.developmentIds.filter(id => items.some(item => item.id === id)) ?? [];
     setSavedId('');
     setVersion(undefined);
-    setSelected([]);
-    setCollection('');
-    setTitle(defaultTitle);
+    setSelected(ids.slice(0, BROCHURE_MAX_DEVELOPMENTS));
+    setCollection(source?.slug ?? '');
+    setCollectionChoice(source?.slug ?? '');
+    setTitle(source?.title ?? defaultTitle);
     setClientName('');
     setIntro('');
     setNotes({});
+    setQuery('');
     edit();
+    if (ids.length > BROCHURE_MAX_DEVELOPMENTS) {
+      setMessage('The first ' + BROCHURE_MAX_DEVELOPMENTS + ' developments were added. You can change the selection below.');
+    }
   }
 
   return <section className="staff-section brochure-workspace">
     <div className="staff-section-title">
       <div><h1>Brochures for your buyers</h1><p>Build a mapped shortlist with your own introduction and contact details.</p></div>
-      <button disabled={busy} onClick={newBrochure}>New brochure</button>
+      <button disabled={busy} onClick={() => newBrochure()}>New brochure</button>
     </div>
+    <section className="admin-panel brochure-collection-start" aria-labelledby="brochure-collection-heading">
+      <span className="brochure-collection-icon"><FileText size={23} aria-hidden="true"/></span>
+      <div>
+        <h2 id="brochure-collection-heading">Create from a buyer collection</h2>
+        <p>Start a new brochure with its title and featured developments.</p>
+      </div>
+      {eligibleCollections.length > 0 && <div className="brochure-collection-picker">
+        <select aria-label="Saved buyer collection" disabled={busy} value={collectionChoice} onChange={event => setCollectionChoice(event.target.value)}>
+          <option value="">Choose a collection</option>
+          {eligibleCollections.map(row => <option key={row.id} value={row.slug}>{row.title} · {row.developmentIds.length} homes</option>)}
+        </select>
+        <button className="primary" disabled={busy || !selectedCollection} onClick={() => selectedCollection && newBrochure(selectedCollection)}>
+          Use collection <ArrowRight size={16}/>
+        </button>
+      </div>}
+    </section>
     <section className="admin-panel saved-brochures">
       <h2>Saved brochures · {saved.length}</h2>
       <p>Private to your account. Save up to 50 brochures and 100MB of PDFs, with a 3.5MB limit per PDF.</p>
@@ -276,13 +311,8 @@ export default function StaffBrochures({items, user, request, active = true, onP
     <div className="brochure-grid">
       <section className="admin-panel">
         <h2>1. Choose your developments</h2>
+        {linkedCollection && <p className="brochure-linked-collection"><FileText size={16}/> From {linkedCollection.title}</p>}
         <fieldset disabled={busy}>
-          <label>Start from a saved collection
-            <select value={collection} onChange={e => startFromCollection(e.target.value)}>
-              <option value="">Choose developments individually</option>
-              {collections.map(c => <option key={c.id} value={c.slug}>{c.title}</option>)}
-            </select>
-          </label>
           <label className="brochure-search">
             <Search size={16}/><input type="search" aria-label="Find developments for brochure" value={query} onChange={e => setQuery(e.target.value)} placeholder="Name, area or postcode"/>
           </label>
@@ -348,6 +378,7 @@ export default function StaffBrochures({items, user, request, active = true, onP
       <h2>3. Review and share</h2>
       <p>{(result.file.size / 1000000).toFixed(1)}MB · {result.count} developments · PDF brochure</p>
       {result.missing.length > 0 && <p role="status">Photography could not be included for {result.missing.join(', ')}. Review the placeholders before sharing.</p>}
+      {result.assetWarnings.length > 0 && <p role="status">{result.assetWarnings.join(' ')}</p>}
       {result.warnings.length > 0 && <p role="status">Copy shortened to fit the page for {result.warnings.join(', ')}.</p>}
       <div className="action-row">
         <a href={result.url} download={result.file.name}><Download size={16}/> Download PDF</a>

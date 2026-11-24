@@ -43,15 +43,19 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
     setRegion(data?.developments.find(development => development.id === id)?.region ?? null);
   }
 
-  async function saveReview(body: object, method: 'PUT' | 'POST' | 'PATCH', success: string) {
+  async function saveReview(action: 'assign' | 'confirm' | 'save-prices', body: object, success: string) {
     setBusy(true);
     setError('');
     setMessage('');
     try {
-      await request('development-reviews', body, method);
-      await refresh();
-      if (method === 'PATCH') await onStockChange();
+      await request('development-reviews', {...body, action});
       setMessage(success);
+      try {
+        await refresh();
+        if (action === 'save-prices') await onStockChange();
+      } catch {
+        setError('The review list could not refresh. Select Refresh list for the latest details.');
+      }
       return true;
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unable to save the review.');
@@ -75,13 +79,13 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
   async function savePrices(editor: NonNullable<typeof priceEditor>) {
     const {review, values} = editor;
     const unitPrices = Object.fromEntries(Object.entries(values).filter(([, value]) => value !== '').map(([beds, value]) => [beds, Number(value)]));
-    const saved = await saveReview({
+    const saved = await saveReview('save-prices', {
       developmentId: review.development.id,
       version: review.version,
       expectedBedrooms: review.development.bedrooms,
       expectedUnitPrices: review.development.unitPrices,
       unitPrices,
-    }, 'PATCH', 'Bedroom prices saved.');
+    }, 'Bedroom prices saved.');
     if (saved) setPriceEditor(null);
   }
 
@@ -90,7 +94,7 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
     <p>{user.role === 'admin'
       ? 'Assign Broker admins and Development consultants to check published details and bedroom prices.'
       : 'Check the published description, pricing and availability, then confirm the details. Each confirmation starts a new 14-day review period.'}</p>
-    {error && <p role="alert" className="admin-message">{error} <button type="button" onClick={() => {
+    {error && <p role="alert" className="admin-message">{error} <button type="button" disabled={busy} onClick={() => {
       setError('');setPriceEditor(null);void refresh().catch(e => setError(e.message));
     }}>Refresh list</button></p>}
     {message && <p role="status" className="admin-message">{message}</p>}
@@ -98,10 +102,10 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
     {data?.canAssign && <form className="admin-panel" onSubmit={event => {
       event.preventDefault();
       if (!developmentId || !changed || busy) return;
-      void saveReview({
+      void saveReview('assign', {
         developmentId, assigneeIds, expectedAssignments: Object.fromEntries(assignments.map(review => [review.assigneeId, review.version])),
         region, expectedRegion: assignedRegion,
-      }, 'PUT', 'Region and review assignment saved.');
+      }, 'Region and review assignment saved.');
     }}>
       <h2>Assign reviews by region</h2>
       <p>{data.emailConfigured ? 'Due developments are grouped into one email per consultant.' : 'Automatic email delivery needs to be configured. You can assign reviews now.'}</p>
@@ -166,7 +170,7 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
                 {ownReview && !editingPrices && <button type="button" disabled={busy} onClick={() => setPriceEditor({
                   review, values: Object.fromEntries(Object.entries(review.development.unitPrices).map(([beds, price]) => [beds, String(price)])),
                 })}><Pencil size={14}/> Bedroom prices</button>}
-                {ownReview && <button type="button" className="primary" disabled={busy || Boolean(editingPrices)} onClick={() => void saveReview({developmentId: id, version: review.version}, 'POST', 'Details confirmed. The next review is due in 14 days.')}>Confirm details</button>}
+                {ownReview && <button type="button" className="primary" disabled={busy || Boolean(editingPrices)} onClick={() => void saveReview('confirm', {developmentId: id, version: review.version}, 'Details confirmed. The next review is due in 14 days.')}>Confirm details</button>}
                 {data.canAssign && <button type="button" disabled={busy} onClick={() => {
                   selectDevelopment(id);
                   developmentSelect.current?.focus();
