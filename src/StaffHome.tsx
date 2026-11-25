@@ -4,6 +4,7 @@ import {canReviewDevelopments, canUseBuyerTools} from '../shared/staff-roles';
 import {personalPortfolioLink} from './sharing';
 import type {ReviewWorkspace} from './StaffDevelopmentReviews';
 import {YourFirstHomeShortcut} from './StaffYourFirstHome';
+import StaffInsights from './StaffInsights';
 import type {StaffRequest, StaffUser} from './staff-types';
 
 const reviewDate = new Intl.DateTimeFormat('en-GB', {day:'numeric', month:'short', timeZone:'Europe/London'});
@@ -57,6 +58,7 @@ export default function StaffHome({user, navigate, request}: {
 
   return <section className="staff-section staff-home">
     <header className="workspace-home-heading"><h1>Overview</h1></header>
+    {user.role === 'admin' && <StaffInsights request={request} openReport={() => navigate('activity')}/>}
     <div className={buyerTools ? 'workspace-home-grid' : 'workspace-home-grid workspace-home-grid-reviews'}>
       <div className="workspace-work">
         {buyerTools && <section className="workspace-creation" aria-labelledby="workspace-tools-title">

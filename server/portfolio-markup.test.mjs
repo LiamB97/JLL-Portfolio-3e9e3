@@ -104,13 +104,16 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
   assert.deepEqual(home('.workspace-task strong').map((_,node)=>home(node).text()).get(),['Buyer collections','PDF brochures']);
   assert.equal(home('.workspace-link-actions a').attr('href'),'https://portfolio.example/?broker=qa');
   assert.match(home('.workspace-link-actions button').text(),/Copy portfolio link/);
+  assert.equal(home('.workspace-insights h2').text(),'Portfolio activity');
   const missingWhatsApp=load(renderToStaticMarkup(createElement(Home,{user:{...staff,role:'broker',whatsapp:''},request,navigate(){}})));
   assert.equal(missingWhatsApp('.workspace-link-actions a').length,0);
   assert.equal(missingWhatsApp('.workspace-review-summary').length,0);
   assert.match(missingWhatsApp('.workspace-link-actions button').text(),/Set up my profile/);
   assert.doesNotMatch(missingWhatsApp('.workspace-aside-card').text(),/Manage buyer access/);
+  assert.equal(missingWhatsApp('.workspace-insights').length,0);
   const managerHome=load(renderToStaticMarkup(createElement(Home,{user:{...staff,role:'broker_admin'},request,navigate(){}})));
   assert.deepEqual(managerHome('.workspace-work > section > header > h2').map((_,node)=>managerHome(node).text()).get(),['Buyer materials','Development reviews']);
+  assert.equal(managerHome('.workspace-insights').length,0);
   const consultantHome=load(renderToStaticMarkup(createElement(Home,{user:{...staff,role:'development_consultant'},request,navigate(){}})));
   assert.deepEqual(consultantHome('.workspace-work > section > header > h2').map((_,node)=>consultantHome(node).text()).get(),['Development reviews']);
   assert.equal(consultantHome('.workspace-home-aside, .workspace-task').length,0);

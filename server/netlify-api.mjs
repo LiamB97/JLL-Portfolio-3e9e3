@@ -4,6 +4,7 @@ import {defaultCommute,CommuteError} from './commute.mjs';
 import {pendingInputService} from './pending-input.mjs';
 import {assignDevelopmentReview,confirmDevelopmentReview,developmentReviewWorkspace,saveDevelopmentReviewPrices} from './development-reviews.mjs';
 import {recordStaff,touchStaff,initializeActivity,engagementService,activityReport} from './activity.mjs';
+import {activityOverview} from './activity-overview.mjs';
 import {translations as defaultTranslations} from './translations.mjs';
 import {staffGuide} from './staff-guide.mjs';
 import {analyticsConfiguration,validateAnalyticsConfiguration} from './analytics-config.mjs';
@@ -218,7 +219,16 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
     throw new AccessError('Pending input action not found.',404);
    }
 
-   if(method==='GET'&&route==='/api/admin/activity'){const state=await repository.read();access.admin(access.current(state,actor));return json(await activityReport(state,visitorRepository,url.searchParams));}
+   if(method==='GET'&&route==='/api/admin/activity'){
+    const state=await repository.read();
+    const acting=access.current(state,actor);
+    access.admin(acting);
+    if(url.searchParams.get('view')==='overview'){
+     if(acting.legacy)throw new AccessError('Sign in with a staff account.',401);
+     return json(await activityOverview(state,visitorRepository,url.searchParams));
+    }
+    return json(await activityReport(state,visitorRepository,url.searchParams));
+   }
    if(method==='POST'&&route==='/api/admin/heartbeat'){if(actor.legacy)throw new AccessError('Sign in with a staff account.',401);const s=await repository.read();const last=s.activity?.people?.[actor.id]?.lastActivityAt;if(!last||Date.now()-Date.parse(last)>=5*60000)await repository.update(state=>touchStaff(state,access.current(state,actor)));return json({ok:true});}
    if(method==='GET'&&route==='/api/admin/guide')return json(staffGuide(actor.role));
    if(method==='GET'&&route==='/api/admin/analytics'){access.admin(actor);return json(analyticsConfiguration(await repository.read(),{privateView:true}));}

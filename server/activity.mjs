@@ -10,19 +10,28 @@ export function initializeActivity(state,now=Date.now()){
  const at=new Date(now).toISOString();state.activity||={startedAt:at,daily:[],people:{},timeline:[]};
  if(state.activity.startedAt>at)state.activity.startedAt=at;
 }
+function staffDay(activity,userId,now){
+ const date=isoDay(now);
+ const existing=activity.daily.find(row=>row.date===date&&row.userId===userId);
+ if(existing)return existing;
+ activity.daily=activity.daily.filter(row=>row.date>=isoDay(now-399*DAY));
+ const row={date,userId,counts:{}};
+ activity.daily.push(row);
+ return row;
+}
 export function recordStaff(state,actor,event,{id='',label='',count=1,now=Date.now()}={}){
  if(!actor?.id||actor.legacy||!STAFF_EVENTS.includes(event))return;
  initializeActivity(state,now);
  const a=state.activity,at=new Date(now).toISOString(),person=a.people[actor.id]||={counts:{}};
  person.lastActivityAt=at;person.counts[event]=(person.counts[event]||0)+count;if(event==='login')person.lastLoginAt=at;
- a.daily=a.daily.filter(d=>d.date>=isoDay(now-399*DAY));let row=a.daily.find(d=>d.date===isoDay(now)&&d.userId===actor.id);
- if(!row){row={date:isoDay(now),userId:actor.id,counts:{}};a.daily.push(row);}row.counts[event]=(row.counts[event]||0)+count;
+ const row=staffDay(a,actor.id,now);row.counts[event]=(row.counts[event]||0)+count;
  a.timeline.push({id:randomBytes(12).toString('hex'),at,userId:actor.id,role:actor.role,event,resourceId:String(id).slice(0,100),label:String(label).slice(0,100),count});
  a.timeline=a.timeline.filter(e=>e.at>=new Date(now-399*DAY).toISOString()).slice(-5000);
 }
 export function touchStaff(state,actor,now=Date.now()){
  initializeActivity(state,now);
  const p=state.activity.people[actor.id]||={counts:{}};p.lastActivityAt=new Date(now).toISOString();
+ staffDay(state.activity,actor.id,now);
 }
 export function engagementService(repository,{now=Date.now}={}){
  return {async collect(state,body){
@@ -34,9 +43,26 @@ export function engagementService(repository,{now=Date.now}={}){
    if(item.collection){c=(state.collections||[]).find(c=>c.slug===item.collection);owner=c&&(state.users||[]).find(u=>u.id===c.ownerId&&u.active);if(isYourFirstHomeSlug(item.collection)&&item.broker&&item.broker!=='your-first-home'){owner=(state.users||[]).find(u=>u.shareSlug===item.broker&&u.active&&u.whatsapp);if(!owner)continue;}if(!owner&&!isYourFirstHomeSlug(item.collection))continue;}
    else if(item.broker){owner=(state.users||[]).find(u=>u.shareSlug===item.broker&&u.active);if(!owner)continue;}
    if(['development_view','favourite_add','favourite_remove'].includes(item.event)&&!state.developments.some(d=>d.id===item.development))continue;
-   resolved.push({ownerId:owner?.id||'unattributed',event:item.event});
+   let link;
+   if(owner&&item.event==='page_view'){
+    if(isYourFirstHomeSlug(item.collection))link={kind:'campaign',resourceId:owner.id};
+    else if(c?.id)link={kind:'collection',resourceId:c.id};
+    else if(!item.collection)link={kind:'personal',resourceId:owner.id};
+   }
+   resolved.push({ownerId:owner?.id||'unattributed',event:item.event,link});
   }
-  if(resolved.length)await repository.updateDay(isoDay(at),day=>{day.people||={};for(const r of resolved){const p=day.people[r.ownerId]||={};p[r.event]=(p[r.event]||0)+1;}});
+  if(resolved.length)await repository.updateDay(isoDay(at),day=>{
+   day.people||={};
+   for(const {ownerId,event,link} of resolved){
+    const person=day.people[ownerId]||={};
+    person[event]=(person[event]||0)+1;
+    if(link){
+     const links=day.links||={};
+     const entry=links[link.kind+':'+link.resourceId]||={...link,ownerId,visits:0};
+     entry.visits++;
+    }
+   }
+  });
   return {ok:true,recorded:resolved.length,recordedAt:new Date(at).toISOString()};
  }};
 }
@@ -50,6 +76,16 @@ export function reportRange(params,now=Date.now()){
  if(role&&!isStaffRole(role)||!Number.isInteger(page)||page<0||page>100||![7,14,30,60,90].includes(inactiveDays))throw new AccessError('Invalid report filters.');
  return {from,to,previousFrom,previousTo,role,userId,page,inactiveDays};
 }
+export async function forEachBuyerActivityDay(visitorRepository,range,since,now,consume){
+ // Daily aggregates contain link counters and no buyer IDs, raw URLs or event payloads.
+ const allDays=dates(range.previousFrom,range.to).filter(date=>
+  date>=isoDay(now-399*DAY)&&(!since||date>=since.slice(0,10)));
+ for(let offset=0;offset<allDays.length;offset+=12){
+  const batch=allDays.slice(offset,offset+12);
+  const records=await Promise.all(batch.map(date=>visitorRepository.readDay(date)));
+  batch.forEach((date,index)=>consume(date,records[index]));
+ }
+}
 export async function activityReport(state,visitorRepository,params,{now=Date.now()}={}){
  const range=reportRange(params,now),activity=state.activity||{daily:[],people:{},timeline:[]},since=activity.startedAt||null;
  const rows=(state.users||[]).filter(u=>(!range.role||u.role===range.role)&&(!range.userId||u.id===range.userId)).map(u=>{
@@ -59,9 +95,14 @@ export async function activityReport(state,visitorRepository,params,{now=Date.no
  const byId=new Map(rows.map(r=>[r.id,r]));
  for(const d of activity.daily){const row=byId.get(d.userId);if(!row)continue;if(d.date>=range.from&&d.date<=range.to)sum(row.counts,d.counts);else if(d.date>=range.previousFrom&&d.date<=range.previousTo)sum(row.previous,d.counts);}
  const unattributed={},previousUnattributed={};
- // Daily aggregate keys contain no buyer IDs, cookies, IP addresses or raw event payloads.
- const allDays=dates(range.previousFrom,range.to).filter(d=>d>=isoDay(now-399*DAY)&&(!since||d>=since.slice(0,10)));
- for(let i=0;i<allDays.length;i+=12){const batch=await Promise.all(allDays.slice(i,i+12).map(d=>visitorRepository.readDay(d)));for(let j=0;j<batch.length;j++){const date=allDays[i+j],previous=date<range.from;for(const [id,counts]of Object.entries(batch[j]?.people||{})){const row=byId.get(id);if(row)sum(previous?row.previousBuyer:row.buyer,counts);else if(id==='unattributed')sum(previous?previousUnattributed:unattributed,counts);}}}
+ await forEachBuyerActivityDay(visitorRepository,range,since,now,(date,day)=>{
+  const previous=date<range.from;
+  for(const [id,counts] of Object.entries(day?.people||{})){
+   const row=byId.get(id);
+   if(row)sum(previous?row.previousBuyer:row.buyer,counts);
+   else if(id==='unattributed')sum(previous?previousUnattributed:unattributed,counts);
+  }
+ });
  const totals={counts:{},previous:{},buyer:{},previousBuyer:{},activeCollections:0,savedCollections:0,activeSessions:0,inactive:0};for(const r of rows){sum(totals.counts,r.counts);sum(totals.previous,r.previous);sum(totals.buyer,r.buyer);sum(totals.previousBuyer,r.previousBuyer);totals.activeCollections+=r.activeCollections;totals.savedCollections+=r.savedCollections;totals.activeSessions+=r.activeSessions;if(r.inactive)totals.inactive++;}
  const events=activity.timeline.filter(e=>byId.has(e.userId)&&e.at.slice(0,10)>=range.from&&e.at.slice(0,10)<=range.to).reverse();
  return {range,startedAt:since,retentionDays:400,timelineLimit:5000,rows,totals,unattributed,previousUnattributed,timeline:params.get('export')==='timeline'?events:events.slice(range.page*100,(range.page+1)*100),timelineTotal:events.length};
