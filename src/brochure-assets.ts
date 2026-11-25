@@ -1,6 +1,7 @@
 import type {Development} from './types';
 import {SHORTLIST_MAP_WIDTH_PX} from './brochure-map-view.ts';
 import {sizedDevelopmentPhoto} from './development-photo-url.ts';
+import type {BuyerLanguage} from '../shared/buyer-language';
 
 const PHOTO_WIDTH = 1280;
 const PHOTO_ATTEMPT_MS = 6000;
@@ -13,16 +14,29 @@ function base64(bytes: Uint8Array) {
 }
 
 let fonts: Promise<{regular: string; semibold: string; light: string; serifItalic: string}> | undefined;
-export function brochureFonts() {
-  fonts ??= Promise.all(['source-sans-3-regular.ttf', 'source-sans-3-semibold.ttf', 'source-sans-3-light.ttf', 'source-serif-4-light-italic.ttf'].map(async file => {
-    const response = await fetch('/fonts/' + file, {signal: AbortSignal.timeout(15_000)});
-    if (!response.ok) throw Error('Brochure fonts could not load. Please try again.');
-    return base64(new Uint8Array(await response.arrayBuffer()));
-  })).then(([regular, semibold, light, serifItalic]) => ({regular, semibold, light, serifItalic})).catch(error => {
+const scriptFonts = new Map<'ar' | 'zh-CN', Promise<string>>();
+
+async function loadFont(file: string, timeout = 15_000) {
+  const response = await fetch('/fonts/' + file, {signal: AbortSignal.timeout(timeout)});
+  if (!response.ok) throw Error('Brochure fonts could not load. Please try again.');
+  return base64(new Uint8Array(await response.arrayBuffer()));
+}
+
+export async function brochureFonts(language: BuyerLanguage = 'en') {
+  fonts ??= Promise.all(['source-sans-3-regular.ttf', 'source-sans-3-semibold.ttf', 'source-sans-3-light.ttf', 'source-serif-4-light-italic.ttf'].map(file => loadFont(file)))
+    .then(([regular, semibold, light, serifItalic]) => ({regular, semibold, light, serifItalic})).catch(error => {
     fonts = undefined;
     throw error;
   });
-  return fonts;
+  if (language !== 'ar' && language !== 'zh-CN') return fonts;
+  let script = scriptFonts.get(language);
+  if (!script) {
+    script = loadFont(language === 'ar' ? 'noto-sans-arabic-pdf.ttf' : 'noto-sans-sc-pdf.ttf', 30_000)
+      .catch(error => {scriptFonts.delete(language); throw error;});
+    scriptFonts.set(language, script);
+  }
+  const [latin, scriptFont] = await Promise.all([fonts, script]);
+  return {...latin, scriptFont};
 }
 
 function loadImage(url: string, timeout: number) {

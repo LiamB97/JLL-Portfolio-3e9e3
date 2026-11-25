@@ -13,6 +13,7 @@ import Modal from './Modal';
 import StationPicker from './StationPicker';
 import {landmarks} from './explore';
 import {universities} from './universities';
+import type {CommuteDestination} from './commute';
 import {styleNeighbourhoodMap} from './map-style';
 import {useLocale} from './i18n';
 import type {Development, TransportNetwork, TransportDefaults} from './types';
@@ -65,7 +66,7 @@ function stationPopup(station:TransportNetwork['stations'][number], network:Tran
   if(action){const button=document.createElement('button');button.type='button';button.className='station-highlight-action';button.textContent=action.label;button.addEventListener('click',action.run);popup.append(button);}
   return popup;
 }
-export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset,clusterFeatured=false,clusterCollection=false,embedded=false}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:{postcode:string;lat:number;lng:number};commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void;clusterFeatured?:boolean;clusterCollection?:boolean;embedded?:boolean}) {
+export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset,clusterFeatured=false,clusterCollection=false,embedded=false}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:CommuteDestination;commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void;clusterFeatured?:boolean;clusterCollection?:boolean;embedded?:boolean}) {
   const {t,dark}=useLocale();
   const lastView=useRef<{centre:L.LatLngExpression;zoom:number}>({centre:CENTRAL_LONDON.centre,zoom:CENTRAL_LONDON.zoom});
   const el=useRef<HTMLDivElement>(null), map=useRef<L.Map|null>(null);
@@ -232,11 +233,11 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     const layer=commuteLayer.current,m=map.current;if(!layer||!m)return;layer.clearLayers();
     if(!commuteDestination){framedCommute.current='';return;}
     const destination=commuteDestination;
-    const label=document.createElement('span');label.textContent='Commute destination: '+destination.postcode;
+    const label=document.createElement('span');label.textContent=t('Commute destination: {place}',{place:destination.name??destination.postcode});
     L.circleMarker([destination.lat,destination.lng],{radius:10,color:dark?'#E0C6AD':'#003E51',fillColor:dark?'#003E51':'#fff',fillOpacity:1,weight:4}).bindTooltip(label,{permanent:true,direction:'right',className:'commute-destination-label'}).addTo(layer);
     const points=[...items,destination].map(p=>[p.lat,p.lng] as [number,number]),key=JSON.stringify(points);
     if(key!==framedCommute.current){m.fitBounds(L.latLngBounds(points),frameOptions(m));framedCommute.current=key;}
-  },[commuteDestination,items,dark]);
+  },[commuteDestination,items,dark,t]);
   useEffect(()=>{const d=items.find(d=>d.id===selected);if(d)map.current?.flyTo([d.lat,d.lng],14,{duration:window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:.7});},[selected,dark]);
   useEffect(()=>{
     const group=lines.current;if(!group)return;group.clearLayers();if(!showLines)return;

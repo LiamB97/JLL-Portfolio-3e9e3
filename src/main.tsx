@@ -5,12 +5,14 @@ import {isYourFirstHomeEmbed,PortfolioEmbedToolbar,PortfolioEmbedNotice} from '.
 import BuyerPasswordGate from './BuyerPasswordGate';
 import {buyerApiPath,type BuyerLock,type BuyerPortfolio} from './buyer-access';
 import {startingPrice} from '../shared/pricing';
+import {staffLocation} from '../shared/analytics-events';
 import Modal from './Modal';
 import PortfolioHeader,{type PortfolioView as View} from './PortfolioHeader';
 import {searchDevelopments} from './portfolio-search';
 import CommuteSearch from './CommuteSearch';
 import {commuteMatches,type CommuteReport} from './commute';
 import WhatsAppIcon from './WhatsAppIcon';
+import WeChatContact,{hasWeChat,WeChatDialog} from './WeChatContact';
 import React, {useCallback, useEffect, useState, useRef, useMemo, lazy, Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
 import {ArrowUpRight,ArrowRight,BedDouble,MapPin,Search,SlidersHorizontal,X,TrainFront,Building2,Heart,Star,ChevronDown} from 'lucide-react';
@@ -32,6 +34,7 @@ import './collection-updates.css';
 import './buyer-access.css';
 import './your-first-home.css';
 import './portfolio-embed.css';
+import './buyer-contact.css';
 import {PreferencesProvider,useLocale} from './i18n';
 import Detail from './Detail';
 import DevelopmentPhoto from './DevelopmentPhoto';
@@ -42,7 +45,8 @@ const narrowViewport = '(max-width: 760px)';
 const embedRequested=isYourFirstHomeEmbed();
 
 function App() {
-  const {t,language}=useLocale();
+  const {t,language,setCollectionLanguage}=useLocale();
+  const [wechatFromLink,setWechatFromLink]=useState(()=>new URLSearchParams(location.search).get('contact')==='wechat');
   const [items, setItems] = useState<Development[]>([]);
   const [network, setNetwork] = useState<TransportNetwork|null>(null);
   const [transportError,setTransportError]=useState('');
@@ -72,7 +76,7 @@ function App() {
     setCommute(report);
     if (!report) setCommuteSort('commute');
   };
-  const isStaff=()=>location.hash==='#admin'||location.hash.startsWith('#invite=');
+  const isStaff=()=>staffLocation(location.hash);
   const [admin, setAdmin] = useState(isStaff);
   const [howItWorks,setHowItWorks]=useState(()=>location.hash==='#how-it-works');
   const embedded=embedRequested&&!admin&&!howItWorks;
@@ -101,6 +105,7 @@ function App() {
       const {passwordRequired}=await response.json();
       if(version!==loadVersion.current)return false;
       setBuyerLock(passwordRequired==='collection'?'collection':'portfolio');
+      setCollectionLanguage(undefined);
       setCollection(null);setBroker(null);setCollectionOnly(false);setItems([]);setSelected(null);setShowFavourites(false);setCommute(null);
       initialLink.current=false;
       return false;
@@ -109,9 +114,10 @@ function App() {
     const data:BuyerPortfolio=await response.json();
     if(version!==loadVersion.current)return false;
     setBuyerLock(null);setItems(data.developments);setCollection(data.collection);
+    setCollectionLanguage(data.collection?.language);
     setBroker(data.broker);setCollectionOnly(data.collectionOnly);setCollectionError(data.linkError);setError('');
     return true;
-  }, []);
+  }, [setCollectionLanguage]);
   const load=useCallback(()=>void refresh().catch(e=>setError(e.message)).finally(()=>setLoading(false)),[refresh]);
   async function unlock(password:string){
     const response=await fetch(buyerApiPath('/api/buyer/unlock'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});
@@ -206,7 +212,7 @@ function App() {
         </div>}
         {yourFirstHome?<YourFirstHomeBar broker={broker} count={items.length} onExplore={()=>{setView('map');setCollectionFrameKey(n=>n+1);}} onInformation={()=>setShowFirstHomeInformation(true)} onContact={collectionActions.onContact}/>:collection&&!mobileCollection&&<CollectionBar collection={collection} {...collectionActions}/>}
 
-        {broker&&!collection&&<section className="discovery-broker"><span className="broker-label">{t('Your JLL broker')}</span><a aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={()=>track('whatsapp_click',{surface:'broker_banner'})} href={'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments."))} target="_blank" rel="noopener noreferrer">{broker.photo?<img className="broker-avatar" src={broker.photo} alt=""/>:<WhatsAppIcon size={18}/>}<strong>{broker.name}</strong></a></section>}
+        {broker&&!collection&&<section className="discovery-broker"><span className="broker-label">{t('Your JLL broker')}</span><a aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={()=>track('whatsapp_click',{surface:'broker_banner'})} href={'https://wa.me/'+broker.whatsapp.replace(/\D/g,'')+'?text='+encodeURIComponent(t("Hi, I'd like more information about your London developments."))} target="_blank" rel="noopener noreferrer">{broker.photo?<img className="broker-avatar" src={broker.photo} alt=""/>:<WhatsAppIcon size={18}/>}<strong>{broker.name}</strong></a><WeChatContact broker={broker}/></section>}
         {collectionError&&<div className="explorer-message" role="status">{collectionError} {t("You can still explore the full portfolio.")}</div>}
         </>}
         {error && <div className="explorer-message" role="alert">{error}<button onClick={() => { setError(''); void refresh().catch(e => setError(e.message)); }}>{t("Retry")}</button></div>}
@@ -263,6 +269,8 @@ function App() {
     {showFirstHomeInformation&&yourFirstHome&&!admin&&!buyerLock&&<YourFirstHomeInformation items={items} broker={broker} close={()=>setShowFirstHomeInformation(false)}/>}
     {showFavourites&&!admin&&!howItWorks&&!buyerLock&&<Favourites items={items} ids={visibleFavourites} toggle={toggleFavourite} persistent={favourites.persistent} broker={broker} collection={collection?.slug} close={()=>setShowFavourites(false)} open={id=>{setShowFavourites(false);setSelected(id);}}/>}
     {active && !admin && !howItWorks && !buyerLock && <Detail selectedBedrooms={beds} key={active.id} broker={broker} collection={collection?.slug} d={active} stations={stations} network={network} saved={favourites.ids.includes(active.id)} toggleFavourite={()=>toggleFavourite(active.id)} close={() => setSelected(null)}/>}
+    {wechatFromLink && !admin && !howItWorks && !loading && !buyerLock && hasWeChat(broker) &&
+      <WeChatDialog broker={broker} close={()=>setWechatFromLink(false)}/>}
   </div>;
 }
 

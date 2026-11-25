@@ -3,6 +3,7 @@ import {ArrowDown, ArrowRight, ArrowUp, Download, FileText, FolderOpen, Mail, Sa
 import {BROCHURE_MAX_CLIENT_NAME, BROCHURE_MAX_DEVELOPMENTS, BROCHURE_MAX_INTRO, BROCHURE_MAX_NOTE, BROCHURE_MAX_SAVED_BYTES} from '../shared/brochure-settings';
 import {brochureShareLinks} from '../shared/brochure-sharing';
 import {outlookDraft} from '../shared/email-draft';
+import {brochureTitles,buyerLanguage,buyerLanguages,type BuyerLanguage} from '../shared/buyer-language';
 import BrochureCover from './BrochureCover';
 import StaffBrochureManagement from './StaffBrochureManagement';
 import WhatsAppIcon from './WhatsAppIcon';
@@ -10,10 +11,9 @@ import type {BrochureInput} from './brochure';
 import type {Development} from './types';
 import type {BrochureCollection, StaffCollection, StaffRequest, StaffUser} from './staff-types';
 
-const defaultTitle = 'Your London New Homes';
-
 interface Settings {
   title: string;
+  language?: BuyerLanguage;
   clientName?: string;
   intro: string;
   notes: Record<string, string>;
@@ -57,7 +57,8 @@ export default function StaffBrochures({items, user, request, startCollection, a
   const [collections, setCollections] = useState<StaffCollection[]>([]);
   const [collectionChoice, setCollectionChoice] = useState('');
   const [collection, setCollection] = useState('');
-  const [title, setTitle] = useState(defaultTitle);
+  const [title, setTitle] = useState(brochureTitles.en);
+  const [language, setLanguage] = useState<BuyerLanguage>('en');
   const [clientName, setClientName] = useState('');
   const [intro, setIntro] = useState('');
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -84,7 +85,7 @@ export default function StaffBrochures({items, user, request, startCollection, a
     void refresh().catch(() => setMessage('Saved brochures could not load. Retry before saving a new copy.'));
   }, [request, active, user.id]);
   useEffect(() => () => {if (result) URL.revokeObjectURL(result.url);}, [result]);
-  useEffect(() => {setResult(null);}, [user.name, user.photo, user.whatsapp, user.jobTitle, user.email, user.shareSlug]);
+  useEffect(() => {setResult(null);}, [user.name, user.photo, user.whatsapp, user.jobTitle, user.email, user.shareSlug, user.wechatId, user.wechatQr]);
   useEffect(() => {
     if (!startCollection || appliedCollection.current === startCollection || busy || !items.length) return;
     appliedCollection.current = startCollection;
@@ -95,8 +96,8 @@ export default function StaffBrochures({items, user, request, startCollection, a
     const development = items.find(d => d.id === id);
     return development ? [development] : [];
   });
-  const shareLinks = brochureShareLinks(location.origin, user.shareSlug, collection, title, user.name);
-  const config: Settings = {title, clientName, intro, notes, collection, developmentIds: chosen.map(d => d.id)};
+  const shareLinks = brochureShareLinks(location.origin, user.shareSlug, collection, title, user.name, language);
+  const config: Settings = {title, language, clientName, intro, notes, collection, developmentIds: chosen.map(d => d.id)};
   const eligibleCollections = collections.filter(row => row.developmentIds.some(id => items.some(item => item.id === id)));
   const selectedCollection = eligibleCollections.find(row => row.slug === collectionChoice);
   const linkedCollection = collections.find(row => row.slug === collection);
@@ -147,20 +148,21 @@ export default function StaffBrochures({items, user, request, startCollection, a
     setResult(null);
     setProgress('Preparing your brochure…');
     try {
-      const [{buildBrochure, brochureFilename}, {brochureFonts, brochurePhotos, brochureBrand, defaultBrochureCover}, {brochureMap}] =
-        await Promise.all([import('./brochure'), import('./brochure-assets'), import('./brochure-map')]);
-      setProgress('Preparing your shortlist map and photos…');
-      const [fonts, brand, cover, {photos, missing}, map] = await Promise.all([
-        brochureFonts(), brochureBrand(), defaultBrochureCover(),
+      const [{buildBrochure, brochureFilename}, {brochureFonts, brochurePhotos, brochureBrand, defaultBrochureCover}, {brochureMap}, {localiseBrochureListings}] =
+        await Promise.all([import('./brochure'), import('./brochure-assets'), import('./brochure-map'), import('./brochure-translations')]);
+      setProgress(language === 'en' ? 'Preparing your shortlist map and photos…' : 'Preparing listing translations, map and photos…');
+      const [fonts, brand, cover, {photos, missing}, map, localized] = await Promise.all([
+        brochureFonts(language), brochureBrand(), defaultBrochureCover(),
         brochurePhotos(chosen, completed => {
           if (preparing) setProgress(completed < chosen.length
             ? `Preparing photography ${completed} of ${chosen.length}…` : 'Finishing the shortlist map and cover…');
         }),
-        brochureMap(chosen),
+        brochureMap(chosen), localiseBrochureListings(chosen, language),
       ]);
       setProgress('Designing your New Homes brochure…');
       const input: BrochureInput = {
-        title, clientName, intro, notes, items: chosen, broker: {...user, title: user.jobTitle || ''},
+        title, language, clientName, intro, notes, items: localized.items, untranslated: localized.untranslated,
+        broker: {...user, title: user.jobTitle || ''},
         origin: location.origin, brokerSlug: user.shareSlug, collection: collection || undefined, coverImage: cover.image,
       };
       const pdf = buildBrochure(input, {...fonts, ...brand, photos, map});
@@ -169,6 +171,8 @@ export default function StaffBrochures({items, user, request, startCollection, a
       if (!cover.image) assetWarnings.push('The cover photo was unavailable. A plain cover was used.');
       else if (cover.fallback) assetWarnings.push('The saved cover could not load. The standard London skyline was used.');
       if (brand.fallback) assetWarnings.push('Some branding images could not load. Review the text and contact links before sharing.');
+      if (localized.untranslated.length) assetWarnings.push('English listing copy was used for ' +
+        chosen.filter(item => localized.untranslated.includes(item.id)).map(item => item.name).join(', ') + '. Review before sharing.');
       setResult({url: URL.createObjectURL(file), file, missing, assetWarnings, warnings: pdf.brochureWarnings, count: chosen.length});
       try {
         await persist(file);
@@ -196,6 +200,7 @@ export default function StaffBrochures({items, user, request, startCollection, a
     setVersion(row.version);
     setSelected(c.developmentIds.filter(id => items.some(d => d.id === id)));
     setTitle(c.title);
+    setLanguage(buyerLanguage(c.language));
     setClientName(c.clientName ?? '');
     setIntro(c.intro);
     setNotes(c.notes);
@@ -266,7 +271,9 @@ export default function StaffBrochures({items, user, request, startCollection, a
     setSelected(ids.slice(0, BROCHURE_MAX_DEVELOPMENTS));
     setCollection(source?.slug ?? '');
     setCollectionChoice(source?.slug ?? '');
-    setTitle(source?.title ?? defaultTitle);
+    const nextLanguage = buyerLanguage(source?.language);
+    setLanguage(nextLanguage);
+    setTitle(source?.title ?? brochureTitles[nextLanguage]);
     setClientName('');
     setIntro('');
     setNotes({});
@@ -353,20 +360,27 @@ export default function StaffBrochures({items, user, request, startCollection, a
         <h2>2. Personalise your brochure</h2>
         <fieldset disabled={busy}>
           <BrochureCover user={user} request={request} changed={edit}/>
+          <label>Buyer language<select value={language} onChange={event => {
+            edit();
+            const next = buyerLanguage(event.target.value);
+            if (title === brochureTitles[language]) setTitle(brochureTitles[next]);
+            setLanguage(next);
+          }}>{buyerLanguages.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          {language !== 'en' && <p>Enter your headline, introduction and notes in the buyer’s language. The brochure translates the listing copy and labels.</p>}
           <label>Brochure headline
-            <input placeholder="e.g. Your handpicked homes in Battersea" maxLength={100} value={title} onChange={e => {edit(); setTitle(e.target.value);}}/>
+            <input dir="auto" placeholder="e.g. Your handpicked homes in Battersea" maxLength={100} value={title} onChange={e => {edit(); setTitle(e.target.value);}}/>
           </label>
           <label>Client name (optional)
-            <input aria-describedby="brochure-client-help" placeholder="e.g. Alex" maxLength={BROCHURE_MAX_CLIENT_NAME} value={clientName} onChange={e => {edit(); setClientName(e.target.value);}}/>
+            <input dir="auto" aria-describedby="brochure-client-help" placeholder="e.g. Alex" maxLength={BROCHURE_MAX_CLIENT_NAME} value={clientName} onChange={e => {edit(); setClientName(e.target.value);}}/>
           </label>
-          <p id="brochure-client-help">Adds “Selected for {clientName.trim() || 'Alex'}” to the cover.</p>
+          <p id="brochure-client-help">Adds the buyer’s name to the cover.</p>
           {!user.jobTitle?.trim() && <div className="brochure-profile-title">
             <strong>Add your job title to the brochure</strong>
             <p>Your work here is kept while you update My profile.</p>
             <button type="button" onClick={onProfile}>Add job title in My profile</button>
           </div>}
           <label>Introduction (optional)
-            <textarea aria-describedby="brochure-intro-help" placeholder="Tell your buyer why you chose these homes." rows={5} maxLength={BROCHURE_MAX_INTRO} value={intro} onChange={e => {edit(); setIntro(e.target.value);}}/>
+            <textarea dir="auto" aria-describedby="brochure-intro-help" placeholder="Tell your buyer why you chose these homes." rows={5} maxLength={BROCHURE_MAX_INTRO} value={intro} onChange={e => {edit(); setIntro(e.target.value);}}/>
           </label>
           <p id="brochure-intro-help">{intro.length}/{BROCHURE_MAX_INTRO} characters. The PDF preview flags copy shortened to fit the page.</p>
           <p className="brochure-contact">
@@ -376,7 +390,7 @@ export default function StaffBrochures({items, user, request, startCollection, a
           {chosen.map((d, index) => <details className="brochure-property-note" key={d.id}>
             <summary><span>{index + 1}. {d.name}</span><small>{notes[d.id]?.trim() ? 'Note added' : 'Add a note or reorder'}</small></summary>
             <label>Your note for {d.name}
-              <textarea rows={4} aria-describedby={'note-limit-' + d.id} maxLength={BROCHURE_MAX_NOTE} value={notes[d.id] || ''} onChange={e => {edit(); setNotes(old => ({...old, [d.id]: e.target.value}));}}/>
+              <textarea dir="auto" rows={4} aria-describedby={'note-limit-' + d.id} maxLength={BROCHURE_MAX_NOTE} value={notes[d.id] || ''} onChange={e => {edit(); setNotes(old => ({...old, [d.id]: e.target.value}));}}/>
             </label>
             <p id={'note-limit-' + d.id}>{(notes[d.id] || '').length}/{BROCHURE_MAX_NOTE} characters</p>
             <div className="action-row">

@@ -1,6 +1,8 @@
 import TransportDefaults, {emptyTransportDefaults} from './TransportDefaults';
 import EmailShare from './EmailShare';
-import {portfolioInvitation} from './sharing';
+import {collectionInvitation,portfolioLink} from '../shared/sharing';
+import {buyerLanguage,buyerLanguages,collectionTitles,type BuyerLanguage} from '../shared/buyer-language';
+import {shareCopy} from '../shared/share-copy';
 import WhatsAppIcon from './WhatsAppIcon';
 import {useEffect, useState} from 'react';
 import {Copy, ExternalLink, FileText, LockKeyhole, Plus, Star, Trash2} from 'lucide-react';
@@ -16,7 +18,8 @@ export default function StaffCollections({items, request, user, active = true, o
   const [transport, setTransport] = useState(emptyTransportDefaults);
   const [collections, setCollections] = useState<StaffCollection[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
-  const [title, setTitle] = useState('Homes picked for you');
+  const [title, setTitle] = useState(collectionTitles.en);
+  const [language, setLanguage] = useState<BuyerLanguage>('en');
   const [editing, setEditing] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [message, setMessage] = useState('');
@@ -27,10 +30,10 @@ export default function StaffCollections({items, request, user, active = true, o
   const [savedVersion, setSavedVersion] = useState({fields: '', passwordProtected: false});
   const isAdmin = user.role === 'admin';
   const saved = collections.find(collection => collection.id === editing);
-  const fields = {title, developmentIds: selected, transportDefaults: transport};
+  const fields = {title, developmentIds: selected, transportDefaults: transport, language};
   const dirty = Boolean(link && (savedVersion.fields !== JSON.stringify(fields) || savedVersion.passwordProtected !== protectedLink));
   const choices = items.filter(d => `${d.name} ${d.area} ${d.postcode}`.toLowerCase().includes(query.toLowerCase()));
-  const buyerLink = (slug: string) => location.origin + '/?collection=' + encodeURIComponent(slug);
+  const buyerLink = (collection: StaffCollection) => portfolioLink(location.origin, collection.slug, undefined, collection.language);
   const canStartBrochure = (collection: StaffCollection) =>
     collection.ownerId === user.id && collection.developmentIds.some(id => items.some(item => item.id === id));
 
@@ -52,12 +55,12 @@ export default function StaffCollections({items, request, user, active = true, o
       ? (protectedLink ? 'protect' : 'remove') : undefined;
     try {
       const collection: StaffCollection = await request(editing ? 'collections/' + editing : 'collections',
-        {...fields, passwordAction}, editing ? 'PUT' : 'POST');
+        {...fields, passwordAction});
       setCollections(old => editing ? old.map(row => row.id === collection.id ? collection : row) : [...old, collection]);
       setSavedVersion({fields: JSON.stringify(fields), passwordProtected: collection.passwordProtected});
       setProtectedLink(collection.passwordProtected);
       setEditing(collection.id);
-      setLink(buyerLink(collection.slug));
+      setLink(buyerLink(collection));
       setMessage(rotate ? 'New collection password generated.' : 'Collection saved. Copy the link to share with your buyer.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to save.');
@@ -72,7 +75,8 @@ export default function StaffCollections({items, request, user, active = true, o
     setTransport(emptyTransportDefaults());
     setEditing(null);
     setSelected([]);
-    setTitle('Homes picked for you');
+    setTitle(collectionTitles.en);
+    setLanguage('en');
     setLink('');
     setProtectedLink(false);
     setSavedVersion({fields: '', passwordProtected: false});
@@ -83,7 +87,7 @@ export default function StaffCollections({items, request, user, active = true, o
     const ids = collection.developmentIds.filter(id => items.some(d => d.id === id));
     const defaults = collection.transportDefaults ?? emptyTransportDefaults();
     setSavedVersion({
-      fields: JSON.stringify({title: collection.title, developmentIds: ids, transportDefaults: defaults}),
+      fields: JSON.stringify({title: collection.title, developmentIds: ids, transportDefaults: defaults, language: buyerLanguage(collection.language)}),
       passwordProtected: collection.passwordProtected,
     });
     setEditorOpen(true);
@@ -91,8 +95,9 @@ export default function StaffCollections({items, request, user, active = true, o
     setTransport(defaults);
     setEditing(collection.id);
     setTitle(collection.title);
+    setLanguage(buyerLanguage(collection.language));
     setSelected(ids);
-    setLink(buyerLink(collection.slug));
+    setLink(buyerLink(collection));
     setProtectedLink(Boolean(collection.passwordProtected));
     setMessage('');
   }
@@ -134,7 +139,7 @@ export default function StaffCollections({items, request, user, active = true, o
     return <>
       {canStartBrochure(collection) && <button className="primary collection-create-brochure" disabled={busy}
         aria-label={'Create brochure from ' + collection.title} onClick={() => onBrochure(collection)}><FileText size={17}/> Create brochure</button>}
-      <a href={buyerLink(collection.slug)} target="_blank" rel="noopener noreferrer">Preview <ExternalLink size={13}/></a>
+      <a href={buyerLink(collection)} target="_blank" rel="noopener noreferrer">Preview <ExternalLink size={13}/></a>
       <button disabled={busy} onClick={() => edit(collection)}>Edit & share</button>
       {!isAdmin && <button aria-label={'Delete ' + collection.title} onClick={() => void remove(collection)} disabled={busy}><Trash2 size={14}/> Remove</button>}
     </>;
@@ -143,6 +148,7 @@ export default function StaffCollections({items, request, user, active = true, o
   function collectionDetails(collection: StaffCollection) {
     return <>
       {collection.developmentIds.length} featured {collection.developmentIds.length === 1 ? 'development' : 'developments'}
+      {collection.language && collection.language !== 'en' && <> · {buyerLanguages.find(option => option.value === collection.language)?.label}</>}
       {collection.password && <> · {collection.passwordProtected ? 'Password protected' : 'Portfolio password required'}</>}
     </>;
   }
@@ -160,7 +166,12 @@ export default function StaffCollections({items, request, user, active = true, o
     <div className={editorOpen ? 'collection-editor editing' : 'collection-editor'}>
       <section hidden={!editorOpen} className="admin-panel collection-form-panel">
         <h2><Star size={18}/> {editing ? 'Edit collection' : 'Create a featured collection'}</h2>
-        <label>Collection title<input value={title} maxLength={100} onChange={e => setTitle(e.target.value)}/></label>
+        <label>Buyer language<select value={language} onChange={event => {
+          const next = buyerLanguage(event.target.value);
+          if (title === collectionTitles[language]) setTitle(collectionTitles[next]);
+          setLanguage(next);
+        }}>{buyerLanguages.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+        <label>Collection title<input value={title} maxLength={100} dir="auto" onChange={e => setTitle(e.target.value)}/></label>
         <label>Find developments<input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Name, area or postcode"/></label>
         <p>{selected.length} selected · Choose up to 50 developments</p>
         <div className="collection-choices">
@@ -200,12 +211,12 @@ export default function StaffCollections({items, request, user, active = true, o
               setMessage('Buyer link copied.');
               shareEvent('collection_link_copy', 'Link copied, but the activity count could not be saved.');
             }).catch(() => setMessage('Select the link above and copy it manually.'))}><Copy size={15}/> Copy link</button>
-            <a className="whatsapp-action" href={'https://wa.me/?text=' + encodeURIComponent(portfolioInvitation + '\n' + link)} target="_blank" rel="noopener noreferrer"
+            <a className="whatsapp-action" href={'https://wa.me/?text=' + encodeURIComponent(collectionInvitation(link))} target="_blank" rel="noopener noreferrer"
               onClick={() => shareEvent('collection_whatsapp_click', 'WhatsApp opened, but the activity count could not be saved.')}>
               <WhatsAppIcon size={16}/> Share on WhatsApp
             </a>
           </div>
-          <EmailShare link={link} title={saved?.password ? 'Your private JLL portfolio link' : saved?.title}
+          <EmailShare link={link} contactOptions title={saved?.password ? shareCopy[buyerLanguage(saved.language)].privateSubject : saved?.title}
             items={saved?.password ? [] : (saved?.developmentIds ?? []).flatMap(id => {const d = items.find(item => item.id === id);return d ? [d] : [];})}
             onShare={() => shareEvent('collection_email_click', 'Email prepared, but the activity count could not be saved.')}/>
           <a href={link} target="_blank" rel="noopener noreferrer">Preview collection <ExternalLink size={13}/></a>

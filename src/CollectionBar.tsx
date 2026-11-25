@@ -3,6 +3,7 @@ import {useState} from 'react';
 import Modal from './Modal';
 import {PortfolioViewSwitcher,type PortfolioView} from './PortfolioHeader';
 import WhatsAppIcon from './WhatsAppIcon';
+import WeChatContact,{hasWeChat} from './WeChatContact';
 import {buyerShareLink} from './sharing';
 import {useLocale} from './i18n';
 import type {BrokerCard,BuyerCollection} from './types';
@@ -29,7 +30,8 @@ export default function CollectionBar({collection,broker,active,dimOthers,onlyPi
      <button className="collection-only-button" aria-pressed={onlyPicked} onClick={onOnly}>{t(onlyPicked?'Show all homes':'Picked homes only')}</button>
     </>}
    </>:<button onClick={onRestore}><RotateCcw size={16}/><span>{t('Restore picked collection')}</span></button>}
-   {broker&&<a className="whatsapp-action collection-broker-contact" href={contact} target="_blank" rel="noopener noreferrer" aria-label={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={18}/><span>{broker.name}</span></a>}
+   {broker&&(hasWeChat(broker)?<WeChatContact broker={broker} whatsappHref={contact} onWhatsApp={onContact} className="collection-broker-contact"/>
+    :<a className="whatsapp-action collection-broker-contact" href={contact} target="_blank" rel="noopener noreferrer" aria-label={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={18}/><span>{broker.name}</span></a>)}
   </div>
  </section>;
 }
@@ -55,8 +57,9 @@ export function MobileCollectionBar({
    <button className="collection-dock-picks" onClick={showingMap?onBrowsePicks:onView}>
     {showingMap?<List size={19}/>:<MapIcon size={19}/>}<span>{t(showingMap?'View picks':'Back to the map')}</span><ArrowRight size={17} aria-hidden="true"/>
    </button>
-   {broker&&<a className="collection-dock-contact" href={contact} target="_blank" rel="noopener noreferrer"
-    aria-label={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={20}/><span>WhatsApp</span></a>}
+   {broker&&(hasWeChat(broker)?<WeChatContact broker={broker} whatsappHref={contact} onWhatsApp={onContact} className="collection-dock-contact"/>
+    :<a className="collection-dock-contact" href={contact} target="_blank" rel="noopener noreferrer"
+     aria-label={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={20}/><span>WhatsApp</span></a>)}
   </div>
   {options&&<Modal title={t('Collection options')} close={()=>setOptions(false)} className="collection-options-dialog">
    <PortfolioViewSwitcher className="collection-options-view" view={view} setView={next=>{setView(next);setOptions(false);}}/>
