@@ -183,6 +183,43 @@ test('reviewers can remove an unavailable bedroom type without leaving an obsole
  assert.equal((await save(admin,onlyType,[],{2:850000})).status,200);
  assert.deepEqual((await reviewFor(consultant)).development.unitPrices,{2:850000});
 });
+test('regional rollouts add colleagues to current published stock and preserve existing reviews',async()=>{
+ const e=environment(),admin=await e.owner(),path='admin/development-reviews';
+ const existing=await e.broker(admin,'existing@example.test','broker_admin');
+ const colleague=await e.broker(admin,'colleague@example.test','development_consultant');
+ const pclIds=samples.slice(0,2).map(item=>item.id);
+ await e.repository.update(state=>{
+  for(let i=0;i<2;i++) Object.assign(state.developments[i],{sample:false,_reviewRegion:'PCL'});
+  Object.assign(state.developments[2],{sample:false,_reviewRegion:'Core'});
+  state.developments[3]._reviewRegion='PCL';
+ });
+ const assign={action:'assign',developmentId:pclIds[0],assigneeIds:[existing.user.id],expectedAssignments:{}};
+ assert.equal((await e.call(path,{actor:admin,method:'POST',body:assign})).status,200);
+ const previous=(await e.call(path,{actor:existing})).data.reviews[0];
+ const plan=(consultants,extraGroups=[])=>JSON.stringify({revision:1,groups:[
+  {region:'PCL',allInRegion:true,consultants},
+  ...extraGroups,
+ ]});
+ await assert.rejects(applyRegionalReviewPlan(e.repository,plan(['existing','missing'])),/distinct, active review account/);
+ await assert.rejects(applyRegionalReviewPlan(e.repository,plan(['colleague'],[
+  {region:'Core',consultants:['colleague'],developmentIds:[pclIds[0]]},
+ ])),/distinct sets/);
+ assert.equal((await e.call(path,{actor:colleague})).data.reviews.length,0);
+ assert.equal((await e.call(path,{actor:existing})).data.reviews.length,1);
+ const valid=plan(['existing','colleague']);
+ const result=await applyRegionalReviewPlan(e.repository,valid);
+ assert.equal(result[0].count,2);
+ assert.equal(await applyRegionalReviewPlan(e.repository,valid),null);
+ const current=(await e.call(path,{actor:admin})).data.reviews;
+ assert.deepEqual([...new Set(current.map(review=>review.development.id))],pclIds);
+ assert.equal(current.find(review=>review.assigneeId===existing.user.id&&review.development.id===pclIds[0]).version,previous.version);
+ assert.deepEqual(regionalReviewPlanCoverage(await e.repository.read(),valid)[0],{
+  region:'PCL',expected:2,grouped:2,consultants:[
+   {name:'existing',matched:true,count:2,queued:0},
+   {name:'colleague',matched:true,count:2,queued:0},
+  ],
+ });
+});
 test('reviews queued for a matching broker-admin invitation appear on account activation',async()=>{
  const e=environment(),admin=await e.owner(),path='admin/development-reviews';
  const developmentId=samples[0].id,email='morgan.river-test@example.test';
