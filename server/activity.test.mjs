@@ -32,11 +32,66 @@ test('buyer collection attribution always uses the owner; anonymous collector st
  assert.equal((await e.call('activity',{events:[{event:'page_view'}]})).status,422);
  assert.equal((await e.call('activity',{consent:'accepted',events:[{event:'page_view'}]},null,'POST','https://evil.test')).status,403);
  const body={consent:'accepted',events:[{event:'page_view',collection:created.data.slug,broker:owner.data.user.shareSlug,email:'private@example.test',phone:'+447900000002',ip:'127.0.0.1',text:'private',ownerId:owner.data.user.id},{event:'favourite_add',collection:created.data.slug,development:samples[0].id},{event:'development_view',broker:broker.data.user.shareSlug,development:samples[0].id},{event:'whatsapp_click',broker:broker.data.user.shareSlug},{event:'page_view'}]};
- assert.equal((await e.call('activity',body)).status,200);const stored=await e.visitors.readDay(day);assert.deepEqual(stored,{people:{[broker.data.user.id]:{page_view:1,favourite_add:1,development_view:1,whatsapp_click:1},unattributed:{page_view:1}}});
+ assert.equal((await e.call('activity',body)).status,200);const stored=await e.visitors.readDay(day);assert.deepEqual(stored,{
+  people:{[broker.data.user.id]:{page_view:1,favourite_add:1,development_view:1,whatsapp_click:1},unattributed:{page_view:1}},
+  links:{['collection:'+created.data.id]:{kind:'collection',resourceId:created.data.id,ownerId:broker.data.user.id,visits:1}},
+ });
  assert.equal((await e.call('activity',{consent:'accepted',events:[{event:'login'}]})).status,422);assert.equal((await e.call('activity',{consent:'accepted',events:[{event:'favourite_add',broker:'nonexistent',development:samples[0].id},{event:'favourite_add',broker:broker.data.user.shareSlug,development:'nonexistent'}]})).status,200);assert.deepEqual(await e.visitors.readDay(day),stored);
  await e.call('admin/users/'+broker.data.user.id,{active:false},owner,'PATCH');await e.call('activity',{consent:'accepted',events:[{event:'page_view',collection:created.data.slug}]});assert.deepEqual(await e.visitors.readDay(day),stored);
  const report=(await e.call('admin/activity',null,owner)).data;assert.equal(report.rows.find(r=>r.id===broker.data.user.id).buyer.favourite_add,1);assert.equal(report.rows.find(r=>r.id===broker.data.user.id).savedCollections,1);assert.equal(report.rows.find(r=>r.id===broker.data.user.id).activeCollections,0);assert.equal(report.unattributed.page_view,1);
 });
+test('admin overview retains historical broker totals and adds link counts, trends and saved picks',async()=>{
+ const e=env(),owner=await e.owner(),broker=await e.broker(owner),manager=await e.broker(owner,'broker_admin');
+ const brokerId=broker.data.user.id,slug=broker.data.user.shareSlug,developmentId=samples[0].id;
+ const overview='admin/activity?view=overview&days=7';
+ assert.equal((await e.call(overview)).status,401);
+ assert.equal((await e.call(overview,null,broker)).status,403);
+ assert.equal((await e.call(overview,null,manager)).status,403);
+ assert.equal((await e.call('admin/activity?view=overview&days=365',null,owner)).status,422);
+ assert.equal((await e.call(overview,null,owner)).data.comparisonAvailable,false);
+ const collection=await e.call('admin/collections',{title:'River views',developmentIds:[developmentId]},broker);
+ const deleted=await e.call('admin/collections',{title:'Removed selection',developmentIds:[developmentId]},broker);
+ const now=Date.now(),day=offset=>new Date(now-offset*86400000).toISOString().slice(0,10);
+ await e.repository.update(state=>{
+  recordStaff(state,broker.data.user,'login',{now:now-14*86400000});
+  touchStaff(state,broker.data.user,now-86400000);
+  state.brochures=[{ownerId:brokerId,fileKey:'private'}, {ownerId:brokerId,config:{clientName:'Private client'}}];
+ });
+ await e.visitors.updateDay(day(1),day=>{day.people[brokerId]={page_view:8};});
+ await e.visitors.updateDay(day(9),day=>{day.people[brokerId]={page_view:3};});
+ assert.equal((await e.call('activity',{consent:'accepted',events:[
+  {event:'page_view',collection:collection.data.slug,broker:owner.data.user.shareSlug},
+  {event:'page_view',collection:collection.data.slug},
+  {event:'page_view',collection:deleted.data.slug},
+  {event:'page_view',broker:slug},
+  {event:'development_view',broker:slug,development:developmentId},
+  {event:'favourite_add',broker:slug,development:developmentId},
+  {event:'whatsapp_click',broker:slug},
+  {event:'page_view'},
+ ]})).status,200);
+ assert.equal((await e.call('admin/collections/'+deleted.data.id,null,broker,'DELETE')).status,200);
+ const result=await e.call(overview,null,owner);
+ assert.equal(result.status,200);
+ const report=result.data,row=report.staff.find(row=>row.id===brokerId);
+ assert.equal(report.comparisonAvailable,true);
+ assert.equal(report.buckets.length,7);
+ assert.deepEqual([row.current.activeDays,row.current.signIns,row.current.collectionsCreated,row.current.visits],[2,1,2,12]);
+ assert.deepEqual([row.current.developmentViews,row.current.favourites,row.current.whatsapp],[1,1,1]);
+ assert.equal(row.previous.visits,3);
+ assert.equal(row.series.at(-2).current.visits,8);
+ assert.equal(row.series.at(-1).current.visits,4);
+ assert.equal(row.savedPdfs,1);
+ assert.equal(report.generalVisits,1);
+ assert.deepEqual(report.links.map(({kind,visits})=>[kind,visits]),[['collection',2],['personal',1],['removed',1]]);
+ assert.ok(report.links.every(link=>link.ownerId===brokerId));
+ assert.deepEqual(report.collections,[{id:collection.data.id,title:'River views',ownerId:brokerId,developmentIds:[developmentId]}]);
+ assert.deepEqual(report.developments.map(development=>development.id),[developmentId]);
+ const serialised=JSON.stringify(report);
+ for(const privateValue of [slug,broker.email,broker.password,'fileKey','clientName','tokenHash','shareSlug']){
+  assert.ok(!serialised.includes(privateValue));
+ }
+});
+
 test('date comparisons, role filters, inactivity and retained timelines are honest about existing accounts',async()=>{
  const now=Date.parse('2026-10-27T12:00:00Z'),old=now-40*86400000,recent=now-2*86400000,a={id:'a',name:'A',email:'a@example.test',role:'broker',active:true,createdAt:new Date(old).toISOString()},b={id:'b',name:'B',email:'b@example.test',role:'broker_admin',active:true,createdAt:new Date(old).toISOString()},c={...a,id:'c',active:false},state={users:[a,b,c],developments:[],collections:[{ownerId:'b'}]};
  recordStaff(state,a,'login',{now:old});recordStaff(state,b,'login',{now:recent});recordStaff(state,b,'collection_create',{now:recent});touchStaff(state,b,now);const visitors=daily();await visitors.updateDay('2026-09-17',d=>{d.people={a:{page_view:3}};});await visitors.updateDay('2026-10-25',d=>{d.people={b:{page_view:5,favourite_add:2}};});
