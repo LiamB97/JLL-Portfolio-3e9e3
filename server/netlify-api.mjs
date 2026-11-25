@@ -309,7 +309,7 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
      if(i<0)return false;
      const existing=state.developments[i];
      if(!access.canEdit(acting,existing))throw new AccessError('You can only edit your own developments.',403);
-     const data={...reviewedDevelopment(body,{allowUnconfirmedPrice:existing.source==='JLL website'&&existing.priceFrom===0}),id};
+     const data={...reviewedDevelopment(body,{allowUnconfirmedPrice:existing.priceFrom===0}),id};
      rejectDuplicate(state.developments,data,id);
      state.developments[i]=markManualEdit(existing,data,acting);
      recordStaff(state,acting,'stock_edit',{id,label:data.name});

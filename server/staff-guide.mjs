@@ -4,12 +4,12 @@ export function staffGuide(role) {
  const stock = canManagePortfolioStock(role);
  const reviewChapter = {id:'reviews',title:'Keep assigned development reviews current',steps:[
   'Open Development reviews from Overview or the sidebar. Use View development to check the published description, pricing and availability.',
-  'Use Bedroom prices to enter confirmed starting prices by bedroom type. Leave unknown prices blank.',
+  'Use Bedroom prices to enter confirmed prices. Leave an unconfirmed price blank or choose Remove type when that bedroom option is no longer offered. Save bedroom changes to update the published listing.',
   stock ? 'Make other stock edits in Developments.' : 'Send corrections to descriptions, images or availability to an Admin or Broker admin.',
   'Select Confirm details once the published information is correct. This starts a new 14-day period for your assignment. Other reviewers on the same development have their own review dates.',
   'Check due dates in the workspace. Email reminders require configured sender details.',
  ]};
- const pricesFaq = {id:'prices',question:'Where do I add bedroom prices or confirm a review?',answer:'Open Development reviews and use Bedroom prices on one of your assigned homes. Once the listing is correct, select Confirm details to start a new 14-day review period.'};
+ const pricesFaq = {id:'prices',question:'Where do I update bedroom prices or confirm a review?',answer:'Open Development reviews and use Bedroom prices on one of your assigned homes. Remove type drops that bedroom option and its price from the listing when you save. Select Confirm details when the listing is correct to start a new 14-day review period.'};
  if(role === 'development_consultant') return {
   title:'Development consultant guide', role,
   chapters:[reviewChapter,{id:'profile',title:'Sign in and get help',steps:[

@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {validateStyleMin} from '@maplibre/maplibre-gl-style-spec';import {styleNeighbourhoodMap} from '../src/map-style.ts';
-import {placeStationLabels} from '../src/map-view.ts';
+import {placeStationLabels,stationLineIds} from '../src/map-view.ts';
 test('map tints retain neutral buildings and valid zoom-dependent styling in both themes',()=>{
  for(const dark of [false,true]){
   const fill=(id,sourceLayer,colour)=>({id,type:'fill',source:'base','source-layer':sourceLayer,paint:{'fill-color':colour}});
@@ -17,4 +17,15 @@ test('station names leave neighbouring dots visible and fit more labels as the m
  assert.deepEqual(placeStationLabels(row,{x:220,y:130}),['top','bottom','bottom']);
  const controls=[{left:100,right:210,top:55,bottom:100}];
  assert.deepEqual(placeStationLabels([{x:90,y:68,labelWidth:60}],{x:220,y:100},controls),['left']);
+});
+test('a station highlight includes nearby same-name TfL services across separate stops',()=>{
+ const station={name:'Stratford',lat:51.542,lng:-.0034,lineIds:['central','jubilee']};
+ const network=[
+  station,
+  {...station,lng:-.0032,lineIds:['dlr','jubilee']},
+  {...station,name:'Stratford (London)',lineIds:['elizabeth']},
+  {...station,name:'Stratford International',lineIds:['extra']},
+  {...station,lat:51.59,lineIds:['distant']},
+ ];
+ assert.deepEqual(stationLineIds(station,network),['central','jubilee','dlr','elizabeth']);
 });

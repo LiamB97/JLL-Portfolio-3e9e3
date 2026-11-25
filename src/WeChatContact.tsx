@@ -1,7 +1,8 @@
 import {useState} from 'react';
-import {Copy, Download, MessagesSquare} from 'lucide-react';
+import {Copy, Download} from 'lucide-react';
 import Modal from './Modal';
 import WhatsAppIcon from './WhatsAppIcon';
+import WeChatIcon from './WeChatIcon';
 import {useLocale} from './i18n';
 import type {BrokerCard} from './types';
 
@@ -21,7 +22,7 @@ export default function WeChatContact({broker, whatsappHref, onWhatsApp, classNa
     <button type="button" className={'wechat-contact-action ' + className}
       aria-label={whatsappHref ? name : t('WeChat {name}', {name: broker.name})} aria-haspopup="dialog" aria-expanded={open}
       onClick={() => setOpen(true)}>
-      <MessagesSquare size={18} aria-hidden="true"/>{!compact && <span>{action}</span>}
+      <WeChatIcon/>{!compact && <span>{action}</span>}
     </button>
     {open && <WeChatDialog broker={broker} whatsappHref={whatsappHref} onWhatsApp={onWhatsApp} close={() => setOpen(false)}/>}
   </>;
@@ -41,7 +42,7 @@ export function WeChatDialog({broker, whatsappHref, onWhatsApp, close}: {
         </a>
       </div>}
       <section className="wechat-details" aria-label="WeChat">
-        {whatsappHref && <h3>WeChat</h3>}
+        {whatsappHref && <h3><WeChatIcon/>WeChat</h3>}
         <p>{t(broker.wechatQr && broker.wechatId
           ? 'Scan the QR code in WeChat or search for the WeChat ID.'
           : broker.wechatQr ? 'Scan the QR code in WeChat. On this phone, save the image and open it from WeChat.'

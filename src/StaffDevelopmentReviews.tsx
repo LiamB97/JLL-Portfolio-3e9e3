@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {ExternalLink, Pencil} from 'lucide-react';
+import {ExternalLink, Pencil, Trash2, Undo2} from 'lucide-react';
 import {reviewRegions, type ReviewRegion} from '../shared/development-review';
 import {canReviewDevelopments} from '../shared/staff-roles';
 import type {StaffRequest, StaffUser} from './staff-types';
@@ -10,6 +10,7 @@ type Review = {
   assigneeId: string; assigneeName: string; assigneeActive: boolean;
   version: string; nextReminderAt: number; lastConfirmedAt?: number; lastFailureAt?: number;
 };
+type PriceEditor = {review: Review; values: Record<string, string>; removeBedrooms: number[]};
 export type ReviewWorkspace = {
   reviews: Review[]; developments: DevelopmentSummary[]; consultants: {id: string; name: string; email: string}[];
   canAssign: boolean; emailConfigured: boolean;
@@ -24,7 +25,7 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
   const [developmentId, setDevelopmentId] = useState('');
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [region, setRegion] = useState<ReviewRegion | null>(null);
-  const [priceEditor, setPriceEditor] = useState<{review: Review; values: Record<string, string>} | null>(null);
+  const [priceEditor, setPriceEditor] = useState<PriceEditor | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -76,16 +77,19 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
   const developments = [...(data?.developments ?? [])].sort((a, b) => a.name.localeCompare(b.name));
   const reviews = [...(data?.reviews ?? [])].sort((a, b) => a.nextReminderAt - b.nextReminderAt || a.development.name.localeCompare(b.development.name));
 
-  async function savePrices(editor: NonNullable<typeof priceEditor>) {
-    const {review, values} = editor;
-    const unitPrices = Object.fromEntries(Object.entries(values).filter(([, value]) => value !== '').map(([beds, value]) => [beds, Number(value)]));
+  async function savePrices(editor: PriceEditor) {
+    const {review, values, removeBedrooms} = editor;
+    const unitPrices = Object.fromEntries(Object.entries(values)
+      .filter(([beds, value]) => value !== '' && !removeBedrooms.includes(Number(beds)))
+      .map(([beds, value]) => [beds, Number(value)]));
     const saved = await saveReview('save-prices', {
       developmentId: review.development.id,
       version: review.version,
       expectedBedrooms: review.development.bedrooms,
       expectedUnitPrices: review.development.unitPrices,
+      removeBedrooms,
       unitPrices,
-    }, 'Bedroom prices saved.');
+    }, removeBedrooms.length ? 'Bedroom options and prices saved.' : 'Bedroom prices saved.');
     if (saved) setPriceEditor(null);
   }
 
@@ -152,8 +156,11 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
             const ownAssignment = developmentReviews.find(row => row.assigneeId === user.id);
             const review = ownAssignment ?? developmentReviews[0];
             const ownReview = Boolean(ownAssignment && canReviewDevelopments(user.role));
+            const canEditPrices = ownReview || data.canAssign;
             const priced = review.development.bedrooms.filter(beds => review.development.unitPrices[beds]).length;
             const editingPrices = priceEditor?.review.development.id === id ? priceEditor : null;
+            const available = [...new Set(review.development.bedrooms)].sort((a, b) => a - b);
+            const removingAll = Boolean(editingPrices?.removeBedrooms.length && editingPrices.removeBedrooms.length === available.length);
             return <article className="development-review-row" key={id}>
               <div>
                 <h4>{review.development.name}</h4>
@@ -167,8 +174,8 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
               </div>
               <div className="action-row">
                 <a className="back-link" href={'/?development=' + encodeURIComponent(id)} target="_blank" rel="noopener noreferrer">View development <ExternalLink size={14}/></a>
-                {ownReview && !editingPrices && <button type="button" disabled={busy} onClick={() => setPriceEditor({
-                  review, values: Object.fromEntries(Object.entries(review.development.unitPrices).map(([beds, price]) => [beds, String(price)])),
+                {canEditPrices && !editingPrices && <button type="button" disabled={busy} onClick={() => setPriceEditor({
+                  review, values: Object.fromEntries(Object.entries(review.development.unitPrices).map(([beds, price]) => [beds, String(price)])), removeBedrooms: [],
                 })}><Pencil size={14}/> Bedroom prices</button>}
                 {ownReview && <button type="button" className="primary" disabled={busy || Boolean(editingPrices)} onClick={() => void saveReview('confirm', {developmentId: id, version: review.version}, 'Details confirmed. The next review is due in 14 days.')}>Confirm details</button>}
                 {data.canAssign && <button type="button" disabled={busy} onClick={() => {
@@ -178,22 +185,37 @@ export default function StaffDevelopmentReviews({request, user, onStockChange}: 
               </div>
               {editingPrices && <form className="development-review-pricing" onSubmit={event => {
                 event.preventDefault();
-                void savePrices(editingPrices);
+                if (!busy && !removingAll) void savePrices(editingPrices);
               }}>
                 <fieldset className="unit-price-editor" disabled={busy}>
                   <legend>Starting prices by bedroom type</legend>
+                  <p>Leave a price blank if it’s unconfirmed. Remove a bedroom type if it’s no longer offered.</p>
                   <div className="unit-price-fields">
-                    {[...editingPrices.review.development.bedrooms].sort((a, b) => a - b).map(beds => <label key={beds}>
-                      {beds === 0 ? 'Studio' : beds === 1 ? '1 bedroom' : `${beds} bedrooms`} (£)
-                      <input type="number" min={1} step={1} placeholder="Not confirmed" value={editingPrices.values[beds] ?? ''} onChange={event => {
-                        const value = event.target.value;
-                        setPriceEditor(current => current && {...current, values: {...current.values, [beds]: value}});
-                      }}/>
-                    </label>)}
+                    {available.map(beds => {
+                      const label = beds === 0 ? 'Studio' : beds === 1 ? '1 bedroom' : `${beds} bedrooms`;
+                      const removed = editingPrices.removeBedrooms.includes(beds);
+                      return <div className="unit-price-option" key={beds} data-removed={removed}>
+                        <label>{label} (£)
+                          <input type="number" min={1} step={1} disabled={removed} placeholder="Not confirmed"
+                            value={editingPrices.values[beds] ?? ''} onChange={event => {
+                              const value = event.target.value;
+                              setPriceEditor(current => current && {...current, values: {...current.values, [beds]: value}});
+                            }}/>
+                        </label>
+                        <button type="button" aria-label={(removed ? 'Undo removal of ' : 'Remove ') + label}
+                          onClick={() => setPriceEditor(current => current && {...current,
+                            removeBedrooms: removed ? current.removeBedrooms.filter(value => value !== beds) : [...current.removeBedrooms, beds],
+                          })}>
+                          {removed ? <><Undo2 size={14}/> Undo removal</> : <><Trash2 size={14}/> Remove type</>}
+                        </button>
+                      </div>;
+                    })}
                   </div>
+                  {removingAll && <p role="status">Keep at least one bedroom type on the listing to save.</p>}
+                  {!removingAll && editingPrices.removeBedrooms.length > 0 && <p role="status">Removed types and their prices will disappear from the published listing when you save.</p>}
                 </fieldset>
                 <div className="action-row">
-                  <button className="primary" disabled={busy}>Save prices</button>
+                  <button className="primary" disabled={busy || removingAll}>Save bedroom changes</button>
                   <button type="button" disabled={busy} onClick={() => setPriceEditor(null)}>Cancel</button>
                 </div>
               </form>}

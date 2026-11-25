@@ -1,4 +1,4 @@
-import {CENTRAL_LONDON, placeStationLabels, type StationLabelSide} from './map-view';
+import {CENTRAL_LONDON, placeStationLabels, stationLineIds, type StationLabelSide} from './map-view';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -16,13 +16,13 @@ import {universities} from './universities';
 import type {CommuteDestination} from './commute';
 import {styleNeighbourhoodMap} from './map-style';
 import {useLocale} from './i18n';
-import type {Development, TransportNetwork, TransportDefaults} from './types';
+import type {Development, Station, TransportLine, TransportNetwork, TransportDefaults} from './types';
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 const osmAttribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const vectorAttribution='<a href="https://openfreemap.org">OpenFreeMap</a> · &copy; <a href="https://openmaptiles.org">OpenMapTiles</a>';
 const universityIcon=L.divIcon({className:'university-pin',iconSize:[26,26],iconAnchor:[13,13],html:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 10l10-5 10 5-10 5-10-5zM6 12v5c3 3 9 3 12 0v-5m4-2v6"/></svg>'});
-const stationIcon=L.divIcon({className:'highlighted-station-pin',iconSize:[36,36],iconAnchor:[18,18],html:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 17l-2 4m10-4 2 4M9 14h.01M15 14h.01"/></svg>'});
+const stationIcon=L.divIcon({className:'highlighted-station-pin',iconSize:[38,38],iconAnchor:[19,19],html:'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 17l-2 4m10-4 2 4M9 14h.01M15 14h.01"/></svg>'});
 function mapLabel(text:string){const label=document.createElement('span');label.textContent=text;return label;}
 
 function showStationLabel(marker: L.CircleMarker, name: string, direction?: L.Direction) {
@@ -54,17 +54,21 @@ function frameOptions(m:L.Map):L.FitBoundsOptions{
  return {paddingTopLeft:[24,Math.min(top,size.y*.45)],paddingBottomRight:[24,Math.min(84,size.y*.25)],maxZoom:14};
 }
 
-function stationPopup(station:TransportNetwork['stations'][number], network:TransportNetwork, action?:{label:string;run:()=>void}) {
-  const popup=document.createElement('div');popup.className='transport-popup';
-  const name=document.createElement('strong');name.textContent=station.name;popup.append(name);
-  for(const id of station.lineIds || []) {
-    const line=network.lines.find(l=>l.id===id);if(!line)continue;
+function stationDetails(station:Station, lines:TransportLine[], highlighted = false) {
+  const details=document.createElement('div');
+  details.className=highlighted?'highlighted-station-details':'transport-popup';
+  const name=document.createElement('strong');name.textContent=station.name;details.append(name);
+  if (!lines.length && station.lines) details.append(mapLabel(station.lines));
+  if (!lines.length) return details;
+  const services=document.createElement('div');
+  services.className=highlighted?'highlighted-station-lines':'transport-popup-lines';
+  for(const line of lines) {
     const badge=document.createElement('div');badge.className='transport-popup-line';
     const swatch=document.createElement('i');swatch.style.background=line.colour;
-    badge.append(swatch,document.createTextNode(line.name));popup.append(badge);
+    badge.append(swatch,document.createTextNode(line.name));services.append(badge);
   }
-  if(action){const button=document.createElement('button');button.type='button';button.className='station-highlight-action';button.textContent=action.label;button.addEventListener('click',action.run);popup.append(button);}
-  return popup;
+  details.append(services);
+  return details;
 }
 export default function PortfolioMap({items, selected, onSelect, network, transportError,featuredIds=[],favouriteIds=[],favouritesOnly=false,transportDefaults,commuteDestination,commuteTimes={},resetKey=0,collectionFrameKey=0,dimOthers=true,onDimOthers,onReset,clusterFeatured=false,clusterCollection=false,embedded=false}:{items:Development[];selected:string|null;onSelect:(id:string)=>void;network:TransportNetwork|null;transportError:string;featuredIds?:string[];favouriteIds?:string[];favouritesOnly?:boolean;transportDefaults?:TransportDefaults;commuteDestination?:CommuteDestination;commuteTimes?:Record<string,number>;resetKey?:number;collectionFrameKey?:number;dimOthers?:boolean;onDimOthers?:()=>void;onReset?:()=>void;clusterFeatured?:boolean;clusterCollection?:boolean;embedded?:boolean}) {
   const {t,dark}=useLocale();
@@ -249,17 +253,28 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   useEffect(()=>{
     const m=map.current,group=stationLayer.current;if(!m||!group)return;group.clearLayers();if(!showStations||!network)return;
     const dots: {marker: L.CircleMarker; name: string; connections: number; side?: StationLabelSide; hovered: boolean}[] = [];
+    const lineById=new Map(network.lines.map(line=>[line.id,line]));
     for(const station of shownStations){
       const id=station.id,highlighted=Boolean(id&&stationFilter.includes(id));
       const location:L.LatLngTuple=[station.lat,station.lng];
-      const popup=stationPopup(station,network,id?{label:t(highlighted?'Remove highlight':'Highlight station'),run:()=>changeStations(highlighted?stationFilter.filter(s=>s!==id):[...stationFilter,id])}:undefined);
+      const services=stationLineIds(station,highlighted?network.stations:[]).map(id=>lineById.get(id)).filter(line=>line !== undefined);
+      const popup=stationDetails(station,services);
+      if (id) {
+        const button=document.createElement('button');button.type='button';button.className='station-highlight-action';
+        button.textContent=t(highlighted?'Remove highlight':'Highlight station');
+        button.addEventListener('click',()=>changeStations(highlighted?stationFilter.filter(s=>s!==id):[...stationFilter,id]));
+        popup.append(button);
+      }
       if(highlighted){
         L.marker(location,{icon:stationIcon,pane:'highlightedStations',title:station.name})
-          .bindTooltip(mapLabel(station.name),{permanent:true,direction:'right',offset:[21,0],className:'highlighted-station-label'})
-          .bindPopup(popup).on('add',event=>(event.target as L.Marker).getElement()?.setAttribute('aria-label',station.name)).addTo(group);
+          .bindTooltip(stationDetails(station,services,true),{permanent:true,direction:'auto',opacity:1,className:'highlighted-station-label'})
+          .bindPopup(popup).on('add',event=>{
+            const lineNames=services.length?services.map(line=>line.name).join(', '):station.lines;
+            (event.target as L.Marker).getElement()?.setAttribute('aria-label',[station.name,lineNames].filter(Boolean).join(' — '));
+          }).addTo(group);
         continue;
       }
-      const colour=network.lines.find(l=>l.id===(lineFilter.find(id=>station.lineIds?.includes(id))||station.lineIds?.[0]))?.colour||'#596575';
+      const colour=(services.find(line=>lineFilter.includes(line.id))??services[0])?.colour||'#596575';
       const marker=L.circleMarker(location,{pane:'transportStations',radius:6,color:colour,fillColor:dark?'#1F2A35':'#fff',fillOpacity:1,weight:2.5}).bindPopup(popup).addTo(group);
       const dot: typeof dots[number] = {marker, name: station.name, connections: station.lineIds?.length ?? 0, hovered: false};
       marker.on('mouseover', () => {

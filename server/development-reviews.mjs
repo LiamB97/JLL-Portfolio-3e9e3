@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {reviewRegions} from '../shared/development-review.ts';
 import {canReviewDevelopments} from '../shared/staff-roles.ts';
+import {priceFromAfterBedroomRemoval} from '../shared/pricing.ts';
 import {AccessError} from './access.mjs';
 import {recordStaff} from './activity.mjs';
 import {newDevelopmentReview, reviewInterval} from './development-review-record.mjs';
@@ -92,21 +93,32 @@ function assignedReview(state, actor, body) {
 }
 
 export function saveDevelopmentReviewPrices(state, actor, body) {
-  const {review, development} = assignedReview(state, actor, body);
+  const {review, development} = actor.role === 'admin'
+    ? {development: developments(state).find(item => item.id === body?.developmentId)}
+    : assignedReview(state, actor, body);
+  if (!development) throw new AccessError('Published development not found.', 404);
   const prices = development.unitPrices ?? {};
   if (!isDeepStrictEqual(body.expectedUnitPrices, prices) || !isDeepStrictEqual(body.expectedBedrooms, development.bedrooms)) {
     throw new AccessError('The bedroom options or prices changed. Refresh the list and try again.', 409);
   }
+  const removed = body.removeBedrooms === undefined ? [] : body.removeBedrooms;
+  if (!Array.isArray(removed) || new Set(removed).size !== removed.length ||
+      removed.some(beds => !development.bedrooms.includes(beds))) {
+    throw new AccessError('Choose existing bedroom types to remove.');
+  }
+  const bedrooms = development.bedrooms.filter(beds => !removed.includes(beds));
+  if (!bedrooms.length && removed.length) throw new AccessError('Keep at least one bedroom type on the listing.');
   let unitPrices;
   try {
-    unitPrices = validateUnitPrices(body.unitPrices, development.bedrooms);
+    unitPrices = validateUnitPrices(body.unitPrices, bedrooms);
   } catch (error) {
     throw new AccessError(error.message);
   }
-  if (isDeepStrictEqual(unitPrices, prices)) return {ok: true};
+  if (!removed.length && isDeepStrictEqual(unitPrices, prices)) return {ok: true};
   const index = state.developments.indexOf(development);
-  state.developments[index] = markManualEdit(development, {unitPrices}, actor);
-  review.version = randomUUID();
+  const priceFrom = priceFromAfterBedroomRemoval(development, bedrooms, unitPrices);
+  state.developments[index] = markManualEdit(development, {bedrooms, unitPrices, priceFrom}, actor);
+  if (review) review.version = randomUUID();
   recordStaff(state, actor, 'stock_edit', {id: development.id, label: development.name});
   return {ok: true};
 }

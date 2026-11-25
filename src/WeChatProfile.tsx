@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {QrCode} from 'lucide-react';
+import WeChatIcon from './WeChatIcon';
 import type {StaffRequest, StaffUser} from './staff-types';
 
 async function prepareQr(file: File) {
@@ -65,7 +65,7 @@ export default function WeChatProfile({user, request, updated}: {
   }
 
   return <form className="profile-details-form wechat-profile" onSubmit={event => {event.preventDefault(); void save();}}>
-    <h2><QrCode size={19}/> WeChat</h2>
+    <h2><WeChatIcon/>WeChat</h2>
     <p>Add your WeChat ID, QR code, or both. Buyers can see these details on your personal portfolio and collection links.</p>
     <fieldset disabled={busy}>
       <label>WeChat ID<input value={id} maxLength={40} autoComplete="off" spellCheck={false} placeholder="Your WeChat ID"

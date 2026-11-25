@@ -48,6 +48,27 @@ html[data-theme=dark] .workspace-insights {
 }
 
 .insights-controls {flex-wrap: wrap; gap: 8px}
+.insights-filters {margin-block: 0 12px}
+.staff-portal .insights-exclusions-button {
+  min-height: 42px;
+  margin: 0;
+  padding: 7px 11px;
+  border-color: var(--insight-border);
+}
+.activity-exclusions {border: 0; margin: 0; padding: 0}
+.activity-exclusions legend {padding: 0; margin-block-end: 8px; color: var(--muted)}
+.staff-portal .activity-exclusions label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 0;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.activity-exclusions input[type=checkbox] {width: 16px; height: 16px; flex: none}
+.activity-exclusions small {display: block; color: var(--muted)}
 .staff-portal.staff-workspace .workspace-insights select {
   width: auto;
   min-width: 0;

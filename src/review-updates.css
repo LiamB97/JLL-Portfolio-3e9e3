@@ -15,6 +15,12 @@
 .unit-prices{margin-block:26px}.unit-prices dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.unit-prices dl>div{padding:14px;border:1px solid var(--line);border-radius:6px;background:var(--page)}
 .unit-prices dt{font-size:16px;font-weight:600}.unit-prices dd{margin:8px 0 0;font-size:18px}.unit-prices p{color:var(--muted);font-size:14px!important}
 .unit-price-editor{margin-block:20px;padding:16px;border:1px solid var(--line);min-width:0}.unit-price-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.unit-price-option{min-width:0}
+.staff-portal .unit-price-option label{margin:0}
+.staff-portal .unit-price-option button{width:100%;min-height:44px;margin:5px 0 0;padding:5px 8px;font-size:14px}
+.unit-price-option[data-removed=true] label{color:var(--muted)}
+.unit-price-option[data-removed=true] input{text-decoration:line-through}
+.unit-price-option[data-removed=true] button{border-color:var(--accent)}
 .stock-pricing-note{display:block;margin-top:6px;color:var(--muted);line-height:1.5}
 .source-review>details{padding-block:16px;border-top:1px solid var(--line)}.source-review summary{cursor:pointer;min-height:44px;align-content:center;font-size:17px}
 .source-difference{margin:20px 0;padding-block:12px;border-top:1px solid var(--line)}.source-value-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:14px 0}

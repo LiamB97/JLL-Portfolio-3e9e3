@@ -33,6 +33,16 @@
 .discovery-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
 .discovery-search input{flex:1;width:100%;min-width:0;height:100%;font-size:16px;border:0;background:transparent;color:var(--ink);outline-offset:0}
 .discovery-search input:focus-visible{outline:0}
+.discovery-search-input{position:relative;flex:1;min-width:0;height:100%}
+.discovery-search-example{
+ position:absolute;inset-block:0;inset-inline:2px 0;display:flex;align-items:center;
+ overflow:hidden;white-space:nowrap;pointer-events:none;color:var(--muted);font-size:16px;
+}
+.discovery-search-example::after{content:"";height:.95em;border-inline-end:1.5px solid var(--accent);margin-inline-start:3px}
+@media (prefers-reduced-motion:no-preference){
+ .discovery-search-input[data-show-example=true] input:not(:focus)::placeholder{color:transparent}
+}
+@media (prefers-reduced-motion:reduce){.discovery-search-example{display:none}}
 .discovery-search>svg{flex-shrink:0}
 .discovery-search button{min-width:40px;min-height:40px;padding:8px;border:0;background:transparent;color:var(--ink)}
 .discovery-filter-trigger{min-height:46px;padding:9px 14px;gap:8px;background:var(--surface);font-size:15px;border-radius:8px}
@@ -84,12 +94,12 @@
 .map-utilities .map-layer-button:active{filter:brightness(.91)}
 .map-layer-cue{display:none}
 @media (prefers-reduced-motion:no-preference){
- .map-layer-cue{display:block;position:absolute;inset:-4px;border-radius:8px;pointer-events:none}
+ .map-layer-cue{--layer-cue-cycle:4s;display:block;position:absolute;inset:-4px;border-radius:8px;pointer-events:none}
  .map-layer-button:focus-visible .map-layer-cue{visibility:hidden}
  .map-layer-cue::before{
   content:"";position:absolute;inset:0;border-radius:inherit;border:2px solid var(--accent);
   box-shadow:0 0 0 2px var(--surface),0 0 15px 5px color-mix(in srgb,var(--accent) 42%,transparent);
-  opacity:0;animation:map-layer-pulse 10s linear .65s 3;
+  opacity:0;animation:map-layer-pulse var(--layer-cue-cycle) linear .4s infinite;
  }
  @supports (mask-composite:exclude){
   .map-layer-trace{
@@ -99,20 +109,20 @@
   .map-layer-trace::before{
    content:"";position:absolute;top:50%;left:50%;width:160%;aspect-ratio:1;opacity:0;
    background:conic-gradient(transparent 0 62%,color-mix(in srgb,var(--sand) 30%,transparent) 75%,#fff7e8 91%,transparent 99%);
-   animation:map-layer-sweep 10s linear .65s 3;
+   animation:map-layer-sweep var(--layer-cue-cycle) linear .4s infinite;
   }
  }
 }
 @keyframes map-layer-pulse{
  0%{opacity:0;transform:scale(.98)}
- 1.2%{opacity:1;transform:scale(1)}
- 4.8%{opacity:1}
- 11%,100%{opacity:0;transform:scale(1.06)}
+ 3%{opacity:1;transform:scale(1)}
+ 13%{opacity:1}
+ 26%,100%{opacity:0;transform:scale(1.06)}
 }
 @keyframes map-layer-sweep{
  0%{opacity:0;transform:translate(-50%,-50%) rotate(-.15turn)}
- 1.2%,9%{opacity:1}
- 11%,100%{opacity:0;transform:translate(-50%,-50%) rotate(.85turn)}
+ 3%,22%{opacity:1}
+ 26%,100%{opacity:0;transform:translate(-50%,-50%) rotate(.85turn)}
 }
 .map-fit-button{min-width:44px}
 .discovery-page .map-note{display:none}
