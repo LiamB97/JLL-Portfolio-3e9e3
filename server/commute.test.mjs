@@ -2,6 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {commuteService,commuteOptions,commutePostcode,parseCommuteJourney} from './commute.mjs';
 import {commuteMatches,nextCommuteDay,londonDate} from '../src/commute.ts';
 import {createNetlifyApi} from './netlify-api.mjs';
+import {commutePlaces,commutePlaceSuggestions} from '../shared/commute-destinations.ts';
 const stamp=Date.parse('2026-10-28T12:00:00Z');
 const options={postcode:'ec2r8ah',date:'2026-10-29',time:'09:00',mode:'public',developmentIds:['home']};
 const homes=[{id:'home',lat:51.501,lng:-.141},{id:'other',lat:51.52,lng:-.08}];
@@ -31,6 +32,21 @@ test('partial provider failures are unavailable, excluded from matches and retri
 });
 test('next commute day uses the London calendar and skips weekends',()=>{
  assert.equal(nextCommuteDay(new Date('2026-10-30T12:00:00Z')),'2026-11-02');assert.equal(londonDate(new Date('2026-07-01T23:30:00Z')),'2026-07-02');assert.equal(commuteMatches({status:'ok',id:'x',durationMinutes:NaN},60),false);
+});
+test('named commute destinations use their mapped London coordinates and support common search names',async()=>{
+ assert.equal(new Set(commutePlaces.map(p=>p.id)).size,commutePlaces.length);
+ let lookups=0;const paths=[];
+ const service=commuteService({now:()=>stamp,fetcher:async()=>{lookups++;return geocode();},get:async path=>{paths.push(path);return journey();}});
+ const {postcode,...request}=options;
+ for(const [query,kind] of [['LSE','University'],['Canary Wharf','Area'],['Tower Bridge','Landmark'],['伦敦大学学院','University']]){
+  const place=commutePlaceSuggestions(query)[0];
+  assert.equal(place.kind,kind);
+  const result=await service({...request,destinationId:place.id},homes);
+  assert.deepEqual(result.destination,{id:place.id,name:place.name,lat:place.lat,lng:place.lng});
+  assert.ok(paths.at(-1).includes('/to/'+place.lat+','+place.lng+'?'));
+ }
+ assert.equal(lookups,0);
+ await assert.rejects(()=>service({...options,destinationId:'unknown'},homes),error=>error.status===422);
 });
 test('public commute endpoint works without staff access and validates origin, JSON, size and missing stock',async()=>{
  const repository={read:async()=>({developments:homes}),update:async()=>{throw Error('Commutes must not write profile or stock state');}};

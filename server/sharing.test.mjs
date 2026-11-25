@@ -1,6 +1,6 @@
 import {brochureShareLinks} from '../shared/brochure-sharing.ts';
 import test from 'node:test';import assert from 'node:assert/strict';
-import {portfolioInvitation,portfolioEmail,emailHref,buyerShareLink,developmentLink,yourFirstHomeShareLink} from '../shared/sharing.ts';
+import {collectionInvitation,portfolioInvitation,portfolioEmail,emailHref,buyerShareLink,developmentLink,yourFirstHomeShareLink} from '../shared/sharing.ts';
 import {YOUR_FIRST_HOME_SLUG} from '../shared/your-first-home.ts';
 test('friend links retain collection ownership and drop staff fragments and unrelated parameters',()=>{
  const url=new URL(buyerShareLink('https://portfolio.example/?broker=wrong&collection=chosen&email=private#invite=secret','home-1'));
@@ -20,6 +20,27 @@ test('brochure WhatsApp and email links open their services with broker attribut
  const whatsapp=new URL(links.whatsapp);assert.equal(whatsapp.hostname,'wa.me');assert.ok(whatsapp.searchParams.get('text').includes('collection=selected'));assert.ok(!whatsapp.searchParams.get('text').includes('my-broker'));
  const email=new URL(links.email);assert.equal(email.protocol,'mailto:');assert.equal(email.pathname,'');assert.ok(email.searchParams.get('subject').startsWith('Your cover title'));assert.ok(!email.searchParams.has('bcc'));assert.ok(!email.searchParams.get('subject').includes('\n'));
  assert.ok(brochureShareLinks('https://portfolio.example','my-broker','','A title','Broker').portfolio.includes('broker=my-broker'));
+});
+
+test('translated collection and brochure messages preserve the buyer language in every link',()=>{
+ const origin='https://portfolio.example',home={id:'home-1',name:'First Home',area:'Chelsea'};
+ for(const [language,salutation] of [['zh-CN','您好'],['tr','Merhaba'],['ar','مرحباً']]){
+  const link=origin+'/?collection=selected&lang='+language;
+  assert.ok(collectionInvitation(link).endsWith(link));
+  assert.ok(!collectionInvitation(link).startsWith(portfolioInvitation));
+  const email=portfolioEmail(link,[home],'Selected homes');
+  assert.ok(email.body.startsWith(salutation));
+  assert.ok(email.body.includes('development=home-1&collection=selected&lang='+language));
+  const onward=new URL(buyerShareLink(link+'&contact=wechat#admin',home.id));
+  assert.equal(onward.searchParams.get('lang'),language);
+  assert.equal(onward.searchParams.has('contact'),false);
+  assert.equal(onward.hash,'');
+  const brochure=brochureShareLinks(origin,'owner','selected','Title','Broker',language);
+  assert.ok(new URL(brochure.email).searchParams.get('body').startsWith(salutation));
+  assert.equal(new URL(brochure.portfolio).searchParams.get('lang'),language);
+  assert.equal(new URL(brochure.portfolio).searchParams.has('broker'),false);
+ }
+ assert.equal(new URL(buyerShareLink(origin+'/?lang=unknown')).searchParams.has('lang'),false);
 });
 
 test('Your First Home links keep the sharing broker through onward links, development emails and brochure shares',()=>{

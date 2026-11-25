@@ -14,6 +14,7 @@ import {rejectDuplicate} from './duplicates.mjs';
 import {accessService,AccessError,checkOrigin,sessionCookie,publicDevelopment,publicUser} from './access.mjs';
 import {BuyerAccessError,brokerPortfolioPassword,buyerContext,buyerDevelopments,collectionPassword,eligibleForBrokerPassword,issueBrokerPassword,portfolioProtectionSettings,requireBuyerAccess,unlockBuyerLink,updateBuyerAccessSettings,updateCollectionPassword} from './buyer-access.mjs';
 import {canManagePortfolioStock} from '../shared/staff-roles.ts';
+import {isBuyerLanguage} from '../shared/buyer-language.ts';
 import {YourFirstHomeError,yourFirstHomeCollection,yourFirstHomeWorkspace,updateYourFirstHome,campaignDevelopment} from './your-first-home.mjs';
 import {randomBytes} from 'node:crypto';
 import {validateDevelopment} from './model.mjs';
@@ -91,7 +92,19 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    }
    if(method==='GET'&&route==='/api/access/status')return json(await access.status());
    if(method==='GET'&&route==='/api/access/me'){const actor=await access.authenticate(request,{allowLegacy:false});return json({user:publicUser(actor),csrf:actor.csrf});}
-   if(method==='POST'&&['/api/access/bootstrap','/api/access/login','/api/access/accept'].includes(route)){checkOrigin(request);if(Number(request.headers.get('content-length')||0)>10000)return json({error:'Request is too large.'},413);const text=await request.text();if(Buffer.byteLength(text)>10000)return json({error:'Request is too large.'},413);let body;try{body=JSON.parse(text);}catch{return json({error:'Request must contain valid JSON.'},400);}const action=route.split('/').pop();const result=await access[action](body);const response=json({user:result.user,csrf:result.csrf});response.headers.set('Set-Cookie',sessionCookie(result.token,request));return response;}
+   if(method==='POST'&&['/api/access/bootstrap','/api/access/login','/api/access/accept','/api/access/reset-password'].includes(route)){
+    checkOrigin(request);
+    if(Number(request.headers.get('content-length')||0)>10000)return json({error:'Request is too large.'},413);
+    const text=await request.text();
+    if(Buffer.byteLength(text)>10000)return json({error:'Request is too large.'},413);
+    let body;
+    try{body=JSON.parse(text);}catch{return json({error:'Request must contain valid JSON.'},400);}
+    const action=route.endsWith('/reset-password')?'resetPassword':route.split('/').pop();
+    const result=await access[action](body);
+    const response=json({user:result.user,csrf:result.csrf});
+    response.headers.set('Set-Cookie',sessionCookie(result.token,request));
+    return response;
+   }
    if(method==='POST'&&route==='/api/access/logout'){const actor=await access.authenticate(request,{allowLegacy:false});access.csrf(request,actor);await access.logout(actor);const response=json({ok:true});response.headers.set('Set-Cookie',sessionCookie('',request,true));return response;}
    if(method==='GET'&&route.startsWith('/api/translations/')){const id=decodeURIComponent(route.slice('/api/translations/'.length)),language=url.searchParams.get('language');const state=await repository.read(),d=buyerDevelopments(state,buyer(state,request,target)).find(x=>x.id===id);if(!d)return json({error:'Development not found.'},404);if(!['ar','zh-CN','tr'].includes(language))return json({error:'Unsupported language.'},422);try{return json(await translations(d,language));}catch(e){console.error('Public listing translation failed:',e.code||e.name,e.message);return json({error:'Automatic translation is unavailable. The original English description is shown.',code:/^provider_http_\d+$/.test(e.code||'')?e.code:'translation_unavailable'},503);}}
    if(method==='POST'&&route==='/api/commute'){
@@ -175,6 +188,16 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
     if(route==='/api/admin/brochure-cover'&&method==='GET'){const file=await brochures.cover(check);return file?new Response(file.bytes,{headers:{'Content-Type':file.type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}}):new Response(null,{status:204});}
     const parts=route.slice('/api/admin/brochures'.length).split('/').filter(Boolean),id=parts[0];
     if(route==='/api/admin/brochures'&&method==='GET')return json(await brochures.list(check));
+    if(method==='GET'&&id==='translation'&&parts.length===2){
+     const language=url.searchParams.get('language');
+     if(!isBuyerLanguage(language)||language==='en')throw new AccessError('Choose a supported translation language.');
+     const state=await repository.read();
+     check(state);
+     const development=state.developments.find(row=>row.id===decodeURIComponent(parts[1]));
+     if(!development)throw new AccessError('Development not found.',404);
+     try{return json(await translations(development,language));}
+     catch{return json({error:'Listing translation is temporarily unavailable.'},503);}
+    }
     if(id&&parts[1]==='pdf'&&method==='GET'){const file=await brochures.pdf(id,check);return new Response(file.bytes,{headers:{'Content-Type':'application/pdf','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Disposition':'inline; filename="'+file.filename+'"'}});}
     if(id&&parts.length===1&&method==='DELETE')return json(await brochures.remove(id,check));
     if(method==='POST'&&(route==='/api/admin/brochures'||route==='/api/admin/brochure-cover')){const text=await request.text();if(Buffer.byteLength(text)>5000000)throw new AccessError('The saved brochure request is too large.',413);let body;try{body=JSON.parse(text);}catch{throw new AccessError('Send valid brochure data.');}return json(route==='/api/admin/brochure-cover'?await brochures.saveCover(body.photo,check):await brochures.save(body,check));}
@@ -252,8 +275,13 @@ export function createNetlifyApi({repository,password,fetchListings=fetchSource,
    if(method==='POST'&&route==='/api/admin/profile')return json(await access.updateProfile(actor,body));
    if(method==='POST'&&route==='/api/admin/drafts'){access.stock(actor);if(!body||typeof body.data!=='object'||!body.data)throw new AccessError('A draft needs development data.');return json(await repository.update(s=>{const acting=access.current(s,actor);access.stock(acting);s.drafts||=[];let d=body.id?s.drafts.find(d=>d.id===body.id):null;if(body.id&&!d)throw new AccessError('Draft no longer exists. Save a new draft.',404);if(d&&acting.role!=='admin'&&d.ownerId!==actor.id)throw new AccessError('You can only edit your own drafts.',403);if(!d){if(s.drafts.length>=200)throw new AccessError('Remove an old draft before adding another.');d={id:randomBytes(12).toString('hex'),ownerId:actor.id};s.drafts.push(d);}d.data=structuredClone(body.data);d.editingId=typeof body.editingId==='string'?body.editingId:null;d.name=String(body.name||'Untitled development').slice(0,100);d.updatedAt=new Date().toISOString();recordStaff(s,acting,'draft_save',{id:d.id,label:d.name});return structuredClone(d);}),201);}
    if(method==='POST'&&route==='/api/admin/users/invite')return json(await access.invite(actor,body),201);
-   if(method==='PATCH'&&route.startsWith('/api/admin/users/'))return json(await access.updateUser(actor,decodeURIComponent(route.slice('/api/admin/users/'.length)),body));
+   const passwordResetRoute=method==='POST'&&route.match(/^\/api\/admin\/users\/([^/]+)\/reset-password$/);
+   if(passwordResetRoute)return json(await access.issuePasswordReset(actor,decodeURIComponent(passwordResetRoute[1])),201);
+   // Use POST in the workspace so the JLL reverse proxy can forward account updates.
+   const accountRoute=['POST','PATCH'].includes(method)&&route.match(/^\/api\/admin\/users\/([^/]+)$/);
+   if(accountRoute)return json(await access.updateUser(actor,decodeURIComponent(accountRoute[1]),body));
    if(method==='POST'&&route==='/api/admin/collections')return json(await access.saveCollection(actor,body),201);
+   if(method==='POST'&&/^\/api\/admin\/collections\/[^/]+$/.test(route))return json(await access.saveCollection(actor,body,decodeURIComponent(route.slice('/api/admin/collections/'.length))));
    if(method==='PUT'&&route.startsWith('/api/admin/collections/'))return json(await access.saveCollection(actor,body,decodeURIComponent(route.slice('/api/admin/collections/'.length))));
    if(method==='POST'&&route==='/api/admin/location'){access.stock(actor);try{return json(await postcodeLocation(body.postcode));}catch(e){return json({error:e.message},422);}}
    if(method==='POST'&&route==='/api/admin/parse-text'){access.stock(actor);try{return json({development:parsePastedListing(body.text,body.url||undefined),warning:'Text loaded as an unpublished draft. Complete missing fields and review all details before publishing.'});}catch(e){return json({error:e.message},422);}}

@@ -1,5 +1,6 @@
 import {randomBytes} from 'node:crypto';
 import {AccessError} from './access.mjs';
+import {isBuyerLanguage} from '../shared/buyer-language.ts';
 import {BROCHURE_MAX_CLIENT_NAME, BROCHURE_MAX_DEVELOPMENTS, BROCHURE_MAX_INTRO, BROCHURE_MAX_NOTE, BROCHURE_MAX_SAVED_BYTES} from '../shared/brochure-settings.ts';
 const legacyCopyLimit = 1600;
 export function memoryBrochureFiles(){const files=new Map();return {put:async(key,bytes,type)=>files.set(key,{bytes,type}),get:async key=>files.get(key)||null,remove:async key=>{files.delete(key);}};}
@@ -15,8 +16,10 @@ export function brochureService(repository,files){
   };
   const ids=input.developmentIds;if(!Array.isArray(ids)||!ids.length||ids.length>BROCHURE_MAX_DEVELOPMENTS||ids.some(id=>typeof id!=='string'||!state.developments.some(d=>d.id===id)))throw new AccessError('Choose 1–20 published developments.');
   if(input.includeMap!==undefined&&typeof input.includeMap!=='boolean')throw new AccessError('Choose whether to include the location map.');
+  if(input.language!==undefined&&!isBuyerLanguage(input.language))throw new AccessError('Choose a supported brochure language.');
   const result={includeMap:input.includeMap!==false,title:text(input.title,100,'The brochure headline').trim(),intro:text(input.intro??'',BROCHURE_MAX_INTRO,'The introduction',previous?.intro),brokerTitle:actor.jobTitle||'',developmentIds:[...new Set(ids)],notes:{},collection:String(input.collection||''),cover:{kind:'default'}};
   if(!result.title)throw new AccessError('Give the brochure a title.');
+  if(input.language&&input.language!=='en')result.language=input.language;
   if(result.collection&&!state.collections?.some(c=>c.slug===result.collection&&c.ownerId===actor.id))throw new AccessError('Choose one of your own collections.',403);
   if (input.clientName !== undefined) {
     const name = text(input.clientName, BROCHURE_MAX_CLIENT_NAME, 'The client name').trim();
@@ -98,7 +101,7 @@ export function brochureService(repository,files){
     if(!existing){existing={id:randomBytes(12).toString('hex'),ownerId:current.id,createdAt:new Date().toISOString(),version:0};state.brochures.push(existing);}
     const same=JSON.stringify(existing.config)===JSON.stringify(fresh);previousKey=existing.fileKey;
     existing.config=fresh;existing.title=fresh.title;existing.updatedAt=new Date().toISOString();existing.version++;
-    if(key||!same||body.clearPdf===true){existing.fileKey=key;existing.size=bytes?.length||0;existing.generatedAt=key?existing.updatedAt:null;existing.filename=key?fresh.title.normalize('NFKD').replace(/[^a-z0-9]+/gi,'-').slice(0,70)+'.pdf':null;}
+    if(key||!same||body.clearPdf===true){existing.fileKey=key;existing.size=bytes?.length||0;existing.generatedAt=key?existing.updatedAt:null;existing.filename=key?(fresh.title.normalize('NFKD').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').slice(0,70)||'JLL-brochure')+'.pdf':null;}
     return structuredClone(existing);});if(previousKey&&previousKey!==row.fileKey)await files.remove(previousKey).catch(()=>{});const {fileKey,...safe}=row;return {...safe,hasPdf:Boolean(fileKey)};
    }catch(e){if(key)await files.remove(key).catch(()=>{});throw e;}
   },
