@@ -58,7 +58,7 @@ export default function StaffHome({user, navigate, request}: {
 
   return <section className="staff-section staff-home">
     <header className="workspace-home-heading"><h1>Overview</h1></header>
-    {user.role === 'admin' && <StaffInsights request={request} openReport={() => navigate('activity')}/>}
+    {user.role === 'admin' && <StaffInsights key={user.id} viewerId={user.id} request={request} openReport={() => navigate('activity')}/>}
     <div className={buyerTools ? 'workspace-home-grid' : 'workspace-home-grid workspace-home-grid-reviews'}>
       <div className="workspace-work">
         {buyerTools && <section className="workspace-creation" aria-labelledby="workspace-tools-title">

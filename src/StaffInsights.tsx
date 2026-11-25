@@ -1,5 +1,5 @@
 import {useEffect, useState, type ReactNode} from 'react';
-import {Activity, ArrowDown, ArrowRight, ArrowUp, ChartNoAxesColumnIncreasing, FolderOpen, Link2, MessageCircle, RefreshCw, UsersRound} from 'lucide-react';
+import {Activity, ArrowDown, ArrowRight, ArrowUp, ChartNoAxesColumnIncreasing, FolderOpen, Link2, MessageCircle, RefreshCw, UserMinus, UsersRound} from 'lucide-react';
 import {activityPeriods, type ActivityMetric, type ActivityOverview, type ActivityPeriod} from '../shared/activity-overview';
 import {staffRoleLabels} from '../shared/staff-roles';
 import ActivityTrend, {activityDates, activityMetric, formatActivityCount, metricLabels, type TrendMetric} from './ActivityTrend';
@@ -15,6 +15,7 @@ const summary = [
 ] as const;
 const rankMetrics = ['activeDays', 'collectionsCreated', 'visits', 'shares', 'staffActions', 'signIns'] as const;
 const previewLimit = 5;
+type RoleScope = 'all' | 'both' | 'broker' | 'broker_admin';
 
 type RankRow = {
   id: string;
@@ -62,13 +63,16 @@ function InsightPanel({id, title, detail, action, children}: {
   </section>;
 }
 
-export default function StaffInsights({request, openReport}: {request: StaffRequest; openReport: () => void}) {
+export default function StaffInsights({request, viewerId, openReport}: {request: StaffRequest; viewerId: string; openReport: () => void}) {
   const [period, setPeriod] = useState<ActivityPeriod>(30);
   const [refresh, setRefresh] = useState(0);
   const [report, setReport] = useState<ActivityOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [person, setPerson] = useState('');
+  const [roleScope, setRoleScope] = useState<RoleScope>('all');
+  const [excludedIds, setExcludedIds] = useState<string[]>([viewerId]);
+  const [exclusionsOpen, setExclusionsOpen] = useState(false);
   const [metric, setMetric] = useState<TrendMetric>('visits');
   const [rank, setRank] = useState<ActivityMetric>('activeDays');
   const [inspection, setInspection] = useState<{kind: 'development' | 'collection'; id: string} | null>(null);
@@ -86,17 +90,22 @@ export default function StaffInsights({request, openReport}: {request: StaffRequ
   }, [period, refresh, request]);
 
   const team = report?.staff ?? [];
-  const staff = person ? team.filter(user => user.id === person) : team;
+  const staffOptions = [...team].sort((a, b) => a.name.localeCompare(b.name));
+  const includedStaff = staffOptions.filter(user => !excludedIds.includes(user.id) &&
+    (roleScope === 'all' || user.role === roleScope || (roleScope === 'both' && (user.role === 'broker' || user.role === 'broker_admin'))));
+  const staff = person ? includedStaff.filter(user => user.id === person) : includedStaff;
+  const staffIds = new Set(staff.map(user => user.id));
+  const excludedCount = team.filter(user => excludedIds.includes(user.id)).length;
   const chartMetric = metric === 'activeStaff' || metric === 'activeDays' ? (person ? 'activeDays' : 'activeStaff') : metric;
   const names = new Map(team.map(user => [user.id, user.name]));
-  const collections = (report?.collections ?? []).filter(collection => !person || collection.ownerId === person);
-  const links = (report?.links ?? []).filter(link => !person || link.ownerId === person);
+  const collections = (report?.collections ?? []).filter(collection => staffIds.has(collection.ownerId));
+  const links = (report?.links ?? []).filter(link => staffIds.has(link.ownerId));
   const developments = report?.developments ?? [];
   const stock = new Map(developments.map(development => [development.id, development]));
   const visits = activityMetric(staff.map(user => user.current), 'visits');
   const visitsWithoutLink = Math.max(0, visits - links.reduce((sum, link) => sum + link.visits, 0));
   const savedPdfs = staff.reduce((sum, user) => sum + user.savedPdfs, 0);
-  const leaderboard = [...team].filter(user => user.current[rank] > 0)
+  const leaderboard = includedStaff.filter(user => user.current[rank] > 0)
     .sort((a, b) => b.current[rank] - a.current[rank] || a.name.localeCompare(b.name));
   const pickedBy = new Map<string, typeof collections>();
   for (const collection of collections) for (const id of collection.developmentIds) {
@@ -119,11 +128,6 @@ export default function StaffInsights({request, openReport}: {request: StaffRequ
         </div>
       </div>
       <div className="insights-controls">
-        {team.length > 0 && <select aria-label="Staff member" value={person} onChange={event => setPerson(event.target.value)}>
-          <option value="">All staff</option>
-          {[...team].sort((a, b) => a.name.localeCompare(b.name)).map(user =>
-            <option key={user.id} value={user.id}>{user.name}{!user.active ? ' · Disabled' : ''}</option>)}
-        </select>}
         <div className="insights-period" role="group" aria-label="Activity period">
           {activityPeriods.map(days => <button type="button" key={days} aria-pressed={period === days} onClick={() => setPeriod(days)}>
             {days} days
@@ -133,6 +137,45 @@ export default function StaffInsights({request, openReport}: {request: StaffRequ
           aria-label="Refresh portfolio activity" title="Refresh portfolio activity"><RefreshCw size={17} aria-hidden="true"/></button>
       </div>
     </header>
+    {team.length > 0 && <div className="insights-controls insights-filters" role="group" aria-label="Activity staff filters">
+      <select aria-label="Staff role" value={roleScope} onChange={event => {
+        setRoleScope(event.target.value as RoleScope);
+        setPerson('');
+        setInspection(null);
+      }}>
+        <option value="all">All roles</option>
+        <option value="both">Brokers and broker admins</option>
+        <option value="broker">Brokers only</option>
+        <option value="broker_admin">Broker admins only</option>
+      </select>
+      <select aria-label="Staff member" value={person} onChange={event => {
+        setPerson(event.target.value);
+        setInspection(null);
+      }}>
+        <option value="">Everyone in this filter</option>
+        {includedStaff.map(user => <option key={user.id} value={user.id}>
+          {user.name}{user.id === viewerId ? ' (you)' : ''}{!user.active ? ' · Disabled' : ''}
+        </option>)}
+      </select>
+      <button type="button" className="insights-exclusions-button" aria-haspopup="dialog" onClick={() => setExclusionsOpen(true)}>
+        <UserMinus size={16} aria-hidden="true"/> Exclude users{excludedCount > 0 && ' (' + excludedCount + ')'}
+      </button>
+    </div>}
+    {exclusionsOpen && <Modal title="Exclude users" close={() => setExclusionsOpen(false)} className="activity-exclusions-dialog"
+      footer={excludedIds.length ? <button type="button" onClick={() => setExcludedIds([])}>Clear exclusions</button> : undefined}>
+      <fieldset className="activity-exclusions">
+        <legend>Hide activity from</legend>
+        {staffOptions.map(user => <label key={user.id}>
+          <input type="checkbox" checked={excludedIds.includes(user.id)} onChange={event => {
+            const excluded = event.target.checked;
+            setExcludedIds(ids => excluded ? [...ids, user.id] : ids.filter(id => id !== user.id));
+            if (excluded && user.id === person) setPerson('');
+            setInspection(null);
+          }}/>
+          <span>{user.name}{user.id === viewerId ? ' (you)' : ''}<small>{staffRoleLabels[user.role]}</small></span>
+        </label>)}
+      </fieldset>
+    </Modal>}
     {loading && <p className="insight-status" role="status">{report ? 'Updating activity…' : 'Loading portfolio activity…'}</p>}
     {error && <p className="insight-status" role="alert">Couldn’t load portfolio activity. Use Refresh to try again.</p>}
     {report && <>
@@ -185,7 +228,7 @@ export default function StaffInsights({request, openReport}: {request: StaffRequ
       <footer className="insights-footer">
         <div className="insights-footnotes">
           <p>{formatActivityCount(savedPdfs)} saved {savedPdfs === 1 ? 'PDF' : 'PDFs'} now
-            {!person && <> · {formatActivityCount(report.generalVisits)} visits to links without a broker in this period</>}</p>
+            {!person && roleScope === 'all' && excludedCount === 0 && <> · {formatActivityCount(report.generalVisits)} visits to links without a broker in this period</>}</p>
           <details><summary>How activity is counted</summary>
             <p>Active days count the dates on which staff used the workspace. Buyer visits include repeat visits from people who accepted analytics. WhatsApp counts measure button clicks. Collection picks and PDFs reflect what’s saved today.</p>
             <p>{report.startedAt ? 'Recording began ' + activityDates(report.startedAt, report.startedAt, true) + '. ' : 'Tracking starts when activity is recorded. '}

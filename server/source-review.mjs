@@ -23,6 +23,9 @@ export function mergeSource(old,incoming,{legacyEdited=false}={}){
    if(!equal(old[key],incoming[key])&&!equal(dismissed[key],incoming[key]))conflicts[key]={field:key,current:old[key]??null,website:incoming[key]??null,detectedAt:incoming.lastSyncedAt,version:version([key,old[key]??null,incoming[key]??null])};
   }
  }
+ if(protectedFields.has('bedrooms')) {
+  next.unitPrices=Object.fromEntries(Object.entries(next.unitPrices||{}).filter(([beds])=>next.bedrooms.includes(Number(beds))));
+ }
  return {...next,_manualFields:[...protectedFields],_sourceSnapshot:snapshot,_refreshConflicts:conflicts};
 }
 export function resolveSourceField(old,field,choice,expected){

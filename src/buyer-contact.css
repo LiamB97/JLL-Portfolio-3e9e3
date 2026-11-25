@@ -22,7 +22,16 @@
 .commute-destination-options li svg {flex-shrink: 0; color: var(--accent)}
 .commute-destination-options li span {min-width: 0; overflow-wrap: anywhere}
 .commute-destination-options small {display: block; color: var(--muted); line-height: 1.2}
-.wechat-profile h2 {display: flex; align-items: center; gap: 9px}
+.wechat-profile h2, .wechat-details h3 {display: flex; align-items: center; gap: 9px}
+.wechat-brand {
+  display: block;
+  flex: none;
+  box-sizing: border-box;
+  object-fit: contain;
+  padding: 3px;
+  border-radius: 6px;
+  background: #078744;
+}
 .wechat-profile fieldset {min-width: 0; padding: 0; border: 0}
 .wechat-profile-preview {display: flex; flex-wrap: wrap; gap: 14px; align-items: start; margin: 10px 0}
 .wechat-profile-preview img {
@@ -49,7 +58,8 @@
   background: transparent; color: white; border-color: #ffffff80; padding-inline: 11px; white-space: nowrap;
 }
 .detail-contact-actions .detail-wechat-action:hover {background: #ffffff20}
-.portfolio-header .wechat-contact-action.portfolio-mobile-broker {border: 0; box-shadow: none}
+.portfolio-header .wechat-contact-action.portfolio-mobile-broker {border: 0; box-shadow: none; background: #078744}
+.portfolio-header .portfolio-mobile-broker .wechat-brand {background: transparent; padding: 0; object-fit: contain}
 @media(max-width: 620px) {
   .detail-contact-actions {grid-column: 1/-1; align-items: stretch}
   .detail-contact-actions > :is(a,button) {flex: 1; justify-content: center}

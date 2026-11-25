@@ -8,6 +8,7 @@ import {startingPrice} from '../shared/pricing';
 import {staffLocation} from '../shared/analytics-events';
 import Modal from './Modal';
 import PortfolioHeader,{type PortfolioView as View} from './PortfolioHeader';
+import DiscoverySearch from './DiscoverySearch';
 import {searchDevelopments} from './portfolio-search';
 import CommuteSearch from './CommuteSearch';
 import {commuteMatches,type CommuteReport} from './commute';
@@ -15,7 +16,7 @@ import WhatsAppIcon from './WhatsAppIcon';
 import WeChatContact,{hasWeChat,WeChatDialog} from './WeChatContact';
 import React, {useCallback, useEffect, useState, useRef, useMemo, lazy, Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
-import {ArrowUpRight,ArrowRight,BedDouble,MapPin,Search,SlidersHorizontal,X,TrainFront,Building2,Heart,Star,ChevronDown} from 'lucide-react';
+import {ArrowUpRight,ArrowRight,BedDouble,MapPin,SlidersHorizontal,X,TrainFront,Building2,Heart,Star,ChevronDown} from 'lucide-react';
 const PortfolioMap=lazy(()=>import('./Map'));
 const BuyerGuide=lazy(()=>import('./BuyerGuide'));
 const StaffPortal=lazy(()=>import('./StaffPortal'));
@@ -186,11 +187,7 @@ function App() {
         onBrowsePicks={()=>{reset();setSelected(null);setHighlightsEnabled(true);setFeaturedOnly(!collectionOnly);changeView('list');}} {...collectionActions}/>}
       <div className="discovery-toolbar">
         {embedded?<PortfolioEmbedToolbar query={query} setQuery={setQuery} count={filtered.length} view={view} setView={setView}/>:<>
-        <form className="discovery-search" role="search" onSubmit={e=>e.preventDefault()}>
-          <Search size={19} aria-hidden="true"/>
-          <input autoComplete="off" aria-label={t("Search by area, development or postcode")} placeholder={t(narrow?"Area, name or postcode":"Search an area, development or postcode")} value={query} onChange={e => setQuery(e.target.value)}/>
-          {query && <button type="button" className="clear-search" aria-label={t("Clear search")} onClick={() => setQuery('')}><X size={15}/></button>}
-        </form>
+        <DiscoverySearch query={query} setQuery={setQuery} narrow={narrow}/>
         <button type="button" className={`discovery-filter-trigger ${filterCount ? 'filtered' : ''}`} aria-label={t('Filters')} aria-expanded={filters} aria-haspopup="dialog" onClick={() => setFilters(true)}>
           <SlidersHorizontal size={17}/><span>{t("Filters")}</span>{filterCount > 0 && <b aria-hidden="true">{filterCount}</b>}
         </button>

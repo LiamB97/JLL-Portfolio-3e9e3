@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {randomBytes} from 'node:crypto';
 import {createNetlifyApi} from './netlify-api.mjs';import {accessService,digest} from './access.mjs';import {samples} from './model.mjs';
 import {applyRegionalReviewPlan,regionalReviewPlanCoverage} from './regional-review-plan.mjs';
+import {mergeSource} from './source-review.mjs';
 function environment(config={}){let state={developments:structuredClone(samples),lastSync:null};const secret=randomBytes(24).toString('hex');const repository={read:async()=>structuredClone(state),update:async fn=>{const next=structuredClone(state);const result=fn(next);state=next;return result;}};const api=createNetlifyApi({repository,password:secret,...config});
  async function call(path,{body,method='GET',actor,buyerCookie,ip,origin='https://portfolio.example',csrf=true}={}){
   const headers={'Content-Type':'application/json',Origin:origin};
@@ -46,7 +47,7 @@ test('designated reviewers can confirm their own assignments and admins manage a
  const [firstReview]=assigned.reviews;
  const prices={action:'save-prices',developmentId,version:firstReview.version,unitPrices:{1:550000},expectedBedrooms:firstReview.development.bedrooms,expectedUnitPrices:{}};
  assert.equal((await e.call(path,{actor:other,method:'POST',body:prices})).status,403);
- assert.equal((await e.call(path,{actor:admin,method:'POST',body:prices})).status,403);
+ assert.equal((await e.call(path,{actor:admin,method:'POST',body:{...prices,unitPrices:{}}})).status,200);
  assert.equal((await e.call(path,{actor:consultant,method:'POST',body:prices,csrf:false})).status,403);
  assert.equal((await e.call(path,{actor:consultant,method:'POST',body:prices,origin:'https://outside.example'})).status,403);
  assert.equal((await e.call(path,{actor:consultant,method:'POST',body:prices})).status,200);
@@ -143,6 +144,81 @@ test('two assigned broker admins can review and edit the same stock without losi
  assert.equal((await e.call(path,{actor:second,method:'POST',body:{developmentId,version:latest.version}})).status,200);
  assert.ok((await reviewFor(second)).lastConfirmedAt);
  assert.equal((await reviewFor(first)).lastConfirmedAt,undefined);
+});
+test('reviewers can remove an unavailable bedroom type without leaving an obsolete price',async()=>{
+ const e=environment(),admin=await e.owner();
+ const consultant=await e.broker(admin,'consultant@example.test','development_consultant');
+ const manager=await e.broker(admin,'manager@example.test','broker_admin');
+ const path='admin/development-reviews',developmentId=samples[0].id;
+ const oldPrices={1:600000,2:800000,4:500000};
+ const source={bedrooms:[1,2,4],unitPrices:oldPrices,priceFrom:500000};
+ await e.repository.update(state=>Object.assign(state.developments[0],{...source,sample:false,_sourceSnapshot:source}));
+ const assign=await e.call(path,{actor:admin,method:'PUT',body:{
+  developmentId,assigneeIds:[consultant.user.id,manager.user.id],expectedAssignments:{},region:'PCL',expectedRegion:null,
+ }});
+ assert.equal(assign.status,200);
+ const reviewFor=async actor=>(await e.call(path,{actor})).data.reviews[0];
+ const save=(actor,review,removeBedrooms,unitPrices)=>e.call(path,{actor,method:'POST',body:{
+  action:'save-prices',developmentId,version:review.version,expectedBedrooms:review.development.bedrooms,
+  expectedUnitPrices:review.development.unitPrices,removeBedrooms,unitPrices,
+ }});
+ const [first,second]=await Promise.all([reviewFor(consultant),reviewFor(manager)]);
+ assert.equal((await save(consultant,first,[4],oldPrices)).status,422);
+ assert.equal((await save(consultant,first,[4],{1:600000,2:800000})).status,200);
+ assert.equal((await save(manager,second,[1],{2:850000,4:500000})).status,409);
+ const refreshed=await reviewFor(manager);
+ assert.deepEqual(refreshed.development.bedrooms,[1,2]);
+ assert.deepEqual(refreshed.development.unitPrices,{1:600000,2:800000});
+ assert.equal(refreshed.nextReminderAt,second.nextReminderAt);
+ const afterRemoval=(await e.call('developments')).data.find(row=>row.id===developmentId);
+ assert.equal(afterRemoval.priceFrom,600000);
+ assert.equal((await save(manager,refreshed,[1],{})).status,200);
+ const onlyType=await reviewFor(manager);
+ assert.equal((await save(admin,onlyType,[2],{})).status,422);
+ const updatedRecord=(await e.repository.read()).developments[0];
+ assert.equal(updatedRecord.priceFrom,0);
+ const merged=mergeSource(updatedRecord,{...samples[0],...source});
+ assert.deepEqual(merged.bedrooms,[2]);
+ assert.ok(!Object.hasOwn(merged.unitPrices,'4'));
+ assert.equal((await save(admin,onlyType,[],{2:850000})).status,200);
+ assert.deepEqual((await reviewFor(consultant)).development.unitPrices,{2:850000});
+});
+test('regional rollouts add colleagues to current published stock and preserve existing reviews',async()=>{
+ const e=environment(),admin=await e.owner(),path='admin/development-reviews';
+ const existing=await e.broker(admin,'existing@example.test','broker_admin');
+ const colleague=await e.broker(admin,'colleague@example.test','development_consultant');
+ const pclIds=samples.slice(0,2).map(item=>item.id);
+ await e.repository.update(state=>{
+  for(let i=0;i<2;i++) Object.assign(state.developments[i],{sample:false,_reviewRegion:'PCL'});
+  Object.assign(state.developments[2],{sample:false,_reviewRegion:'Core'});
+  state.developments[3]._reviewRegion='PCL';
+ });
+ const assign={action:'assign',developmentId:pclIds[0],assigneeIds:[existing.user.id],expectedAssignments:{}};
+ assert.equal((await e.call(path,{actor:admin,method:'POST',body:assign})).status,200);
+ const previous=(await e.call(path,{actor:existing})).data.reviews[0];
+ const plan=(consultants,extraGroups=[])=>JSON.stringify({revision:1,groups:[
+  {region:'PCL',allInRegion:true,consultants},
+  ...extraGroups,
+ ]});
+ await assert.rejects(applyRegionalReviewPlan(e.repository,plan(['existing','missing'])),/distinct, active review account/);
+ await assert.rejects(applyRegionalReviewPlan(e.repository,plan(['colleague'],[
+  {region:'Core',consultants:['colleague'],developmentIds:[pclIds[0]]},
+ ])),/distinct sets/);
+ assert.equal((await e.call(path,{actor:colleague})).data.reviews.length,0);
+ assert.equal((await e.call(path,{actor:existing})).data.reviews.length,1);
+ const valid=plan(['existing','colleague']);
+ const result=await applyRegionalReviewPlan(e.repository,valid);
+ assert.equal(result[0].count,2);
+ assert.equal(await applyRegionalReviewPlan(e.repository,valid),null);
+ const current=(await e.call(path,{actor:admin})).data.reviews;
+ assert.deepEqual([...new Set(current.map(review=>review.development.id))],pclIds);
+ assert.equal(current.find(review=>review.assigneeId===existing.user.id&&review.development.id===pclIds[0]).version,previous.version);
+ assert.deepEqual(regionalReviewPlanCoverage(await e.repository.read(),valid)[0],{
+  region:'PCL',expected:2,grouped:2,consultants:[
+   {name:'existing',matched:true,count:2,queued:0},
+   {name:'colleague',matched:true,count:2,queued:0},
+  ],
+ });
 });
 test('reviews queued for a matching broker-admin invitation appear on account activation',async()=>{
  const e=environment(),admin=await e.owner(),path='admin/development-reviews';

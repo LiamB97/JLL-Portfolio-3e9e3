@@ -130,7 +130,7 @@ html[data-theme=dark] .property-card-wrap.featured-card > .property-card {
   margin:0;color:var(--white);font-size:21px;font-weight:600;letter-spacing:-.025em;line-height:1.08;
  }
  .collection-dock-summary p{margin:3px 0 0;color:#cbd3da;font-size:14px;line-height:1.2}
- .collection-dock :is(button.collection-dock-options,button.collection-dock-picks,a.collection-dock-contact){
+ .collection-dock :is(button.collection-dock-options,button.collection-dock-picks,.collection-dock-contact){
   min-height:44px;line-height:1.2;border:1px solid #ffffff3d;border-radius:7px;touch-action:manipulation;
  }
  .collection-dock button.collection-dock-options{width:44px;padding:0;background:transparent;color:var(--white)}
@@ -139,14 +139,14 @@ html[data-theme=dark] .property-card-wrap.featured-card > .property-card {
   display:grid;grid-template-columns:auto minmax(0,1fr) auto;flex:1;min-width:0;gap:7px;
   padding:7px 10px;background:var(--sand);color:var(--midnight);font-size:16px;font-weight:650;text-align:start;
  }
- .collection-dock a.collection-dock-contact{
+ .collection-dock :is(a,button).collection-dock-contact{
   display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;
   background:#253844;color:#e7f9ef;border-color:#54766a;font-size:14px;font-weight:600;
  }
  .collection-dock-contact svg{color:#61e794}
  .collection-dock-actions svg{flex-shrink:0}
  .collection-dock-picks:dir(rtl)>svg:last-child{rotate:180deg}
- .collection-dock :is(button.collection-dock-options,button.collection-dock-picks,a.collection-dock-contact):active{filter:brightness(.91)}
+ .collection-dock :is(button.collection-dock-options,button.collection-dock-picks,.collection-dock-contact):active{filter:brightness(.91)}
  .mobile-collection .discovery-disclaimer{font-size:12px}
  .mobile-collection .map-shell .collection-pick-cluster{
   background:var(--sand);border:2px solid var(--midnight);border-radius:50%;box-shadow:0 1px 0 2px #fff9;
