@@ -8,8 +8,8 @@ export interface TransportNetwork {source:string;attribution:string;updatedAt:st
 export interface StationRoute extends Station {straightLineKm:number;walking:{distanceMeters:number;durationMinutes:number}|null;cycling:{distanceMeters:number;durationMinutes:number}|null}
 export interface Connections {source:string;updatedAt:string;stations:StationRoute[]}
 
-export interface BrokerCard {campaign?:'your-first-home';photo?:string;name:string;whatsapp:string;slug:string}
-export interface BuyerCollection {campaign?:'your-first-home';transportDefaults?:TransportDefaults;broker?:BrokerCard|null;slug:string;title:string;brokerName:string;developmentIds:string[]}
+export interface BrokerCard {campaign?:'your-first-home';photo?:string;wechatId?:string;wechatQr?:string;name:string;whatsapp:string;slug:string}
+export interface BuyerCollection {campaign?:'your-first-home';language?:import('../shared/buyer-language').BuyerLanguage;transportDefaults?:TransportDefaults;broker?:BrokerCard|null;slug:string;title:string;brokerName:string;developmentIds:string[]}
 
 // New homes describes this entire portfolio, rather than a useful unit type.
 export const specificPropertyTypes=(types:string[])=>types.filter(type=>!/^new[\s-]*homes?$/i.test(type.trim()));

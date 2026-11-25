@@ -2,7 +2,7 @@ import {randomBytes} from 'node:crypto';
 import {AccessError,publicUser} from './access.mjs';
 import {isYourFirstHomeSlug} from '../shared/your-first-home.ts';
 import {isStaffRole} from '../shared/staff-roles.ts';
-export const STAFF_EVENTS=['login','logout','personal_link_created','personal_link_copy','personal_whatsapp_click','personal_email_click','collection_create','collection_update','collection_delete','collection_link_copy','collection_whatsapp_click','collection_email_click','stock_add','stock_edit','stock_remove','stock_sync','invite_create','invite_revoke','user_update','profile_update','draft_save','draft_remove','pending_save','pending_extract','pending_publish','pending_archive'];
+export const STAFF_EVENTS=['login','logout','personal_link_created','personal_link_copy','personal_whatsapp_click','personal_email_click','collection_create','collection_update','collection_delete','collection_link_copy','collection_whatsapp_click','collection_email_click','stock_add','stock_edit','stock_remove','stock_sync','invite_create','invite_revoke','user_update','password_reset_issued','password_reset_completed','profile_update','draft_save','draft_remove','pending_save','pending_extract','pending_publish','pending_archive'];
 export const BUYER_EVENTS=['page_view','development_view','favourite_add','favourite_remove','whatsapp_click','shortlist_copy'];
 const DAY=86400000;
 const isoDay=ms=>new Date(ms).toISOString().slice(0,10);

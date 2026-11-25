@@ -154,8 +154,8 @@ html[data-theme=dark] .whatsapp-icon{color:var(--whatsapp)}
 .detail-actions>.detail-save{margin:0}
 .detail-actions .friend-share-menu{inset-inline-start:0;inset-inline-end:auto}
 .friend-share-menu>:is(button,a){min-height:44px;font-size:14px;line-height:1.4;padding:10px 14px}
-.staff-user-controls{display:grid;grid-template-columns:124px minmax(80px,auto);gap:10px;align-items:end;flex:0 0 auto}
-.staff-user-controls>label{width:auto;margin:0;gap:6px;font-size:14px}
+.staff-user-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:end;flex:0 1 auto}
+.staff-user-controls>label{flex:1 0 124px;max-width:180px;width:auto;margin:0;gap:6px;font-size:14px}
 .staff-user-controls select,.staff-portal .staff-user-controls>button{min-height:44px;height:44px;margin:0;padding:10px 12px;font-size:14px;line-height:1.4;box-sizing:border-box}
 .staff-user-controls select{width:100%;min-width:0}
 .entry-row{grid-template-columns:repeat(3,minmax(0,1fr));align-items:end}
@@ -173,7 +173,7 @@ html[data-theme=dark] .whatsapp-icon{color:var(--whatsapp)}
 @media(max-width:560px){
  .staff-user{flex-wrap:wrap;align-items:flex-start}
  .staff-user>div:first-child{flex-basis:100%}
- .staff-user-controls{width:100%;grid-template-columns:minmax(0,1fr) auto}
+ .staff-user-controls{width:100%}
  .entry-row{grid-template-columns:minmax(0,1fr)}
  .admin-row{flex-wrap:wrap}
  .admin-row>div:first-child{flex-basis:100%}

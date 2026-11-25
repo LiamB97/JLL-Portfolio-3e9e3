@@ -15,7 +15,7 @@ export function staffGuide(role) {
   chapters:[reviewChapter,{id:'profile',title:'Sign in and get help',steps:[
    'Open https://digitalportfolio.live.jll.com/#admin and sign in with your JLL email.',
    'To activate a new invitation, use the matching work email and choose a password of at least 12 characters. The WhatsApp field is optional for this role.',
-   'Ask an Admin to assign developments, reissue an expired invitation or help with your account.',
+   'Ask an Admin to assign developments, reissue an expired invitation or create a password reset link.',
   ]}],
   faqs:[pricesFaq,{id:'review-scope',question:'How do I correct a description, photo or availability?',answer:'Send the development name and verified correction to an Admin or Broker admin. Confirm the review once the published details are correct.'}],
  };
@@ -26,7 +26,7 @@ export function staffGuide(role) {
     'The live portfolio is https://digitalportfolio.live.jll.com. Use Staff workspace in the menu, or open /#admin to sign in. Existing accounts and passwords work on this address.',
     'New colleagues open their own invitation, enter the matching JLL email, choose a password of at least 12 characters and add an international WhatsApp number. Invitations are single-use and expire after seven days. Existing staff should use their current account.',
     'In My profile, check your WhatsApp number, name and job title. Upload a JPEG, PNG or WebP in Your broker photo, adjust its position and zoom, then Save photo. Your photo appears on buyer links and newly generated brochures.',
-    'Your personal and collection links show your name and WhatsApp contact. Your work email appears in brochures. Profile changes update existing buyer links; regenerate saved PDFs to update their contact details.',
+    'Your personal and collection links show your name and WhatsApp contact. Add a WeChat ID or QR image under My profile → WeChat so buyers can choose how to contact you. Profile changes update existing buyer links. Regenerate saved PDFs to refresh their contact details.',
     'Overview puts collections and PDFs first, with personal and Your First Home links in Sharing. Use Workspace section on mobile. Switching sections preserves in-progress forms in the current tab; refresh or sign-out clears unsaved work.'
    ]},
    {id:'share',title:'Share your personal portfolio link',steps:[
@@ -36,14 +36,14 @@ export function staffGuide(role) {
     'If an Admin protects the full portfolio, your buyer password appears in My profile. Share it separately from the buyer link. Your staff sign-in password is never a buyer password.'
    ]},
    {id:'collections',title:'Create a collection for a buyer',steps:[
-    'Open Buyer collections → New collection. Choose a general title and 1–50 published developments. Keep buyer names and other personal details out of titles.',
+    'Open Buyer collections → New collection. Set Buyer language, choose a general title and select 1–50 published developments. Keep buyer names and other personal details out of titles. The link opens in the chosen language and the email and WhatsApp drafts use it.',
     'Map layers on opening lets you choose transport lines or specific stations for that collection. General portfolio links open with optional overlays off. Selected stations have prominent markers and visible names.',
     'Create buyer link, then preview it. Your picks appear first in List and Split with featured styling, and the map initially frames your selection. View picks returns to the selection; Picked homes only filters results. Other homes remain available unless access settings restrict the collection.',
     'Tick Password protect this collection before saving to generate a buyer password. Share the password separately. Replace collection password invalidates the previous password without changing the link.',
     'Save changes before sharing an edited collection. Existing links use the latest saved selection and their owner’s current WhatsApp details. Removing a collection stops its link. Admins can manage all collections; editing someone else’s collection does not change its contact.'
    ]},
    {id:'brochures',title:'Create and save a PDF brochure',steps:[
-    'Open PDF brochures and choose up to 20 published developments, or start from a saved buyer collection. Reorder the homes and add an optional client name, introduction and notes.',
+    'Open PDF brochures and choose up to 20 published developments, or start from a saved buyer collection. Buyer language follows the collection and can be changed. Reorder the homes and enter any headline, introduction and notes in the buyer’s language.',
     'The brochure includes the shared London skyline, a numbered shortlist map, a page for each development and a viewing invitation. The PDF uses your profile photo, name, job title, WhatsApp number and work email.',
     'Generate & save PDF, then check the preview for photos, bedroom prices and shortened copy. Confirm prices and availability before sharing.',
     'Outlook draft · PDF attached downloads an .eml message containing the PDF. Open it in Outlook, add the recipient and review before sending. WhatsApp downloads a PDF for you to attach manually. Share file uses a supported device share sheet. Nothing is sent automatically.',
@@ -52,7 +52,7 @@ export function staffGuide(role) {
    {id:'buyers',title:'Help buyers explore and shortlist',steps:[
     'Buyers can switch Map, Split and List. Desktop opens in Split and mobile in Map, with view choices in the menu. Search a development, area or postcode and filter by region, nearby area, bedrooms and starting-price budget. Named areas use a 2 km radius; regions are approximate.',
     'Map layers adds universities, landmarks, TfL lines and stations. Turn on stations and use Highlight specific stations, or open a station and choose Highlight station. Highlighted stations stand out with visible names. Other labels appear where space allows; zoom in for more.',
-    'Find homes by commute checks a destination postcode, travel mode, arrival date/time and journey-time limit using confirmed TfL journeys. List and Split then default to Shortest journey. This sorts by travel time, not straight-line distance; unconfirmed routes are reported separately.',
+    'Find homes by commute accepts a university, area, landmark or UK postcode. Choose a travel mode, arrival date and time, and journey-time limit. List and Split then default to Shortest journey using TfL durations. Unconfirmed routes are reported separately.',
     'Development details include photos, Watch Video where available, amenities, transport and a sticky WhatsApp enquiry action. A viewing message is a request, not a confirmed booking. Nearby walking/cycling links and the destination form open Google Maps for route options.',
     'Heart buttons save favourites on the buyer’s current browser/device. Favourites and Show favourites only help them share a shortlist. English, Arabic, Simplified Chinese and Turkish and Light, Dark or Automatic appearance are in the menu.',
     'Prices are starting points. With a bedroom filter, missing confirmed prices for that bedroom type are not replaced by another unit type’s price. Check suitable homes, availability, translations and travel estimates with the buyer.'
@@ -91,9 +91,9 @@ export function staffGuide(role) {
     'Stock editing, imports, drafts and publishing are for Admins and Broker admins. Admins control portfolio-wide access, instructed-only settings, roles, review assignments and reporting.'
    ]}]),
    {id:'people',title:'Invitations and account access',steps:[
-    role === 'admin' ? 'In People & roles, invite colleagues as Broker, Broker admin, Development consultant or Admin. Manage roles, access and password-reset invitations there.' : 'Invite brokers creates an invitation for a new regular Broker. Only Admins can reset existing accounts or assign other roles.',
+    role === 'admin' ? 'In People & roles, invite colleagues as Broker, Broker admin, Development consultant or Admin. Under Staff accounts, choose Reset password to create a private link. Send it to the colleague so they can choose their own password. The link can be used once and expires after 24 hours.' : 'Invite brokers creates an invitation for a new regular Broker. Only Admins can reset existing accounts or assign other roles.',
     'Each named invitation requires its matching email, can be used once, expires after seven days and can be revoked. The app does not email invitations automatically.',
-    'Use your own account and never send staff activation links to buyers. Disabling an account stops its personal and ordinary collection links. Ask an Admin for a new invitation if you forget your sign-in password.'
+    'Use your own account and keep staff activation and reset links private. Disabling access signs that colleague out and pauses their personal portfolio and collection links. At least one Admin must stay active. Ask an Admin for a reset link if you forget your sign-in password.'
    ]},
    ...(role === 'admin' ? [
     {id:'buyer-access',title:'Control buyer access and instructed-only stock',steps:[
@@ -116,11 +116,11 @@ export function staffGuide(role) {
    ] : [])
   ],
   faqs: [
-   {id:'sign-in',question:'Where do I sign in, and do I need a new account for the JLL domain?',answer:'Use https://digitalportfolio.live.jll.com/#admin. Existing accounts and passwords still work. New staff activate their own invitation with the matching email, a password of at least 12 characters and an international WhatsApp number. Ask an Admin about expired invitations or password resets.'},
-   {id:'broker-contact',question:'How do I make sure enquiries come to me?',answer:'Check your WhatsApp number in My profile and share Copy my portfolio link or one of your collections. Preview its contact. The generic address goes to JLL Residential; your personal Your First Home link uses your WhatsApp; the public campaign link goes to its team contact.'},
+   {id:'sign-in',question:'Where do I sign in, and do I need a new account for the JLL domain?',answer:'Use https://digitalportfolio.live.jll.com/#admin. Existing accounts and passwords still work. New staff activate their own invitation with the matching email, a password of at least 12 characters and an international WhatsApp number. Ask an Admin for a password reset link if you forget your password.'},
+   {id:'broker-contact',question:'How do I make sure enquiries come to me?',answer:'Check your WhatsApp number in My profile and share Copy my portfolio link or one of your collections. Add your WeChat ID, QR image or both if you offer WeChat. The generic address goes to JLL Residential. Your personal Your First Home link uses your WhatsApp, and the public campaign link goes to its team contact.'},
    {id:'collection-password',question:'Can every broker password protect a collection?',answer:'Yes. Tick Password protect this collection in Buyer collections and save. Share the generated buyer password separately. Replace or remove it without changing the link. Never share your staff sign-in password.'},
    {id:'selected-homes',question:'What will buyers see first in my collection?',answer:'Your picks appear first in List and Split with featured styling. The opening map frames them. View picks returns to your selection; Picked homes only filters results. Other homes depend on the current collection and portfolio access settings.'},
-   {id:'travel',question:'Can I highlight a station or sort homes by commute?',answer:'In Map layers, turn on stations and use Highlight specific stations, or click a station and choose Highlight station. Find homes by commute checks a destination postcode and travel limit. List and Split default to Shortest journey using confirmed TfL durations.'},
+   {id:'travel',question:'Can I highlight a station or sort homes by commute?',answer:'In Map layers, turn on stations and use Highlight specific stations, or click a station and choose Highlight station. In Find homes by commute, pick a university, area or landmark, or enter a UK postcode. List and Split default to Shortest journey using confirmed TfL durations.'},
    {id:'saved-pdfs',question:'Will a saved PDF update when stock or prices change?',answer:'No. A PDF is a snapshot. Reopen its saved settings, regenerate and review it before sending. Online collection links use the latest saved selection and published details.'},
    {id:'campaign',question:'Can I share Your First Home, and who receives enquiries?',answer:'Share the pinned collection from your workspace. It is being prepared ahead of scheme launch with potential homes only; participation and eligibility are unconfirmed. Calculator & FAQs contains the outline and guidance links. Your copied broker link routes enquiries to your profile WhatsApp. The public campaign link and landing-page embed route to the Your First Home team, initially James Dewhurst.'},
    {id:'buyer-data',question:'Do buyers register, and what does the portfolio track?',answer:'Buyers need no account or enquiry form; some links require a buyer password. Favourites stay in their browser/device. WhatsApp opens a separate conversation. Optional buyer analytics needs consent. Admins can review staff activity; this does not reveal who forwarded a buyer link.'},

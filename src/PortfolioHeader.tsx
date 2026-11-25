@@ -5,6 +5,7 @@ import Preferences from './Preferences';
 import ShareWithFriend from './ShareWithFriend';
 import {useLocale} from './i18n';
 import WhatsAppIcon from './WhatsAppIcon';
+import WeChatContact,{hasWeChat} from './WeChatContact';
 import {buyerShareLink} from './sharing';
 import {yourFirstHomeContact} from './YourFirstHome';
 import type {BrokerCard,BuyerCollection} from './types';
@@ -27,11 +28,11 @@ export default function PortfolioHeader({exploring,staff,view,setView,saved,open
  return <header className={'portfolio-header'+(exploring?' with-views':'')} dir="ltr">
   <a className="portfolio-header-brand" href={homeHref} aria-label={t('JLL Residential home')} onClick={onNavigate}><img src={dark?'/images/jll-residential-dark.svg?v=2026-01':'/images/jll-residential-light.svg?v=2026-01'} alt="JLL Residential"/></a>
   {staff&&<span className="portfolio-workspace-label">{t('Broker workspace')}</span>}
-  {exploring&&<h1 className="portfolio-header-title"><a href={homeHref} onClick={onNavigate}>{campaign?'Your First Home':'London New Homes Portfolio'}</a></h1>}
+  {exploring&&<h1 className="portfolio-header-title"><a href={homeHref} onClick={onNavigate}>{campaign?'Your First Home':t('London New Homes Portfolio')}</a></h1>}
   {exploring&&<PortfolioViewSwitcher view={view} setView={setView}/>}
   <div className="portfolio-header-buttons">
    {staff&&<a className="portfolio-workspace-exit" href="/" target="_blank" rel="noopener noreferrer">{t('View portfolio')} <ArrowUpRight size={16} aria-hidden="true"/></a>}
-   {exploring&&broker&&<a className="portfolio-mobile-broker" href={contactHref} target="_blank" rel="noopener noreferrer" aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={22}/></a>}
+   {exploring&&broker&&(hasWeChat(broker)?<WeChatContact broker={broker} whatsappHref={contactHref} onWhatsApp={onContact} className="portfolio-mobile-broker" compact/>:<a className="portfolio-mobile-broker" href={contactHref} target="_blank" rel="noopener noreferrer" aria-label={t('WhatsApp {name}',{name:broker.name})} title={t('WhatsApp {name}',{name:broker.name})} onClick={onContact}><WhatsAppIcon size={22}/></a>)}
    {exploring&&<a className="portfolio-guide-link" href="#how-it-works" onClick={onNavigate}><CircleHelp size={17}/><span>{t('How it works')}</span></a>}
    {exploring&&<button className="portfolio-saved" aria-label={t('Favourites, {count} saved',{count:saved})} title={t('Favourites')} onClick={openFavourites}>
     <Heart size={19}/><span>{t('Favourites')}</span>{saved>0&&<b>{saved}</b>}

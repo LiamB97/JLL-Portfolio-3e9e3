@@ -2,18 +2,22 @@ import {encode} from 'fast-png';
 import {jsPDF} from 'jspdf';
 import {BROCHURE_MAX_CLIENT_NAME, BROCHURE_MAX_DEVELOPMENTS, BROCHURE_MAX_INTRO, BROCHURE_MAX_NOTE} from '../shared/brochure-settings.ts';
 import {startingPrice} from '../shared/pricing.ts';
-import {developmentLink} from '../shared/sharing.ts';
+import {developmentLink,portfolioLink} from '../shared/sharing.ts';
+import {brochureTitles,type BuyerLanguage} from '../shared/buyer-language.ts';
+import {brochureCopy} from './brochure-copy.ts';
 import {layoutBrochurePins, MAP_TAG_HEIGHT, MAP_TAG_MAX_WIDTH, MAP_TAG_TIP_HEIGHT, type BrochureMapImage} from './brochure-map-layout.ts';
 import {A4_HEIGHT, A4_WIDTH, SHORTLIST_MAP_TOP, shortlistMapHeight} from './brochure-map-view.ts';
 import type {Development} from './types';
 
 export interface BrochureInput {
   title: string;
+  language?: BuyerLanguage;
   clientName?: string;
   intro: string;
   notes: Record<string, string>;
   items: Development[];
-  broker: {name: string; whatsapp: string; photo?: string; title?: string; email?: string};
+  broker: {name: string; whatsapp: string; photo?: string; title?: string; email?: string; wechatId?: string; wechatQr?: string};
+  untranslated?: string[];
   origin: string;
   collection?: string;
   brokerSlug?: string;
@@ -25,6 +29,7 @@ export interface BrochureAssets {
   semibold: string;
   light?: string;
   serifItalic?: string;
+  scriptFont?: string;
   logoDark?: string;
   whatsappMidnight?: string;
   whatsappSand?: string;
@@ -42,8 +47,6 @@ const contentWidth = right - left;
 const firstShortlistLimit = 6;
 const continuationLimit = 11;
 const money = new Intl.NumberFormat('en-GB', {style: 'currency', currency: 'GBP', maximumFractionDigits: 0});
-const priceLabel = (price: number | null) => price === null ? 'To be confirmed' : money.format(price % 1000 === 999 ? price + 1 : price);
-const bedLabel = (beds: number) => beds === 0 ? 'Studio' : `${beds} ${beds === 1 ? 'bed' : 'beds'}`;
 const bedroomTypes = (development: Development) => [...new Set(development.bedrooms)].sort((a, b) => a - b);
 const clean = (value: string) => value.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/[\u2010-\u2015]/g, '-').replace(/\s+/g, ' ').trim().replace(/\bnew homes\b/gi, 'New Homes');
 
@@ -53,12 +56,8 @@ function listingText(value: string) {
     .replace(/&(?:nbsp|#160);/gi, ' ').replace(/&amp;/gi, '&').replace(/&(?:apos|#39);/gi, '’').replace(/&quot;/gi, '"');
 }
 
-function bedRange(development: Development) {
-  const beds = bedroomTypes(development);
-  if (beds.length <= 1) return beds.length ? bedLabel(beds[0]) : '';
-  if (beds.length === 2) return `${beds[0] === 0 ? 'Studio' : beds[0]} and ${beds[1]} beds`;
-  return `${beds[0] === 0 ? 'Studio' : beds[0]} to ${beds.at(-1)} beds`;
-}
+const arabicText = /\p{Script=Arabic}/u;
+const chineseText = /[\p{Script=Han}\u3000-\u303f\uff00-\uffef]/u;
 
 export function brochureFilename(title: string) {
   return (title.normalize('NFKD').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').slice(0, 70) || 'JLL-brochure') + '.pdf';
@@ -74,7 +73,7 @@ export function brochureIntroduction(description: string) {
   const paragraphs = listingText(description).split(/\n+/).map(clean).filter(Boolean);
   const substantive = paragraphs.filter(value => !/^(?:book\b|contact\b|register\b|enquire\b|request\b|call\s|email\s|please\b|up to £)/i.test(value));
   const summary = substantive.find(value => value.length > 60) || substantive[0] || '';
-  return summary.match(/^.+?[.!?](?:\s|$)/)?.[0].trim() || summary;
+  return summary.match(/^.+?(?:[.!?](?:\s|$)|[。！？؟])/)?.[0].trim() || summary;
 }
 
 function brochureFeatures(development: Development) {
@@ -106,6 +105,16 @@ function heroFadePng(photoHeight: number, bottomFadeStart: number) {
 }
 
 export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
+  const language = input.language ?? 'en';
+  const copy = brochureCopy(language);
+  if ((language === 'ar' || language === 'zh-CN') && !assets.scriptFont) throw Error('The brochure language font could not load.');
+  const priceLabel = (price: number | null) => price === null ? copy('unknown') : money.format(price % 1000 === 999 ? price + 1 : price);
+  const bedLabel = (beds: number) => beds === 0 ? copy('studio') : beds === 1 ? copy('oneBed') : copy('beds', {count: beds});
+  function bedRange(development: Development) {
+    const beds = bedroomTypes(development);
+    if (beds.length <= 1) return beds.length ? bedLabel(beds[0]) : '';
+    return copy(beds.length === 2 ? 'twoTypes' : 'range', {first: beds[0] === 0 ? copy('studio') : beds[0], last: beds.at(-1)!});
+  }
   const total = input.items.length;
   if (!input.title.trim() || total < 1 || total > BROCHURE_MAX_DEVELOPMENTS) throw Error('Choose 1–20 developments and add a title.');
   const pointsById = new Map(assets.map?.points.map(point => [point.id, point]));
@@ -124,6 +133,10 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     doc.addFileToVFS('SourceSerif-Italic.ttf', assets.serifItalic);
     doc.addFont('SourceSerif-Italic.ttf', 'SourceSerif', 'italic');
   }
+  if (assets.scriptFont) {
+    doc.addFileToVFS('BrochureScript-Regular.ttf', assets.scriptFont);
+    doc.addFont('BrochureScript-Regular.ttf', 'BrochureScript', 'normal');
+  }
   const warnings = new Set<string>();
   const heroFades = new Map<string, Uint8Array>();
   const brokerName = clean(input.broker.name);
@@ -134,14 +147,23 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
   const phone = digits.startsWith('447') && digits.length === 12 ? `+44 ${digits.slice(2, 6)} ${digits.slice(6)}` : `+${digits}`;
   const callLink = `tel:+${digits}`;
   const email = input.broker.email?.trim() || '';
-  const emailLink = email ? `mailto:${email}?subject=${encodeURIComponent('Your London New Homes')}` : '';
+  const emailLink = email ? `mailto:${email}?subject=${encodeURIComponent(brochureTitles[language])}` : '';
   const whatsapp = (message: string) => `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
-  const generalEnquiry = whatsapp(`Hi ${firstName}, I've been looking at the New Homes you sent me and would like to arrange some viewings.`);
-  const developmentEnquiry = (name: string) => whatsapp(`Hi ${firstName}, I'm interested in ${name}. Could we arrange a viewing?`);
-  const homeLink = (id: string) => developmentLink(input.origin, id, input.collection, input.brokerSlug);
+  const generalEnquiry = whatsapp(copy('generalEnquiry', {name: firstName}));
+  const developmentEnquiry = (name: string) => whatsapp(copy('developmentEnquiry', {name: firstName, development: name}));
+  const homeLink = (id: string) => developmentLink(input.origin, id, input.collection, input.brokerSlug, input.language);
+  let wechatLink = '';
+  if (input.brokerSlug && (input.broker.wechatId || input.broker.wechatQr)) {
+    const url = new URL(portfolioLink(input.origin, input.collection, input.brokerSlug, input.language));
+    url.searchParams.set('contact', 'wechat');
+    wechatLink = url.href;
+  }
+  const whatsappLabel = copy('whatsapp', {name: firstName});
 
-  function font(size: number, face: Face) {
-    if (face === 'italic') doc.setFont(assets.serifItalic ? 'SourceSerif' : 'times', 'italic');
+  function font(size: number, face: Face, value: string) {
+    const usesScript = assets.scriptFont && (language === 'ar' ? arabicText.test(value) : chineseText.test(value));
+    if (usesScript) doc.setFont('BrochureScript', 'normal');
+    else if (face === 'italic') doc.setFont(assets.serifItalic ? 'SourceSerif' : 'times', 'italic');
     else doc.setFont('SourceSans', face);
     doc.setFontSize(size);
   }
@@ -150,14 +172,18 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     const {face = 'light', colour: ink = colour.white, opacity = 1, align = 'left', leading = size * 1.2} = style;
     doc.saveGraphicsState();
     if (opacity < 1) doc.setGState(doc.GState({opacity}));
-    font(size, face);
+    const plain = Array.isArray(value) ? value.join(' ') : value;
+    font(size, face, plain);
     doc.setTextColor(ink);
-    doc.text(value, x, y, {align, lineHeightFactor: leading / size});
+    const direction = arabicText.test(plain)
+      ? {isInputVisual: false, isInputRtl: true, isOutputVisual: true, isOutputRtl: false, isSymmetricSwapping: true}
+      : {};
+    doc.text(value, x, y, {align, lineHeightFactor: leading / size, ...direction});
     doc.restoreGraphicsState();
   }
 
   function spanWidth(value: string, size: number, face: Face) {
-    font(size, face);
+    font(size, face, value);
     return doc.getTextWidth(value);
   }
 
@@ -173,7 +199,7 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
   function fit(value: string, width: number, size: number, maxLines: number, face: Face = 'light', minSize = size): FittedText {
     if (!value) return {lines: [], size, shortened: false};
     while (true) {
-      font(size, face);
+      font(size, face, value);
       const lines: string[] = doc.splitTextToSize(value, width);
       if (lines.length <= maxLines) return {lines, size, shortened: false};
       if (size > minSize) {size = Math.max(minSize, size - 1); continue;}
@@ -186,11 +212,17 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     }
   }
 
+  function blockText(value: string | string[], x: number, y: number, width: number, size: number, style: TextStyle = {}) {
+    const arabic = arabicText.test(Array.isArray(value) ? value.join(' ') : value);
+    if (!style.align && arabic) text(value, x + width, y, size, {...style, align: 'right'});
+    else text(value, x, y, size, style);
+  }
+
   function fitted(value: string, x: number, baseline: number, width: number, size: number, maxLines: number,
     style: TextStyle = {}, minSize = size, warning?: string) {
     const content = fit(value, width, size, maxLines, style.face, minSize);
     if (warning && content.shortened) warnings.add(warning);
-    if (content.lines.length) text(content.lines, x, baseline, content.size, style);
+    if (content.lines.length) blockText(content.lines, x, baseline, width, content.size, style);
     return content;
   }
 
@@ -274,7 +306,7 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     if (warning && title.shortened) warnings.add(warning);
     const leading = title.size + 4;
     const baseline = y - (title.lines.length - 1) * leading;
-    text(title.lines, left - 2, baseline, title.size, {leading});
+    blockText(title.lines, left - 2, baseline, width, title.size, {leading});
     return baseline - title.size * .8 - 8;
   }
 
@@ -287,7 +319,7 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
   }
 
   function whatsappButtonWidth(maxWidth: number) {
-    return Math.min(maxWidth, Math.max(144, spanWidth(`WhatsApp ${firstName}`, 14, 'bold') + 53));
+    return Math.min(maxWidth, Math.max(144, spanWidth(whatsappLabel, 14, 'bold') + 53));
   }
 
   function button(label: string, x: number, y: number, width: number, url: string, style: 'sand' | 'midnight' | 'outline', icon?: string) {
@@ -308,7 +340,7 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
   }
 
   function whatsappButton(x: number, y: number, width: number, url: string, dark = false) {
-    button(`WhatsApp ${firstName}`, x, y, width, url, dark ? 'midnight' : 'sand', dark ? assets.whatsappSand : assets.whatsappMidnight);
+    button(whatsappLabel, x, y, width, url, dark ? 'midnight' : 'sand', dark ? assets.whatsappSand : assets.whatsappMidnight);
   }
 
   function numberCircle(number: number, x: number, y: number, diameter = 20) {
@@ -335,9 +367,9 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     lockup(true);
     const labelY = heading(clean(input.title), 442, 46, 540, 34, 'Cover headline');
     const client = limitedCopy(input.clientName || '', BROCHURE_MAX_CLIENT_NAME, 'Client name');
-    if (client) fitted(`Selected for ${client}`, left, labelY, contentWidth, 20, 1, {face: 'italic', colour: colour.sand}, 16, 'Client name');
-    const date = (input.date || new Date()).toLocaleDateString('en-GB', {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London'});
-    text(`${total} ${total === 1 ? 'development' : 'developments'} · ${date}`, left, 465, 13, {face: 'normal', opacity: .75});
+    if (client) fitted(copy('selectedFor', {name: client}), left, labelY, contentWidth, 20, 1, {face: 'italic', colour: colour.sand}, 16, 'Client name');
+    const date = (input.date || new Date()).toLocaleDateString(language === 'en' ? 'en-GB' : language, {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London'});
+    blockText(copy(total === 1 ? 'countOne' : 'countMany', {count: total}) + ' · ' + date, left, 465, contentWidth, 13, {face: 'normal', opacity: .75});
     rule(left, 500, contentWidth, .25);
     const intro = limitedCopy(input.intro, BROCHURE_MAX_INTRO, 'Cover introduction');
     const actionTop = intro ? 786 : 629;
@@ -346,9 +378,9 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     if (intro) {
       const introBaseline = 550;
       const introLeading = 23;
-      fitted(`A note from ${firstName}`, left, 526, contentWidth, 18, 1, {face: 'italic', colour: colour.sand}, 14);
-      const copy = fitted(intro, left, introBaseline, contentWidth, 16, 7, {leading: introLeading}, 16, 'Cover introduction');
-      const lastIntroBaseline = introBaseline + (copy.lines.length - 1) * introLeading;
+      fitted(copy('note', {name: firstName}), left, 526, contentWidth, 18, 1, {face: 'italic', colour: colour.sand}, 14);
+      const introText = fitted(intro, left, introBaseline, contentWidth, 16, 7, {leading: introLeading}, 16, 'Cover introduction');
+      const lastIntroBaseline = introBaseline + (introText.lines.length - 1) * introLeading;
       portraitTop = Math.max(portraitTop, lastIntroBaseline + 16);
     }
     portrait(left, portraitTop, portraitSize);
@@ -357,7 +389,7 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     const whatsappWidth = whatsappButtonWidth(188);
     whatsappButton(left, actionTop, whatsappWidth, generalEnquiry);
     const callX = left + whatsappWidth + 20;
-    const callLabel = `Call ${phone}`;
+    const callLabel = copy('call', {phone});
     textLink(callLabel, callX, actionTop + 24, 140, 13, callLink, {face: 'bold'});
     const emailX = callX + spanWidth(callLabel, 13, 'bold') + 20;
     textLink(email, emailX, actionTop + 24, right - emailX, 13, emailLink, {opacity: .8});
@@ -366,8 +398,8 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
   function shortlistHeading(continued: boolean) {
     newPage();
     lockup();
-    text(continued ? 'Your shortlist (continued)' : 'Your shortlist', left, 102, 32);
-    if (!continued) text('Development locations', left, 133, 16, {face: 'italic', colour: colour.sand});
+    blockText(copy(continued ? 'continued' : 'shortlist'), left, 102, contentWidth, 32);
+    if (!continued) blockText(copy('locations'), left, 133, contentWidth, 16, {face: 'italic', colour: colour.sand});
   }
 
   function shortlistMap(height: number) {
@@ -418,7 +450,7 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
       numberCircle(index + 1, 123, y + 4, 18);
       const name = fitted(brochureDevelopmentName(development.name), 150, y + 18, 278, 16, 2, {face: 'bold', leading: 16}, 13);
       fitted(`${development.area}, ${development.postcode} · ${bedRange(development)}`, 150, y + (name.lines.length === 2 ? 48 : 38), 278, 12, 1, {opacity: .8}, 11);
-      text('From', right, y + 19, 12, {face: 'italic', align: 'right', colour: colour.sand});
+      text(copy('from'), right, y + 19, 12, {face: 'italic', align: 'right', colour: colour.sand});
       const price = startingPrice(development);
       fitted(priceLabel(price), right, y + 41, 120, price === null ? 14 : 18, 1, {align: 'right', face: 'bold'}, 11);
       rule(left, y + rowHeight - 4, contentWidth, .2);
@@ -446,7 +478,7 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     const name = brochureDevelopmentName(development.name);
     hero(assets.photos[development.id], 320);
     lockup();
-    const tagLabel = `${index + 1} of ${total} on your shortlist`;
+    const tagLabel = copy('pick', {index: index + 1, count: total});
     const tagWidth = spanWidth(tagLabel, 13, 'bold') + 41;
     tag(tagLabel, index + 1, right - tagWidth, 28, tagWidth, 13);
     const areaY = heading(name, 300, 48, contentWidth + 2, 34, `${name} headline`);
@@ -456,24 +488,26 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     const priceTop = 340;
     const priceBottom = priceTop + 110 + bedTypes.length * 25;
     rect(340, priceTop, right - 340, priceBottom - priceTop, colour.space);
-    text('Prices from', 358, 371, 16, {face: 'italic', colour: colour.sand});
+    blockText(copy('priceFrom'), 358, 371, right - 376, 16, {face: 'italic', colour: colour.sand});
     const price = startingPrice(development);
     fitted(priceLabel(price), 358, 409, right - 376, price === null ? 21 : 32, 1, {face: 'bold'}, 16);
     rule(358, 435, right - 376, .3);
     bedTypes.forEach((beds, row) => {
       const y = 460 + row * 25;
-      text(bedLabel(beds), 358, y, 13);
+      fitted(bedLabel(beds), 358, y, 76, 13, 1, {}, 10);
       const unitPrice = startingPrice(development, beds);
-      fitted(unitPrice === null ? 'Speak to your broker' : priceLabel(unitPrice), right - 18, y, 114, 14, 1, {align: 'right', face: 'bold'}, 11);
+      fitted(unitPrice === null ? copy('brokerPrice') : priceLabel(unitPrice), right - 18, y, language === 'en' ? 114 : 101, 14, 1, {align: 'right', face: 'bold'}, 10);
     });
 
     const description = brochureIntroduction(development.description);
     const features = brochureFeatures(development);
     const note = limitedCopy(input.notes[development.id] || '', BROCHURE_MAX_NOTE, `${name} broker note`);
+    const original = input.untranslated?.includes(development.id);
+    const summaryStart = original ? 373 : 352;
     const layout = (descriptionLimit: number, featureLimit: number, noteLimit: number) => {
       const summary = fit(description, 280, 14, descriptionLimit);
       const visibleFeatures = features.slice(0, featureLimit).map(feature => fit(feature, 264, 13, 1));
-      const summaryBottom = summary.lines.length ? 352 + (summary.lines.length - 1) * 21 : 331;
+      const summaryBottom = summary.lines.length ? summaryStart + (summary.lines.length - 1) * 21 : summaryStart - 21;
       const featuresTitle = summaryBottom + 28;
       const featuresBottom = visibleFeatures.length ? featuresTitle + 24 + (visibleFeatures.length - 1) * 21 + 4 : summaryBottom + 4;
       const noteText = fit(note, contentWidth - 86, 13, noteLimit);
@@ -488,32 +522,36 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     if (body.summary.shortened) warnings.add(`${name} description`);
     if (body.visibleFeatures.length < features.length || body.visibleFeatures.some(feature => feature.shortened)) warnings.add(`${name} features`);
     if (body.noteText.shortened) warnings.add(`${name} broker note`);
-    if (body.summary.lines.length) text(body.summary.lines, left, 352, 14, {leading: 21});
+    if (original) blockText(copy('original'), left, 352, 280, 11, {face: 'bold', colour: colour.sand});
+    if (body.summary.lines.length) blockText(body.summary.lines, left, summaryStart, 280, 14, {leading: 21});
     if (body.visibleFeatures.length) {
-      text('Key features', left, body.featuresTitle, 16, {face: 'italic', colour: colour.sand});
+      blockText(copy('features'), left, body.featuresTitle, 280, 16, {face: 'italic', colour: colour.sand});
       body.visibleFeatures.forEach((feature, row) => {
         const y = body.featuresTitle + 24 + row * 21;
-        rect(left, y - 4, 9, 1, colour.sand);
-        text(feature.lines, 52, y, 13);
+        const rtl = arabicText.test(feature.lines.join(' '));
+        rect(rtl ? left + 271 : left, y - 4, 9, 1, colour.sand);
+        blockText(feature.lines, rtl ? left : 52, y, 264, 13);
       });
     }
     if (body.noteHeight) {
       rect(left, body.noteY, contentWidth, body.noteHeight, colour.space);
       rect(left, body.noteY, 3, body.noteHeight, colour.sand);
       portrait(left + 18, body.noteY + 16, 38);
-      fitted(`A note from ${firstName}`, left + 68, body.noteY + 29, contentWidth - 86, 16, 1, {face: 'italic', colour: colour.sand}, 13);
-      text(body.noteText.lines, left + 68, body.noteY + 49, 13, {leading: 19});
+      fitted(copy('note', {name: firstName}), left + 68, body.noteY + 29, contentWidth - 86, 16, 1, {face: 'italic', colour: colour.sand}, 13);
+      blockText(body.noteText.lines, left + 68, body.noteY + 49, contentWidth - 86, 13, {leading: 19});
     }
 
     rect(0, 732, A4_WIDTH, A4_HEIGHT - 732, colour.sand);
     const buttonWidth = whatsappButtonWidth(184);
     const buttonX = right - buttonWidth;
     const copyWidth = buttonX - left - 16;
-    fitted(`Interested in ${name}?`, left, 762, copyWidth, 16, 1, {face: 'italic', colour: colour.midnight}, 13);
-    fitted(`Message ${firstName} to arrange a viewing`, left, 787, copyWidth, 17, 1, {face: 'bold', colour: colour.midnight}, 13);
+    // Keep a leading number in the English name with its Latin text in an Arabic sentence.
+    const displayName = language === 'ar' && !arabicText.test(name) ? `\u200e${name}\u200e` : name;
+    fitted(copy('interest', {name: displayName}), left, 762, copyWidth, 16, 1, {face: 'italic', colour: colour.midnight}, 13);
+    fitted(copy('messageBroker', {name: firstName}), left, 787, copyWidth, 17, 1, {face: 'bold', colour: colour.midnight}, 13);
     whatsappButton(buttonX, 758, buttonWidth, developmentEnquiry(name), true);
-    textLink('View in the JLL portfolio →', left, 815, copyWidth, 12, homeLink(development.id), {face: 'bold', colour: colour.midnight});
-    const disclaimer = development.sample ? 'Illustrative sample. Prices are indicative.' : 'Prices and availability subject to change.';
+    textLink(copy('viewPortfolio'), left, 815, copyWidth, 12, homeLink(development.id), {face: 'bold', colour: colour.midnight});
+    const disclaimer = copy(development.sample ? 'illustrative' : 'priceNotice');
     text(disclaimer, right, 815, 10, {align: 'right', colour: colour.midnight});
     text(String(doc.getNumberOfPages()), right - spanWidth(disclaimer, 10, 'light') - 20, 815, 10, {align: 'right', colour: colour.midnight});
   }
@@ -522,39 +560,41 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
     newPage();
     hero(input.coverImage, 320);
     lockup();
-    heading('Let’s arrange your viewings', 300, 40, contentWidth, 36);
-    const body = 'Message me on WhatsApp with the developments you’d like to see and a few times that suit you. I’ll arrange the viewings and send you everything you need beforehand.';
-    fitted(body, left, 359, contentWidth, 15, 3, {leading: 22});
+    heading(copy('viewings'), 300, 40, contentWidth, 36);
+    fitted(copy('nextBody'), left, 359, contentWidth, 15, 3, {leading: 22});
     const steps = [
-      ['Message me', 'Tell me which homes you like'],
-      ['Book a viewing', 'I’ll confirm the time and place'],
-      ['Reserve', 'I’ll guide you through each step'],
+      [copy('stepMessage'), copy('stepHomes')],
+      [copy('stepBook'), copy('stepConfirm')],
+      [copy('stepReserve'), copy('stepGuide')],
     ];
-    steps.forEach(([title, copy], index) => {
+    steps.forEach(([title, explanation], index) => {
       const x = left + 180 * index;
       doc.setDrawColor(colour.sand);
       doc.setLineWidth(1);
       doc.circle(x + 14, 454, 14, 'S');
       text(String(index + 1), x + 14, 459, 15, {face: 'italic', align: 'center', colour: colour.sand});
       text(title, x, 493, 15, {face: 'bold'});
-      fitted(copy, x, 511, Math.min(165, right - x), 12, 2, {opacity: .8, leading: 16});
+      fitted(explanation, x, 511, Math.min(165, right - x), 12, 2, {opacity: .8, leading: 16});
     });
     rect(left, 560, contentWidth, 180, colour.space);
     portrait(56, 580, 84);
     const contactX = 161;
     const contactWidth = right - 18 - contactX;
-    text('Your contact', contactX, 596, 15, {face: 'italic', colour: colour.sand});
+    text(copy('contact'), contactX, 596, 15, {face: 'italic', colour: colour.sand});
     fitted(brokerName, contactX, 624, contactWidth, 22, 1, {face: 'bold'}, 16, 'Contact name');
     fitted(role, contactX, 644, contactWidth, 13, 1, {opacity: .8}, 11, 'Contact job title');
     if (email) {
-      text('Email', contactX, 666, 13, {face: 'bold', colour: colour.sand});
-      textLink(email, contactX + 37, 666, contactWidth - 37, 13, emailLink);
+      const label = copy('email'), gap = spanWidth(label, 13, 'bold') + 9;
+      text(label, contactX, 666, 13, {face: 'bold', colour: colour.sand});
+      textLink(email, contactX + gap, 666, contactWidth - gap, 13, emailLink);
     }
     const width = whatsappButtonWidth(204);
     whatsappButton(56, 682, width, generalEnquiry);
-    const callLabel = `Call ${phone}`;
-    button(callLabel, 66 + width, 682, Math.max(155, spanWidth(callLabel, 14, 'bold') + 32), callLink, 'outline');
-    text('Prices and availability subject to change. Images are indicative and may include CGIs or show homes.', left, 803, 10, {opacity: .6});
+    const callLabel = copy('call', {phone}), callX = 66 + width;
+    const callWidth = Math.min(right - callX - (wechatLink ? 106 : 18), Math.max(155, spanWidth(callLabel, 14, 'bold') + 32));
+    button(callLabel, callX, 682, callWidth, callLink, 'outline');
+    if (wechatLink) button('WeChat', callX + callWidth + 10, 682, 78, wechatLink, 'outline');
+    fitted(copy('disclaimer'), left, 803, contentWidth - 20, 10, 2, {opacity: .6, leading: 12});
     pageNumber();
   }
 
@@ -562,6 +602,6 @@ export function buildBrochure(input: BrochureInput, assets: BrochureAssets) {
   shortlist();
   input.items.forEach(developmentPage);
   nextSteps();
-  doc.setProperties({title: clean(input.title), author: brokerName, subject: 'Selected London New Homes', creator: 'JLL New Homes Portfolio'});
+  doc.setProperties({title: clean(input.title), author: brokerName, subject: copy('metadata'), creator: 'JLL New Homes Portfolio'});
   return Object.assign(doc, {brochureWarnings: [...warnings]});
 }

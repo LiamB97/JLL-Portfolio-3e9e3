@@ -1,15 +1,18 @@
 import {tflJson} from './transport.mjs';
+import {commutePlace,fullCommutePostcode} from '../shared/commute-destinations.ts';
 export class CommuteError extends Error{constructor(message,status=422){super(message);this.status=status;}}
 const publicModes=new Set(['tube','bus','public-bus','dlr','overground','elizabeth-line','national-rail','train','tram','walking','interchange-keep-sitting','interchange-secure','replacement-bus']);
-export function commutePostcode(value){const raw=String(value||'').trim().toUpperCase().replace(/\s/g,'');if(!/^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(raw))throw new CommuteError('Enter a full UK destination postcode, for example EC2R 8AH.');return raw.slice(0,-3)+' '+raw.slice(-3);}
+export function commutePostcode(value){const postcode=fullCommutePostcode(value);if(!postcode)throw new CommuteError('Choose a suggested destination or enter a full UK postcode.');return postcode;}
 export function commuteOptions(body,now=Date.now()){
- const postcode=commutePostcode(body.postcode),mode=body.mode||'public';
+ const place=commutePlace(body.destinationId);
+ if(body.destinationId!==undefined&&!place)throw new CommuteError('Choose a destination from the suggestions.');
+ const destination=place?{place}:{postcode:commutePostcode(body.postcode)},mode=body.mode||'public';
  if(!['public','walking','cycle'].includes(mode))throw new CommuteError('Choose public transport, walking or cycling.');
  const date=String(body.date||''),time=String(body.time||'');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))throw new CommuteError('Choose a valid arrival date and time.');
  const day=Date.parse(date+'T00:00:00Z'),today=Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));
  if(!Number.isFinite(day)||new Date(day).toISOString().slice(0,10)!==date||date<today||day>Date.parse(today+'T00:00:00Z')+28*86400000)throw new CommuteError('Choose a travel date between today and 28 days from now.');
- return {postcode,mode,date,time};
+ return {...destination,mode,date,time};
 }
 export function parseCommuteJourney(data,mode){
  const permitted=mode==='walking'?new Set(['walking']):mode==='cycle'?new Set(['cycle','walking']):publicModes;
@@ -36,7 +39,9 @@ export function commuteService({get=tflJson,fetcher=fetch,now=Date.now}={}){
   if(!body||typeof body!=='object'||Array.isArray(body))throw new CommuteError('Enter a valid commute request.');
   const options=commuteOptions(body,now());if(!Array.isArray(body.developmentIds)||!body.developmentIds.length||body.developmentIds.length>5||body.developmentIds.some(id=>typeof id!=='string'))throw new CommuteError('Check between 1 and 5 developments per request.');
   const ids=[...new Set(body.developmentIds)];const homes=ids.map(id=>developments.find(d=>d.id===id));if(homes.some(d=>!d))throw new CommuteError('Some developments have changed. Refresh the portfolio.',409);
-  let target;try{target=await destination(options.postcode);}catch(e){if(e instanceof CommuteError)throw e;throw new CommuteError('Postcode lookup is temporarily unavailable. Please try again.',503);}
+  let target;
+  if(options.place){const {id,name,lat,lng}=options.place;target={id,name,lat,lng};}
+  else try{target=await destination(options.postcode);}catch(e){if(e instanceof CommuteError)throw e;throw new CommuteError('Postcode lookup is temporarily unavailable. Please try again.',503);}
   const results=await Promise.all(homes.map(async d=>{const value=await route(d,target,options);return {id:d.id,status:value?'ok':'unavailable',...value};}));
   return {destination:target,results,source:'TfL Journey Planner',checkedAt:new Date(now()).toISOString(),date:options.date,time:options.time,mode:options.mode};
  };

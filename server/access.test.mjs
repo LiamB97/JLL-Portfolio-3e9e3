@@ -244,6 +244,55 @@ test('invitations are single-use, revocable, and never expose hashes or password
 test('login failures lock the account temporarily and invalid tokens do not grant access',async()=>{const e=environment(),admin=await e.owner(),broker=await e.broker(admin);for(let i=0;i<5;i++)assert.equal((await e.call('access/login',{method:'POST',body:{email:broker.email,password:'wrong'}})).status,401);assert.equal((await e.call('access/login',{method:'POST',body:{email:broker.email,password:broker.password}})).status,429);assert.equal((await e.call('access/me',{actor:{cookie:'jll_session=forged',csrf:'forged'}})).status,401);});
 test('expired invitations fail and stale actor permissions are rechecked during writes',async()=>{const e=environment(),admin=await e.owner();let time=Date.now();const access=accessService(e.repository,e.secret,{now:()=>time});const request=new Request('https://portfolio.example/api/admin/users',{headers:{Cookie:admin.cookie}});const actor=await access.authenticate(request);const invited=await access.invite(actor,{name:'Expiry',email:'expires@example.test',role:'broker'});time+=8*24*3600000;await assert.rejects(access.accept({token:invited.token,password:randomBytes(18).toString('hex')}),/invalid or expired/);const s=await e.repository.read();await e.repository.update(state=>{state.sessions=[];});await assert.rejects(access.saveCollection(actor,{title:'Stale',developmentIds:[samples[0].id]}),/session has ended/);assert.equal(s.collections?.length||0,0);});
 
+test('an admin can issue a one-use password reset without changing the account profile or buyer links',async()=>{
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin,'recover@example.test','broker_admin');
+ const profile=(await e.call('admin/profile',{method:'POST',actor:broker,body:{wechatId:'test_broker',jobTitle:'Sales consultant'}})).data;
+ const collection=(await e.call('admin/collections',{method:'POST',actor:broker,body:{title:'Saved selection',developmentIds:[samples[0].id]}})).data;
+ const path='admin/users/'+broker.user.id+'/reset-password';
+ const issue=actor=>e.call(path,{method:'POST',actor,body:{}});
+ assert.equal((await issue(broker)).status,403);
+ assert.equal((await e.call(path,{method:'POST',actor:admin,csrf:false,body:{}})).status,403);
+ const previous=await issue(admin);
+ const latest=await issue(admin);
+ assert.equal(previous.status,201);
+ assert.equal(latest.status,201);
+ assert.ok(latest.data.expiresAt>Date.now());
+ assert.equal((await e.call('access/me',{actor:broker})).status,200);
+ const privateUsers=await e.call('admin/users',{actor:admin});
+ assert.ok(!JSON.stringify(privateUsers.data).includes(latest.data.token));
+ assert.ok(!('_passwordReset' in privateUsers.data.find(user=>user.id===broker.user.id)));
+ const password=randomBytes(18).toString('hex');
+ const redeem=(token,email=broker.email)=>e.call('access/reset-password',{method:'POST',body:{token,email,password,whatsapp:'+447900000099',role:'admin'}});
+ assert.equal((await redeem(previous.data.token)).status,410);
+ assert.equal((await redeem(latest.data.token,'other@example.test')).status,410);
+ const result=await redeem(latest.data.token);
+ assert.equal(result.status,200);
+ assert.deepEqual(result.data.user,profile);
+ assert.match(result.headers.get('set-cookie'),/HttpOnly.*Secure/);
+ assert.equal((await e.call('access/me',{actor:broker})).status,401);
+ assert.equal((await redeem(latest.data.token)).status,410);
+ assert.equal((await e.call('access/login',{method:'POST',body:{email:broker.email,password:broker.password}})).status,401);
+ assert.equal((await e.call('access/login',{method:'POST',body:{email:broker.email,password}})).status,200);
+ assert.equal((await e.call('collections/'+collection.slug)).data.broker.slug,broker.user.shareSlug);
+});
+
+test('password reset links expire and cannot restore disabled access',async()=>{
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin);
+ let time=Date.now();
+ const access=accessService(e.repository,e.secret,{now:()=>time});
+ const actor=await access.authenticate(new Request('https://portfolio.example/api/admin/users',{headers:{Cookie:admin.cookie}}));
+ const expired=await access.issuePasswordReset(actor,broker.user.id);
+ time=expired.expiresAt;
+ const password=randomBytes(18).toString('hex');
+ await assert.rejects(access.resetPassword({token:expired.token,email:broker.email,password}),error=>error.status===410);
+ const path='admin/users/'+broker.user.id;
+ const reset=await e.call(path+'/reset-password',{method:'POST',actor:admin,body:{}});
+ assert.equal((await e.call(path,{method:'POST',actor:admin,body:{active:false}})).status,200);
+ assert.equal((await e.call(path+'/reset-password',{method:'POST',actor:admin,body:{}})).status,409);
+ assert.equal((await e.call(path,{method:'POST',actor:admin,body:{active:true}})).status,200);
+ assert.equal((await e.call('access/reset-password',{method:'POST',body:{token:reset.data.token,email:broker.email,password}})).status,410);
+});
+
 test('website extraction creates only a review draft and publishing requires explicit confirmation',async()=>{
  const draft={...samples[0],name:'External reviewed property',_requiresReview:true};const e=environment({extract:async()=>draft}),admin=await e.owner();const before=(await e.call('developments')).data.length;
  const extracted=await e.call('admin/extract',{method:'POST',actor:admin,body:{url:'https://developer.com/home'}});assert.equal(extracted.status,200);assert.equal(extracted.data.development._requiresReview,true);assert.equal((await e.call('developments')).data.length,before);
@@ -464,6 +513,55 @@ test('transport defaults belong only to collections, never personal links',async
   assert.equal((await e.call('admin/collections/'+c.data.id,{method:'PUT',actor:a,body:{...update,transportDefaults:invalid}})).status,422);
  }
  assert.deepEqual((await e.call('collections/'+c.data.slug)).data.transportDefaults,defaults);
+});
+
+test('optional WeChat details and the chosen buyer language follow the collection owner',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const e=environment(),admin=await e.owner(),broker=await e.broker(admin),other=await e.broker(admin,'separate@example.test');
+ const qr='data:image/jpeg;base64,'+readFileSync(new URL('./fixtures/profile-square.jpg',import.meta.url)).toString('base64');
+ const profile=await e.call('admin/profile',{actor:broker,method:'POST',body:{wechatId:'jll_example',wechatQr:qr}});
+ assert.equal(profile.status,200);
+ assert.equal(profile.data.wechatId,'jll_example');
+ assert.equal((await e.call('access/me',{actor:other})).data.user.wechatId,undefined);
+ assert.equal((await e.call('admin/profile',{actor:broker,method:'POST',body:{wechatQr:'data:image/svg+xml,test'}})).status,422);
+ const body={title:'精选住宅',developmentIds:[samples[0].id],language:'zh-CN',passwordAction:'protect'};
+ const collection=await e.call('admin/collections',{actor:broker,method:'POST',body});
+ assert.equal(collection.status,201);
+ assert.equal(collection.data.language,'zh-CN');
+ const path='buyer/portfolio?collection='+collection.data.slug+'&broker='+other.user.shareSlug;
+ const locked=await e.call(path);
+ assert.equal(locked.status,423);
+ assert.equal(locked.data.broker,undefined);
+ const opened=await e.call('buyer/unlock?collection='+collection.data.slug,{method:'POST',body:{password:collection.data.password}});
+ assert.equal(opened.status,200);
+ const buyer=(await e.call(path,{buyerCookie:opened.cookie})).data;
+ assert.equal(buyer.collection.language,'zh-CN');
+ assert.equal(buyer.broker.wechatId,'jll_example');
+ assert.equal(buyer.broker.wechatQr,qr);
+ assert.equal(buyer.broker.email,undefined);
+ assert.equal((await e.call('admin/collections/'+collection.data.id,{actor:broker,method:'POST',body:{...body,language:'invalid'}})).status,422);
+ const edited=await e.call('admin/collections/'+collection.data.id,{actor:broker,method:'POST',body:{...body,passwordAction:undefined,language:'ar'}});
+ assert.equal(edited.status,200);assert.equal(edited.data.language,'ar');
+ assert.equal((await e.call('admin/profile',{actor:broker,method:'POST',body:{wechatId:'',wechatQr:''}})).status,200);
+ assert.equal((await e.call(path,{buyerCookie:opened.cookie})).data.broker.wechatId,undefined);
+});
+
+test('brokers can save brochure language and translate selected listing data through the staff route',async()=>{
+ const calls=[];
+ const e=environment({translations:async (item,language)=>{
+  calls.push([item.id,language]);
+  return {description:'已审核的项目说明。',amenities:['靠近车站']};
+ }});
+ const admin=await e.owner(),broker=await e.broker(admin);
+ const input={title:'伦敦新住宅',developmentIds:[samples[0].id],language:'zh-CN'};
+ const response=await e.call('admin/brochures',{actor:broker,method:'POST',body:{config:input}});
+ assert.equal(response.status,200);
+ assert.equal((await e.call('admin/brochures',{actor:broker})).data[0].config.language,'zh-CN');
+ assert.equal((await e.call('admin/brochures',{actor:broker,method:'POST',body:{config:{...input,language:'invalid'}}})).status,422);
+ const route='admin/brochures/translation/'+samples[0].id+'?language=zh-CN';
+ assert.equal((await e.call(route)).status,401);
+ assert.equal((await e.call(route,{actor:broker})).data.description,'已审核的项目说明。');
+ assert.deepEqual(calls,[[samples[0].id,'zh-CN']]);
 });
 
 test('broker portraits save only to the signed-in profile, persist and can be removed',async()=>{

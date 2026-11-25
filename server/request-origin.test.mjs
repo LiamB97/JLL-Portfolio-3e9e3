@@ -70,6 +70,29 @@ test('existing staff accounts of every role can sign in, save and sign out throu
  }
 });
 
+test('the JLL proxy can disable and re-enable a colleague through the POST account action',async()=>{
+ const e=environment(),owner=await e.owner(),email='access-check@example.test',password=randomBytes(18).toString('hex');
+ const invite=await e.call('admin/users/invite',{method:'POST',actor:owner,body:{name:'Test colleague',email,role:'broker'}});
+ const colleague=await e.call('access/accept',{method:'POST',body:{email,password,token:invite.data.token,whatsapp:'+447700900003'}});
+ const {id,shareSlug}=colleague.data.user;
+ const path='admin/users/'+id;
+ const update=(actor,active,options={})=>e.call(path,{method:'POST',actor,body:{active},...options});
+ assert.equal((await update(colleague,false)).status,403);
+ assert.equal((await update(owner,false,{csrf:false})).status,403);
+ assert.equal((await update(owner,false,{origin:'https://example.test'})).status,403);
+ assert.equal((await e.call('admin/users/'+owner.data.user.id,{method:'POST',actor:owner,body:{active:false}})).status,422);
+ const disabled=await update(owner,false);
+ assert.equal(disabled.status,200);
+ assert.equal(disabled.data.active,false);
+ assert.equal((await e.call('access/me',{actor:colleague})).status,401);
+ assert.equal((await e.call('brokers/'+shareSlug)).status,404);
+ const enabled=await update(owner,true);
+ assert.equal(enabled.status,200);
+ assert.equal(enabled.data.active,true);
+ assert.equal((await e.call('access/login',{method:'POST',body:{email,password}})).status,200);
+ assert.equal((await e.call('brokers/'+shareSlug)).status,200);
+});
+
 test('buyer collection and portfolio passwords unlock through the public domain and consented activity uses the same origin check',async()=>{
  const e=environment(),owner=await e.owner();
  const created=await e.call('admin/collections',{method:'POST',actor:owner,body:{title:'Protected homes',developmentIds:[samples[0].id],passwordAction:'protect',password:'buyer-test-password'}});

@@ -30,6 +30,16 @@ const generate = (data = input) => buildBrochure(data, {...assets, map: mapFor(d
 const links = (doc, page) => doc.internal.getPageInfo(page).pageContext.annotations.filter(a => a.type === 'link');
 const urls = (doc, page) => links(doc, page).map(a => a.options.url);
 
+test('a translated brochure links to the same buyer language and the owning broker’s WeChat details', () => {
+  const data = {...input, language:'tr', title:'Londra konutları', items: input.items.slice(0, 1), broker:{...input.broker,wechatId:'test_broker'}};
+  const doc = generate(data);
+  const target = new URL(urls(doc,2)[0]);
+  assert.equal(target.searchParams.get('lang'),'tr');
+  assert.equal(target.searchParams.get('collection'),input.collection);
+  assert.match(urls(doc,4).find(url=>url.includes('contact=wechat')),/collection=shared-selection&lang=tr&contact=wechat/);
+  assert.ok(urls(doc,3).filter(url=>url.startsWith('https://wa.me')).some(url=>new URL(url).searchParams.get('text').startsWith('Merhaba')));
+});
+
 test('a named map and linked shortlist precede the development pages in broker order', () => {
   const doc = generate();
   assert.equal(doc.getNumberOfPages(), 6);

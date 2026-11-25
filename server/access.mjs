@@ -1,4 +1,5 @@
-import {profilePhoto} from './profile-photo.mjs';
+import {profileJpegSize,profilePhoto} from './profile-photo.mjs';
+import {isBuyerLanguage} from '../shared/buyer-language.ts';
 import {canManagePortfolioStock,canReviewDevelopments,canUseBuyerTools,isStaffRole} from '../shared/staff-roles.ts';
 import {isYourFirstHomeSlug} from '../shared/your-first-home.ts';
 import {publicYourFirstHome} from './your-first-home.mjs';
@@ -8,7 +9,7 @@ import {newDevelopmentReview} from './development-review-record.mjs';
 import {issueBrokerPassword,privateCollection,updateCollectionPassword} from './buyer-access.mjs';
 import {randomBytes,createHash,timingSafeEqual,scrypt as scryptCallback} from 'node:crypto';
 import {promisify} from 'node:util';
-const scrypt=promisify(scryptCallback),SESSION_MS=8*3600000,INVITE_MS=7*24*3600000,LOCK_MS=15*60000;
+const scrypt=promisify(scryptCallback),SESSION_MS=8*3600000,INVITE_MS=7*24*3600000,RESET_MS=24*3600000,LOCK_MS=15*60000;
 export class AccessError extends Error{constructor(message,status=422){super(message);this.status=status;}}
 function transportDefaults(value){
  if(!value||typeof value!=='object'||Array.isArray(value)||typeof value.showLines!=='boolean'||typeof value.showStations!=='boolean')throw new AccessError('Choose valid transport map defaults.');
@@ -24,7 +25,10 @@ export function whatsappNumber(value){const number=String(value||'').trim().repl
 function password(value){if(typeof value!=='string'||value.length<12||value.length>128)throw new AccessError('Use a password of 12–128 characters.');return value;}
 async function passwordHash(value){const salt=randomBytes(16).toString('hex');const key=await scrypt(password(value),salt,64,{N:32768,r:8,p:1,maxmem:64*1024*1024});return `scrypt-v1:${salt}:${key.toString('hex')}`;}
 async function verify(value,stored){if(typeof value!=='string'||value.length>128)return false;const [,salt,key]=String(stored||'').split(':');const result=await scrypt(value,salt||'jll-login-padding',64,{N:32768,r:8,p:1,maxmem:64*1024*1024});return Boolean(key)&&equal(result.toString('hex'),key);}
-export function publicUser(u){return {id:u.id,name:u.name,email:u.email,role:u.role,active:u.active,createdAt:u.createdAt,whatsapp:u.whatsapp||'',shareSlug:u.shareSlug||'',photo:u.photo||'',jobTitle:u.jobTitle||''};}
+function wechatContact(user) {
+ return {...(user.wechatId && {wechatId:user.wechatId}), ...(user.wechatQr && {wechatQr:user.wechatQr})};
+}
+export function publicUser(u){return {id:u.id,name:u.name,email:u.email,role:u.role,active:u.active,createdAt:u.createdAt,whatsapp:u.whatsapp||'',shareSlug:u.shareSlug||'',photo:u.photo||'',jobTitle:u.jobTitle||'',...wechatContact(u)};}
 export function publicDevelopment(d){const {createdBy,updatedBy,importSource,...safe}=d;for(const key of Object.keys(safe))if(key.startsWith('_'))delete safe[key];return safe;}
 function init(s){for(const key of ['users','sessions','invites','collections','authFailures'])if(!Array.isArray(s[key]))s[key]=[];}
 function ownerGuard(s,u,nextRole,nextActive){if(u.role==='admin'&&u.active&&(nextRole!=='admin'||!nextActive)&&s.users.filter(x=>x.active&&x.role==='admin').length<=1)throw new AccessError('Keep at least one active administrator.');}
@@ -98,15 +102,107 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
    const phone=canUseBuyerTools(invitation.role)?whatsappNumber(body.whatsapp):null;
    let u=s.users.find(x=>x.email===invitation.email);if(u){ownerGuard(s,u,invitation.role,true);u.passwordHash=hash;u.role=invitation.role;u.active=true;u.name=invitation.name;}else{u={id:randomBytes(12).toString('hex'),email:invitation.email,name:invitation.name,role:invitation.role,active:true,passwordHash:hash,createdAt:new Date(now()).toISOString()};s.users.push(u);}
    if(phone){u.whatsapp=phone;if(!u.shareSlug){u.shareSlug=randomBytes(12).toString('base64url');recordStaff(s,u,'personal_link_created',{now:now()});}}
+   delete u._passwordReset;
    issueBrokerPassword(s,u,true);
    activateInvitedReviews(s,invitation,u,now());
    s.invites=s.invites.filter(x=>x.id!==invitation.id);s.sessions=s.sessions.filter(x=>x.userId!==u.id);s.authFailures=s.authFailures.filter(x=>x.key!==digest(u.email));return addSession(s,u);
   });
  }
- async function updateProfile(actor,body){if(body.transportDefaults!==undefined)throw new AccessError('Set transport defaults in a buyer collection.');const phone=body.whatsapp===undefined?undefined:whatsappNumber(body.whatsapp);let jobTitle;if(body.jobTitle!==undefined){if(typeof body.jobTitle!=='string'||body.jobTitle.length>100)throw new AccessError('Enter a job title of up to 100 characters.');jobTitle=body.jobTitle.trim().replace(/\s+/g,' ');}let photo;if(body.photo!==undefined){try{photo=profilePhoto(body.photo);}catch(e){throw new AccessError(e.message);}}return repository.update(s=>{const acting=current(s,actor);const u=s.users.find(u=>u.id===acting.id);if(!u)throw new AccessError('Create a staff account first.',409);if(phone!==undefined)u.whatsapp=phone;if(jobTitle!==undefined)u.jobTitle=jobTitle;if(photo!==undefined)u.photo=photo;if(!u.shareSlug){u.shareSlug=randomBytes(12).toString('base64url');recordStaff(s,u,'personal_link_created',{now:now()});}recordStaff(s,acting,'profile_update',{now:now()});return publicUser(u);});}
- function brokerCard(u){return u?.active&&u.whatsapp&&u.shareSlug?{name:u.name,whatsapp:u.whatsapp,slug:u.shareSlug,photo:u.photo||''}:null;}
+ async function issuePasswordReset(actor,id){
+  admin(actor);
+  if(actor.legacy)throw new AccessError('Sign in with your staff account.',401);
+  const token=randomBytes(32).toString('base64url');
+  return repository.update(state=>{
+   const acting=current(state,actor);
+   admin(acting);
+   const user=state.users.find(user=>user.id===id);
+   if(!user)throw new AccessError('User not found.',404);
+   if(!user.active)throw new AccessError('Enable this account before resetting its password.',409);
+   const expiresAt=now()+RESET_MS;
+   user._passwordReset={tokenHash:digest(token),expiresAt,createdBy:acting.id};
+   recordStaff(state,acting,'password_reset_issued',{id:user.id,label:user.name,now:now()});
+   return {token,expiresAt};
+  });
+ }
+ async function resetPassword(body){
+  const address=email(body?.email),token=body?.token;
+  const invalid=()=>new AccessError('This password reset link has expired, was already used or does not match this email.',410);
+  if(typeof token!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(token))throw invalid();
+  const tokenHash=digest(token);
+  function target(state){
+   const user=(state.users||[]).find(user=>user.active&&user.email===address);
+   const reset=user?._passwordReset;
+   if(!reset||reset.expiresAt<=now()||!equal(reset.tokenHash,tokenHash)||
+      !state.users.some(issuer=>issuer.id===reset.createdBy&&issuer.active&&issuer.role==='admin'))throw invalid();
+   return user;
+  }
+  target(await repository.read());
+  const hash=await passwordHash(body.password);
+  return repository.update(state=>{
+   init(state);
+   const user=target(state);
+   user.passwordHash=hash;
+   delete user._passwordReset;
+   state.sessions=state.sessions.filter(session=>session.userId!==user.id);
+   state.invites=state.invites.filter(invite=>invite.email!==address);
+   state.authFailures=state.authFailures.filter(failure=>failure.key!==digest(address));
+   recordStaff(state,user,'password_reset_completed',{now:now()});
+   return addSession(state,user);
+  });
+ }
+ async function updateProfile(actor,body) {
+  if(!body||typeof body!=='object'||Array.isArray(body))throw new AccessError('Enter valid profile details.');
+  if(body.transportDefaults!==undefined)throw new AccessError('Set transport defaults in a buyer collection.');
+  const changes={};
+  if(body.whatsapp!==undefined)changes.whatsapp=whatsappNumber(body.whatsapp);
+  if(body.jobTitle!==undefined){if(typeof body.jobTitle!=='string'||body.jobTitle.length>100)throw new AccessError('Enter a job title of up to 100 characters.');changes.jobTitle=body.jobTitle.trim().replace(/\s+/g,' ');}
+  if(body.photo!==undefined){try{changes.photo=profilePhoto(body.photo);}catch(e){throw new AccessError(e.message);}}
+  if(body.wechatId!==undefined){
+   if(typeof body.wechatId!=='string'||!/^[A-Za-z0-9_-]{0,40}$/.test(body.wechatId.trim()))throw new AccessError('Enter your WeChat ID using letters, numbers, hyphens or underscores.');
+   changes.wechatId=body.wechatId.trim();
+  }
+  if(body.wechatQr!==undefined){
+   const size=profileJpegSize(body.wechatQr);
+   if(body.wechatQr!==''&&(!size||Math.min(size.width,size.height)<96||Math.max(size.width,size.height)>720))throw new AccessError('Choose a legible WeChat QR image.');
+   changes.wechatQr=body.wechatQr;
+  }
+  return repository.update(state=>{
+   const acting=current(state,actor);
+   const user=state.users.find(user=>user.id===acting.id);
+   if(!user)throw new AccessError('Create a staff account first.',409);
+   Object.assign(user,changes);
+   if(!user.shareSlug){user.shareSlug=randomBytes(12).toString('base64url');recordStaff(state,user,'personal_link_created',{now:now()});}
+   recordStaff(state,acting,'profile_update',{now:now()});
+   return publicUser(user);
+  });
+ }
+ function brokerCard(u){return u?.active&&u.whatsapp&&u.shareSlug?{name:u.name,whatsapp:u.whatsapp,slug:u.shareSlug,photo:u.photo||'',...wechatContact(u)}:null;}
  async function publicBroker(slug,state){const s=state??await repository.read();const u=(s.users||[]).find(u=>u.shareSlug===slug&&u.active);const card=brokerCard(u);if(!card)throw new AccessError('This broker link is unavailable.',404);return card;}
- async function updateUser(actor,id,body){admin(actor);return repository.update(s=>{init(s);const acting=current(s,actor);admin(acting);const u=s.users.find(x=>x.id===id);if(!u)throw new AccessError('User not found.',404);const nextRole=body.role===undefined?u.role:role(body.role),active=body.active===undefined?u.active:body.active;if(typeof active!=='boolean')throw new AccessError('Choose whether the account is active.');ownerGuard(s,u,nextRole,active);u.role=nextRole;u.active=active;if(active)issueBrokerPassword(s,u);else delete u._buyerPasswordVersion;s.sessions=s.sessions.filter(x=>x.userId!==u.id);s.invites=s.invites.filter(x=>x.email!==u.email&&x.createdBy!==u.id);recordStaff(s,acting,'user_update',{id:u.id,label:u.name,now:now()});return publicUser(u);});}
+ async function updateUser(actor,id,body){
+  admin(actor);
+  if(!body||typeof body!=='object'||Array.isArray(body))throw new AccessError('Enter valid account details.');
+  return repository.update(state=>{
+   init(state);
+   const acting=current(state,actor);
+   admin(acting);
+   const user=state.users.find(user=>user.id===id);
+   if(!user)throw new AccessError('User not found.',404);
+   const nextRole=body.role===undefined?user.role:role(body.role),active=body.active===undefined?user.active:body.active;
+   if(typeof active!=='boolean')throw new AccessError('Choose whether the account is active.');
+   ownerGuard(state,user,nextRole,active);
+   user.role=nextRole;
+   user.active=active;
+   if(active)issueBrokerPassword(state,user);
+   else delete user._buyerPasswordVersion;
+   state.sessions=state.sessions.filter(session=>session.userId!==id);
+   state.invites=state.invites.filter(invite=>invite.email!==user.email&&invite.createdBy!==id);
+   for(const account of state.users){
+    if(account.id===id||account._passwordReset?.createdBy===id)delete account._passwordReset;
+   }
+   recordStaff(state,acting,'user_update',{id,label:user.name,now:now()});
+   return publicUser(user);
+  });
+ }
  function canEdit(actor,d){return canManagePortfolioStock(actor.role);}
  async function collections(actor){
   const state=await repository.read(),acting=current(state,actor);
@@ -115,6 +211,7 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
  async function saveCollection(actor,body,id){
   if(actor.legacy)throw new AccessError('Create a staff account first.',409);
   const title=name(body?.title),defaults=body.transportDefaults===undefined?undefined:transportDefaults(body.transportDefaults);
+  if(body.language!==undefined&&!isBuyerLanguage(body.language))throw new AccessError('Choose a supported collection language.');
   if(!Array.isArray(body.developmentIds)||!body.developmentIds.length||body.developmentIds.length>50||!body.developmentIds.every(x=>typeof x==='string'))throw new AccessError('Choose 1–50 developments.');
   const ids=[...new Set(body.developmentIds)];
   return repository.update(state=>{
@@ -132,6 +229,7 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
    }
    collection.title=title;
    collection.developmentIds=ids;
+   if(body.language!==undefined)collection.language=body.language;
    if(defaults!==undefined)collection.transportDefaults=defaults;
    updateCollectionPassword(state,collection,body.passwordAction);
    collection.updatedAt=new Date(now()).toISOString();
@@ -161,7 +259,8 @@ export function accessService(repository,bootstrapSecret,{now=Date.now}={}){
   const c=(s.collections||[]).find(x=>x.slug===slug),owner=c&&(s.users||[]).find(u=>u.id===c.ownerId&&u.active);
   if(!c||!owner)throw new AccessError('This collection is no longer available.',404);
   const ids=new Set((visible??s.developments).map(d=>d.id));
-  return {slug:c.slug,title:c.title,transportDefaults:c.transportDefaults,brokerName:owner.name,broker:brokerCard(owner),developmentIds:c.developmentIds.filter(id=>ids.has(id))};
+  return {slug:c.slug,title:c.title,transportDefaults:c.transportDefaults,brokerName:owner.name,broker:brokerCard(owner),
+   ...(isBuyerLanguage(c.language)&&{language:c.language}),developmentIds:c.developmentIds.filter(id=>ids.has(id))};
  }
- return {status,authenticate,current,staffSession,csrf,admin,stock,bootstrap,login,logout,users,invite,invites,revokeInvite,accept,updateUser,updateProfile,publicBroker,canEdit,collections,saveCollection,deleteCollection,deleteCollections,publicCollection};
+ return {status,authenticate,current,staffSession,csrf,admin,stock,bootstrap,login,logout,users,invite,invites,revokeInvite,accept,issuePasswordReset,resetPassword,updateUser,updateProfile,publicBroker,canEdit,collections,saveCollection,deleteCollection,deleteCollections,publicCollection};
 }
