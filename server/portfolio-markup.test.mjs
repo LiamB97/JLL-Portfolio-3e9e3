@@ -12,7 +12,10 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
  const previous={location:globalThis.location,window:globalThis.window,document:globalThis.document};
  globalThis.location=new URL('https://portfolio.example/?collection=chosen');
  globalThis.window=new EventTarget();globalThis.document=new EventTarget();
- const server=await createServer({configFile:false,plugins:[react()],server:{middlewareMode:true},appType:'custom',optimizeDeps:{noDiscovery:true}});
+ const server=await createServer({
+  configFile:false,plugins:[react()],server:{middlewareMode:true},appType:'custom',optimizeDeps:{noDiscovery:true},
+  define:{'import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY':'undefined'},
+ });
  try{
   const Header=(await server.ssrLoadModule('/src/PortfolioHeader.tsx')).default;
   const headerProps={exploring:true,staff:false,view:'split',saved:1,setView(){},openFavourites(){},onNavigate(){}};
@@ -44,6 +47,21 @@ test('rendered buyer enquiries preserve attribution and broker screens start wit
   assert.match(links.text(),/Enquire on WhatsApp/);
   assert.equal($('.detail-broker-identity strong').text(),'Test Broker');
   assert.equal($('.detail-broker-avatar img').attr('src'),broker.photo);
+  const streetViewDetail=load(renderToStaticMarkup(createElement(Detail,{...base,d:{...base.d,sample:false},broker,collection:'chosen'})));
+  const streetViewLink=streetViewDetail('.detail-actions .development-street-view');
+  assert.equal(streetViewLink.text().trim(),'Street View');
+  assert.equal(streetViewLink.attr('target'),'_blank');
+  assert.equal(streetViewLink.attr('rel'),'noopener noreferrer');
+  const streetViewUrl=new URL(streetViewLink.attr('href'));
+  assert.equal(streetViewUrl.origin,'https://www.google.com');
+  assert.equal(streetViewUrl.pathname,'/maps/@');
+  assert.deepEqual(Object.fromEntries(streetViewUrl.searchParams),{
+   api:'1',map_action:'pano',viewpoint:`${base.d.lat},${base.d.lng}`,
+  });
+  for(const d of [{...base.d,sample:true},{...base.d,sample:false,lat:91}]){
+   const noStreetView=load(renderToStaticMarkup(createElement(Detail,{...base,d})));
+   assert.equal(noStreetView('.development-street-view').length,0);
+  }
   const personal=load(renderToStaticMarkup(createElement(Detail,{...base,broker:{...broker,photo:undefined}})));
   assert.equal(personal('.detail-broker-avatar').text(),'TB');
   assert.match(new URL(personal('.detail-enquiry-action').attr('href')).searchParams.get('text'),/broker=owner-link/);

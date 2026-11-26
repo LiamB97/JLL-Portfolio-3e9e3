@@ -88,10 +88,22 @@
 .discovery-page .listing-heading{margin:0 0 12px}
 /* Controls have one anchor and reserve space for Leaflet zoom controls. */
 .map-utilities{position:absolute;bottom:36px;inset-inline-start:16px;display:flex;gap:8px;z-index:600;max-width:calc(100% - 82px)}
-.map-utilities button{min-height:44px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 2px 8px #0002;padding:10px 12px;font-size:14px;gap:8px}
+:is(.map-utilities,.map-street-view) button{min-height:44px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 2px 8px #0002;padding:10px 12px;font-size:14px;gap:8px}
 .map-utilities .map-layer-button{position:relative;background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);font-weight:600}
 .map-layer-button .layer-count{background:color-mix(in srgb,var(--accent-contrast) 20%,transparent)}
 .map-utilities .map-layer-button:active{filter:brightness(.91)}
+.map-street-view{
+ position:absolute;inset-inline-start:16px;bottom:88px;z-index:600;
+ display:flex;align-items:flex-end;gap:8px;max-width:calc(100% - 84px);pointer-events:none
+}
+.map-street-view button{pointer-events:auto;touch-action:manipulation;white-space:nowrap}
+.map-street-view button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast)}
+.map-street-view-hint{
+ background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:5px;
+ padding:9px 11px;box-shadow:0 2px 8px #0002;font-size:14px;line-height:1.3
+}
+.street-view-target .development-pin{outline:2px solid var(--surface);outline-offset:2px}
+.detail-actions .development-street-view{color:var(--ink);background:var(--surface);touch-action:manipulation}
 .map-layer-cue{display:none}
 @media (prefers-reduced-motion:no-preference){
  .map-layer-cue{--layer-cue-cycle:4s;display:block;position:absolute;inset:-4px;border-radius:8px;pointer-events:none}
@@ -170,6 +182,7 @@
  .discovery-broker>a{padding:3px 9px;min-height:36px}.discovery-broker .broker-avatar{width:24px;height:24px}
  .discovery-disclaimer{font-size:14px;padding:4px 12px}
  .map-utilities{bottom:36px;inset-inline-start:12px;gap:7px}.map-utilities button{font-size:14px;padding:10px}.map-fit-button span{display:none}
+ .map-street-view{inset-inline-start:12px}
  .discovery-page.view-split{overflow:auto}.discovery-page.view-split .discovery-workspace{display:flex;flex-direction:column;flex:none;height:auto}
  /* Reserve room for the listing controls and the start of the first card. */
  .discovery-page.view-split .map-shell{height:clamp(160px,calc(100svh - 420px),310px);flex:none}

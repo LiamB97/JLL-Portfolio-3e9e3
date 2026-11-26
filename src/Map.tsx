@@ -8,7 +8,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import * as maplibregl from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import '@maplibre/maplibre-gl-leaflet';
-import {GraduationCap, Landmark, Layers, TrainFront, AlertCircle, SlidersHorizontal,LocateFixed,RotateCcw} from 'lucide-react';
+import {GraduationCap, Landmark, Layers, TrainFront, AlertCircle, SlidersHorizontal,LocateFixed,RotateCcw,PersonStanding} from 'lucide-react';
 import Modal from './Modal';
 import StationPicker from './StationPicker';
 import {landmarks} from './explore';
@@ -16,6 +16,7 @@ import {universities} from './universities';
 import type {CommuteDestination} from './commute';
 import {styleNeighbourhoodMap} from './map-style';
 import {useLocale} from './i18n';
+import {hasStreetView, streetViewUrl, streetViewEmbedEnabled, StreetViewDialog} from './StreetView';
 import type {Development, Station, TransportLine, TransportNetwork, TransportDefaults} from './types';
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
@@ -82,6 +83,20 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
   const universityLayer=useRef<L.LayerGroup|null>(null);
   const [showLandmarks,setShowLandmarks]=useState(false),[showUniversities,setShowUniversities]=useState(false),[toolsOpen,setToolsOpen]=useState(false);
   const [layersOpened, setLayersOpened] = useState(false);
+  const [choosingStreetView, setChoosingStreetView] = useState(false);
+  const [streetViewDevelopment, setStreetViewDevelopment] = useState<Development | null>(null);
+  const streetViewButton = useRef<HTMLButtonElement>(null);
+  const streetViewAvailable = !embedded && items.some(hasStreetView);
+  const streetViewPicking = streetViewAvailable && choosingStreetView;
+  useEffect(() => {
+    if (!streetViewAvailable || resetKey) setChoosingStreetView(false);
+  }, [streetViewAvailable, resetKey]);
+  const openStreetView = useCallback((development: Development) => {
+    streetViewButton.current?.focus({preventScroll: true});
+    setChoosingStreetView(false);
+    if (streetViewEmbedEnabled) setStreetViewDevelopment(development);
+    else window.open(streetViewUrl(development), '_blank', 'noopener,noreferrer');
+  }, []);
   const [lineFilter,setLineFilter]=useState<string[]>([]);
   const [stationFilter,setStationFilter]=useState<string[]>([]);
   useEffect(()=>{setShowLines(transportDefaults?.showLines??false);setShowStations(transportDefaults?.showStations??false);setLineFilter(transportDefaults?.lineIds??[]);setStationFilter(transportDefaults?.stationIds??[]);},[transportDefaults]);
@@ -151,13 +166,25 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     const highlightedLayer=(clusterCollection?collectionClusters.current:null)??(clusterFeatured?group:featured);
     for(const d of items){
       const highlighted=featuredIds.includes(d.id),saved=favouriteIds.includes(d.id);
+      const streetViewTarget = streetViewPicking && hasStreetView(d);
+      const label = streetViewTarget
+        ? t('Street View for {name}', {name: d.name})
+        : `${d.name}${highlighted?', '+t('FEATURED'):''}${saved?', '+t('Saved to favourites'):''}`;
       const icon=L.divIcon({className:'development-pin-wrap',html:`<span class="development-pin ${d.id===selected?'active':''} ${highlighted?'featured-pin':''} ${saved?'favourite-pin':''}">${highlighted?'<svg class="pin-feature-star" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg>':saved?'<svg class="pin-heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>':'<span class="pin-centre"></span>'}${highlighted&&saved?'<b class="pin-saved-badge">♥</b>':''}</span>`,iconSize:highlighted?[46,54]:[34,40],iconAnchor:highlighted?[23,50]:[17,38]});
       const marker=L.marker([d.lat,d.lng],{icon,keyboard:true,title:d.name+(highlighted?' · '+t('FEATURED'):'')+(saved?' · '+t('Saved to favourites'):''),opacity:dimOthers&&featuredIds.length&&!highlighted&&!saved&&d.id!==selected ? 0.32 : 1,zIndexOffset:d.id===selected?3000:highlighted?2000:saved?1000:0});
       if(commuteTimes[d.id]!==undefined){const label=document.createElement('span');label.textContent=d.name+' · '+commuteTimes[d.id]+' min commute';marker.bindTooltip(label);}
       const pinLayer=saved||(highlighted&&d.id===selected)?featured:highlighted?highlightedLayer:group;
-      marker.on('add',()=>marker.getElement()?.setAttribute('aria-label',`${d.name}${highlighted?', '+t('FEATURED'):''}${saved?', '+t('Saved to favourites'):''}`)).on('click',()=>onSelect(d.id)).addTo(pinLayer);
+      marker.on('add', () => {
+        const element = marker.getElement();
+        element?.setAttribute('aria-label', label);
+        element?.classList.toggle('street-view-target', streetViewTarget);
+        if (streetViewPicking && !streetViewTarget) element?.setAttribute('aria-disabled', 'true');
+      }).on('click', () => {
+        if (streetViewTarget) openStreetView(d);
+        else if (!streetViewPicking) onSelect(d.id);
+      }).addTo(pinLayer);
     }
-  },[items,selected,onSelect,featuredIds,favouriteIds,commuteTimes,dimOthers,dark,t,clusterFeatured,clusterCollection]);
+  },[items,selected,onSelect,featuredIds,favouriteIds,commuteTimes,dimOthers,dark,t,clusterFeatured,clusterCollection,streetViewPicking,openStreetView]);
   useEffect(()=>{
     const m=map.current,group=landmarkLayer.current;if(!m||!group)return;
     function render(){
@@ -295,7 +322,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
       const viewport = m.getBounds();
       const container = m.getContainer();
       const frame = container.getBoundingClientRect();
-      const controls = Array.from(container.closest('.map-shell')?.querySelectorAll('.map-utilities, .leaflet-control-zoom, .leaflet-control-attribution') ?? []);
+      const controls = Array.from(container.closest('.map-shell')?.querySelectorAll('.map-utilities, .map-street-view, .leaflet-control-zoom, .leaflet-control-attribution') ?? []);
       const toolbar = container.closest('.discovery-page')?.querySelector('.discovery-toolbar');
       if (toolbar) controls.push(toolbar);
       const reserved = controls.map(control => {
@@ -318,13 +345,28 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
     updateLabels();
     m.on('moveend resize', updateLabels);
     return () => { m.off('moveend resize', updateLabels); };
-  },[showStations,shownStations,network,lineFilter,stationFilter,dark,changeStations,t]);
+  },[showStations,shownStations,network,lineFilter,stationFilter,dark,changeStations,t,streetViewAvailable,streetViewPicking]);
   const activeLayerCount=[showLines,showStations,showLandmarks,showUniversities].filter(Boolean).length;
   const openMapLayers = () => {
     setLayersOpened(true);
     setToolsOpen(true);
   };
-  return <div className="map-shell" data-map-ready={baseReady}>{!baseReady&&<div className="map-loading-indicator" role="status">{t("Loading London map…")}</div>}<div ref={el} className="map" aria-label={t("Map of London developments")}/>
+  return <div className="map-shell" data-map-ready={baseReady} onKeyDown={event => {
+    if (event.key === 'Escape' && streetViewPicking && !toolsOpen) {
+      setChoosingStreetView(false);
+      streetViewButton.current?.focus({preventScroll: true});
+    }
+  }}>
+    {streetViewAvailable && <div className="map-street-view">
+      <button ref={streetViewButton} type="button" aria-pressed={streetViewPicking}
+        onClick={() => setChoosingStreetView(choosing => !choosing)}>
+        <PersonStanding size={20} aria-hidden="true"/>{t('Street View')}
+      </button>
+      {streetViewPicking && <span className="map-street-view-hint" role="status">
+        {t('Choose a pin')}
+      </span>}
+    </div>}
+    {!baseReady&&<div className="map-loading-indicator" role="status">{t("Loading London map…")}</div>}<div ref={el} className="map" aria-label={t("Map of London developments")}/>
     <div className="map-utilities">{!embedded&&<button className="map-layer-button" aria-haspopup="dialog" aria-expanded={toolsOpen} onClick={openMapLayers}>{!layersOpened&&<span className="map-layer-cue" aria-hidden="true"><span className="map-layer-trace"/></span>}<SlidersHorizontal size={16}/>{t('Map layers')}{activeLayerCount>0&&<span className="layer-count">{activeLayerCount}</span>}</button>}
     <button className="map-fit-button" aria-label={t('Show matching homes')} title={t('Show matching homes')} disabled={!items.length} onClick={()=>{const m=map.current;if(!m||!items.length)return;m.fitBounds(L.latLngBounds([...items,...(commuteDestination?[commuteDestination]:[])].map(d=>[d.lat,d.lng] as [number,number])),frameOptions(m));}}><LocateFixed size={19}/><span>{t('Show matching homes')}</span></button>
     {onReset&&!embedded&&<button className="map-reset-button" aria-label={t('Reset map')} title={t('Reset map')} onClick={onReset}><RotateCcw size={18}/><span>{t('Reset map')}</span></button>}
@@ -337,6 +379,7 @@ export default function PortfolioMap({items, selected, onSelect, network, transp
       {network&&(showLines||showStations)&&<section className="map-line-picker"><h3>{t('Show specific lines')}</h3><p>{t('All lines are shown until you pick a specific selection below.')}</p><button aria-pressed={!lineFilter.length} className={!lineFilter.length?'selected':''} onClick={()=>setLineFilter([])}>{t('Show all lines')}</button><div className="map-line-options">{network.lines.map(line=><label key={line.id}><i style={{background:line.colour}}/><span>{line.name}</span><input type="checkbox" checked={lineFilter.includes(line.id)} onChange={()=>setLineFilter(old=>old.includes(line.id)?old.filter(id=>id!==line.id):[...old,line.id])}/></label>)}</div><small>{t('Powered by TfL Open Data')}{network.stale?' · Last available network':''}</small>{Boolean(network.missingGeometry?.length)&&<small>{t('Route geometry unavailable for:')} {network.missingGeometry!.join(', ')}</small>}</section>}
       {!network&&<p role="status">{t('Transport layers are temporarily unavailable. You can still browse developments and landmarks.')}</p>}
     </Modal>}
+    {streetViewDevelopment && <StreetViewDialog development={streetViewDevelopment} close={() => setStreetViewDevelopment(null)}/>}
     <span className="map-note">{showStations&&network?t('{count} TfL rail stops · Click a station for its lines',{count:shownStations.length}):t('Select a development to explore homes, photos and viewing details')}</span>
     {transportError&&<div className="transport-notice" role="status">{t("TfL network temporarily unavailable. Development browsing is still available.")}</div>}
     {failed&&<div className="map-error"><AlertCircle size={16}/> {t("Some map detail could not load. You can still browse developments in List.")}</div>}
